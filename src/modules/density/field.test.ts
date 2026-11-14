@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DensityPoint } from "@/shared/contracts";
 import { densityAt, FIELD_RADIUS_M, pointWeight, rampColor } from "./ui/field";
-import { HEAT_MODES } from "./ui/modes";
+import { availableModes, DEFAULT_MODE, HEAT_MODES } from "./ui/modes";
 
 const at = { lat: 42.3868, lng: -72.5301 };
 const point = (eastM: number, weight: number, source: DensityPoint["source"] = "simulated"): DensityPoint => ({
@@ -53,12 +53,18 @@ describe("crowd field", () => {
     expect(rampColor(0.45, "gray")).not.toBe(quiet);
   });
 
-  it("offers green-red, gray-red, gray-red on grass, and off", () => {
-    expect(HEAT_MODES.map((m) => [m.id, m.ramp, m.grass])).toEqual([
-      ["green-red", "green", false],
-      ["gray-red", "gray", false],
-      ["gray-red-grass", "gray", true],
-      ["off", null, true],
+  it("defines gray-red, gray-red on grass, off, and a dev-only green-red", () => {
+    expect(HEAT_MODES.map((m) => [m.id, m.ramp, m.grass, Boolean(m.devOnly)])).toEqual([
+      ["gray-red", "gray", false, false],
+      ["gray-red-grass", "gray", true, false],
+      ["off", null, true, false],
+      ["green-red", "green", false, true],
     ]);
+  });
+
+  it("keeps green-red out of the public list and shows it in dev settings", () => {
+    expect(availableModes(false).map((m) => m.id)).toEqual(["gray-red", "gray-red-grass", "off"]);
+    expect(availableModes(true).map((m) => m.id)).toContain("green-red");
+    expect(availableModes(false).some((m) => m.id === DEFAULT_MODE)).toBe(true);
   });
 });

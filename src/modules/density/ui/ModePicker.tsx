@@ -1,7 +1,8 @@
 "use client";
 
 import { useStore } from "@/shared/ui/store";
-import { HEAT_MODES } from "./modes";
+import { publicEnv } from "@/shared/config/public-env";
+import { availableModes } from "./modes";
 import { densityStore, setHeatMode } from "./state";
 
 /** The map modes as a list of radio buttons. `onPick` lets a popover close itself. */
@@ -9,7 +10,7 @@ export function ModePicker({ onPick, showHints = true }: { onPick?: () => void; 
   const mode = useStore(densityStore, (s) => s.mode);
   return (
     <div role="radiogroup" aria-label="Map colours" className="flex flex-col gap-1">
-      {HEAT_MODES.map((m) => {
+      {availableModes(publicEnv.devTools).map((m) => {
         const selected = m.id === mode;
         return (
           <button

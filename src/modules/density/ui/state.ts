@@ -1,7 +1,8 @@
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { DensityResponse, SharingState } from "@/shared/contracts";
 import { createStore } from "@/shared/ui/store";
-import { DEFAULT_MODE, HEAT_MODES, type HeatModeId } from "./modes";
+import { publicEnv } from "@/shared/config/public-env";
+import { availableModes, DEFAULT_MODE, type HeatModeId } from "./modes";
 
 /**
  * Client state shared by the map layer (which polls and pings) and the panel (which shows
@@ -85,7 +86,8 @@ export function setHeatMode(mode: HeatModeId): void {
 export function restoreHeatMode(): void {
   try {
     const saved = localStorage.getItem(MODE_KEY);
-    if (saved && HEAT_MODES.some((m) => m.id === saved)) densityStore.set({ mode: saved as HeatModeId });
+    // a saved dev-only mode is ignored when dev tools are off
+    if (saved && availableModes(publicEnv.devTools).some((m) => m.id === saved)) densityStore.set({ mode: saved as HeatModeId });
     else if (localStorage.getItem(OLD_HEAT_KEY) === "0") densityStore.set({ mode: "off" });
   } catch {
     // keep the default
