@@ -5,6 +5,7 @@ import { MapProvider, useMapStore } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
+import { ThemeToggle } from "./ThemeToggle";
 
 export interface ShellUser {
   name: string | null;
@@ -48,6 +49,7 @@ export function AppShell({ user }: { user: ShellUser }) {
         </div>
 
         <DevTools />
+        <ThemeToggle />
       </div>
 
       {registry.headless.map(({ id, Component }) => (
