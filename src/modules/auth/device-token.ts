@@ -17,22 +17,30 @@ function bearerToken(req: Request): string | null {
   return match ? match[1] : null;
 }
 
+/** A token idle for this long is deleted on its next use. The app asks for a new one after the 401. */
+export const DEVICE_TOKEN_IDLE_MS = 30 * 24 * 60 * 60 * 1000;
+
 /**
  * Reads `Authorization: Bearer <token>`, looks up the SHA-256 of the token in `device_tokens`,
- * updates `lastUsedAt` and returns the user, or null for a missing, malformed, unknown or
- * deleted token. Never throws on a bad header.
+ * updates `lastUsedAt` and returns the user, or null for a missing, malformed, unknown, deleted
+ * or idle (30 days) token. Never throws on a bad header.
  */
 export async function resolveDeviceToken(req: Request): Promise<AuthUser | null> {
   const token = bearerToken(req);
   if (!token) return null;
 
   const { device_tokens, users } = await getCollections();
-  const row = await device_tokens.findOneAndUpdate(
-    { tokenHash: hashToken(token) },
-    { $set: { lastUsedAt: new Date() } },
-    { returnDocument: "after" },
-  );
-  if (!row) return null;
+  const tokenHash = hashToken(token);
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - DEVICE_TOKEN_IDLE_MS);
+  // Live = used (or, never used, issued) within the window. The check is part of the update, so an
+  // idle token is never refreshed on its way to being refused.
+  const live = { $or: [{ lastUsedAt: { $gte: cutoff } }, { lastUsedAt: { $exists: false }, createdAt: { $gte: cutoff } }] };
+  const row = await device_tokens.findOneAndUpdate({ tokenHash, ...live }, { $set: { lastUsedAt: now } }, { returnDocument: "after" });
+  if (!row) {
+    await device_tokens.deleteOne({ tokenHash, $nor: [live] }); // idle: gone. Unknown: nothing to delete.
+    return null;
+  }
 
   const user = await users.findOne({ _id: row.userId });
   if (!user) return null;

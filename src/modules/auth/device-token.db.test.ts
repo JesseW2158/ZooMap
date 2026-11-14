@@ -14,8 +14,11 @@ const t = withTestDb();
 const alex = { _id: "seed-alex", email: "dev.alex@umass.edu", name: "Alex Dev" };
 const blair = { _id: "seed-blair", email: "dev.blair@umass.edu", name: "Blair Dev" };
 
-const bearer = (value: string | null) =>
-  new Request("http://localhost/api/presence/ping", { method: "POST", headers: value === null ? {} : { Authorization: value } });
+const request = (path: string, method: string, value: string | null) =>
+  new Request(`http://localhost${path}`, { method, headers: value === null ? {} : { Authorization: value } });
+/** A bearer request to the one route that accepts device tokens. */
+const bearer = (value: string | null) => request("/api/presence/ping", "POST", value);
+const DAY = 24 * 60 * 60 * 1000;
 
 beforeEach(async () => {
   await Promise.all([t.cols.users.deleteMany({}), t.cols.device_tokens.deleteMany({})]);
@@ -89,11 +92,58 @@ describe("device tokens", () => {
     }
   });
 
-  it("requireUser accepts the device token and answers 401 for an unknown one", async () => {
+  it("requireUser accepts the device token on POST /api/presence/ping and answers 401 for an unknown one", async () => {
     const { token } = await createDeviceToken(blair._id);
     await expect(requireUser(bearer(`Bearer ${token}`))).resolves.toMatchObject({ id: blair._id, via: "device" });
     await expect(requireUser(bearer("Bearer unknown"))).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(requireUser(bearer(null))).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("requireUser refuses a valid device token anywhere but POST /api/presence/ping", async () => {
+    const { token } = await createDeviceToken(blair._id);
+    const header = `Bearer ${token}`;
+    const refused: [string, string][] = [
+      ["/api/store/redeem", "POST"],
+      ["/api/activities", "POST"],
+      ["/api/activities", "GET"],
+      ["/api/mobile/device-token", "POST"],
+      ["/api/presence/ping", "GET"],
+      ["/api/presence/ping", "PUT"],
+      ["/api/presence/sharing", "PUT"],
+      ["/api/presence/ping/extra", "POST"],
+      ["/api/presence/ping-other", "POST"],
+    ];
+    for (const [path, method] of refused) {
+      await expect(requireUser(request(path, method, header)), `${method} ${path}`).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    }
+    // a query string does not change the path
+    await expect(requireUser(request("/api/presence/ping?x=1", "POST", header))).resolves.toMatchObject({ via: "device" });
+    // the token itself is still good
+    expect((await resolveDeviceToken(bearer(header)))?.id).toBe(blair._id);
+  });
+
+  it("a token idle for 31 days is refused and its row deleted; one idle 29 days works and lastUsedAt advances", async () => {
+    const stale = await createDeviceToken(alex._id);
+    const fresh = await createDeviceToken(blair._id);
+    const now = Date.now();
+    await t.cols.device_tokens.updateOne({ userId: alex._id }, { $set: { lastUsedAt: new Date(now - 31 * DAY) } });
+    const old = new Date(now - 29 * DAY);
+    await t.cols.device_tokens.updateOne({ userId: blair._id }, { $set: { lastUsedAt: old } });
+
+    expect(await resolveDeviceToken(bearer(`Bearer ${stale.token}`))).toBeNull();
+    expect(await t.cols.device_tokens.countDocuments({ userId: alex._id })).toBe(0);
+    expect(await resolveDeviceToken(bearer(`Bearer ${stale.token}`))).toBeNull();
+
+    expect((await resolveDeviceToken(bearer(`Bearer ${fresh.token}`)))?.id).toBe(blair._id);
+    const row = await t.cols.device_tokens.findOne({ userId: blair._id });
+    expect(row!.lastUsedAt!.getTime()).toBeGreaterThan(old.getTime() + DAY);
+  });
+
+  it("a token never used counts from its creation date", async () => {
+    const { token } = await createDeviceToken(alex._id);
+    await t.cols.device_tokens.updateOne({ userId: alex._id }, { $set: { createdAt: new Date(Date.now() - 31 * DAY) } });
+    expect(await resolveDeviceToken(bearer(`Bearer ${token}`))).toBeNull();
+    expect(await t.cols.device_tokens.countDocuments({ userId: alex._id })).toBe(0);
   });
 });
 
