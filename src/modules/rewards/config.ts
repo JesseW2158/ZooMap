@@ -10,7 +10,7 @@ export const REWARDS_CONFIG = {
   timeAtActivity: {
     /** Most one participation can pay, in points. */
     perParticipationCap: 240,
-    /** Most `time-at-activity` can pay one user in one calendar day, in points. */
+    /** Most `time-at-activity` can pay one user in one calendar day (the day points are paid), in points. */
     perDayCap: 600,
   },
   /** How many ledger entries and redemptions `GET /api/rewards/me` returns. */

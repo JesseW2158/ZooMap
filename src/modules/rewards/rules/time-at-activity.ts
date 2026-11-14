@@ -26,7 +26,9 @@ export function timeAtActivityPoints(input: {
 
 /**
  * Pays for location-verified minutes at an activity when the participation ends.
- * Hosts and guests are paid alike. The day is the America/New_York day the participation ended.
+ * Hosts and guests are paid alike. The daily cap counts the America/New_York day the points
+ * are PAID (`ctx.now`), the same clock the ledger's `createdAt` uses. Settling is lazy, so a
+ * participation that ends at 11:58 pm and settles at 12:01 am counts toward the new day.
  */
 export const timeAtActivity: RewardRule<"participation.ended"> = {
   id: TIME_AT_ACTIVITY,
@@ -34,8 +36,8 @@ export const timeAtActivity: RewardRule<"participation.ended"> = {
   async evaluate(event, ctx): Promise<LedgerDraft[]> {
     const idempotencyKey = `participation:${event.participationId}:time`;
     const { timeZone } = REWARDS_CONFIG;
-    const dayStart = startOfDay(event.endedAt, timeZone);
-    const dayEnd = startOfNextDay(event.endedAt, timeZone);
+    const dayStart = startOfDay(ctx.now, timeZone);
+    const dayEnd = startOfNextDay(ctx.now, timeZone);
 
     const today = await ctx.ledgerForUser(event.userId, { since: dayStart, ruleId: TIME_AT_ACTIVITY });
     const alreadyToday = today
