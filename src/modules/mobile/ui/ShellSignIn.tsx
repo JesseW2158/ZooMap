@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { isNativeShell } from "@/shared/platform";
 import { installReturnListener, startHandoff } from "./handoff";
+import { getTracker } from "./tracking";
 
 const subscribe = () => () => {};
 
@@ -18,7 +19,10 @@ export function ShellSignIn({ children }: { children: ReactNode }) {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (inShell) installReturnListener();
+    if (!inShell) return;
+    installReturnListener();
+    // signing out leaves the plugin's watcher (and its notification) behind; remove it here
+    void getTracker().clearOrphans();
   }, [inShell]);
 
   if (!inShell) return <>{children}</>;

@@ -61,6 +61,13 @@ export interface TrackerDeps {
   /** Wait before retrying a watcher that could not start yet. Tests pass an instant one. */
   sleep?: (ms: number) => Promise<void>;
   createPinger?: typeof createPinger;
+  /**
+   * Where watcher ids are remembered across page loads. A full page load (sign-out, the reload after
+   * connecting a calendar) throws the JavaScript side away but not the plugin's watcher, which would
+   * keep the foreground service and its notification alive with nobody listening. The next page
+   * removes whatever the last one left.
+   */
+  watcherIds?: { read(): Promise<string[]>; write(ids: string[]): Promise<void> };
 }
 
 export interface Tracker {
@@ -70,6 +77,8 @@ export interface Tracker {
   onFix(listener: (fix: Fix) => void): () => void;
   /** Tracking stopped on its own: the token was refused, sharing is off, or permission was denied. */
   onStopped(listener: (reason: StopReason) => void): () => void;
+  /** Remove watchers left behind by an earlier page. Runs by itself before the first `setMode`. */
+  clearOrphans(): Promise<void>;
 }
 
 export const BACKGROUND_TITLE = "ZooMap is sharing your location";
@@ -133,12 +142,35 @@ export function createTracker(deps: TrackerDeps): Tracker {
     }
   };
 
+  const writeIds = async () => {
+    try {
+      await deps.watcherIds?.write(watcherId ? [watcherId] : []);
+    } catch {
+      // best effort
+    }
+  };
+
   const teardown = async () => {
     pinger?.stop();
     pinger = null;
     const id = watcherId;
     watcherId = null;
     await removeWatcherById(id);
+    await writeIds();
+  };
+
+  let orphans: Promise<void> | null = null;
+  const clearOrphans = () => {
+    orphans ??= (async () => {
+      try {
+        const ids = (await deps.watcherIds?.read()) ?? [];
+        for (const id of ids) await removeWatcherById(id);
+        if (ids.length) await deps.watcherIds?.write([]);
+      } catch {
+        // best effort
+      }
+    })();
+    return orphans;
   };
 
   /** Stop on our own account. Bumps the generation so a watcher still being added is removed when it lands. */
@@ -214,10 +246,12 @@ export function createTracker(deps: TrackerDeps): Tracker {
       return;
     }
     watcherId = id ?? null;
+    await writeIds();
   };
 
   return {
     mode: () => mode,
+    clearOrphans,
     onFix(listener) {
       fixListeners.add(listener);
       return () => fixListeners.delete(listener);
@@ -232,6 +266,7 @@ export function createTracker(deps: TrackerDeps): Tracker {
       const gen = generation;
       log(`mode ${mode} -> ${next}`);
       mode = next;
+      await clearOrphans();
       await teardown();
       if (gen !== generation || next === "off") return;
       if (next === "sharing") {
@@ -269,6 +304,17 @@ export function nativeTrackerDeps(): TrackerDeps {
     },
     getToken: () => nativePrefs.get(PREF_KEYS.deviceToken),
     clearToken: () => nativePrefs.remove(PREF_KEYS.deviceToken),
+    watcherIds: {
+      async read() {
+        try {
+          const parsed: unknown = JSON.parse((await nativePrefs.get(PREF_KEYS.watcherIds)) ?? "[]");
+          return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [];
+        } catch {
+          return [];
+        }
+      },
+      write: (ids) => nativePrefs.set(PREF_KEYS.watcherIds, JSON.stringify(ids)),
+    },
     async post(token, body) {
       // Native HTTP, not fetch: Android throttles WebView requests about five minutes after the
       // app goes to the background. Used per request; the global fetch patch stays off so

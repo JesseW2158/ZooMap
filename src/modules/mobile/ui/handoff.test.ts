@@ -32,6 +32,12 @@ describe("PKCE challenge", () => {
     expect(await challengeFor(verifier)).toBe("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
   });
 
+  it("makes a challenge of exactly 43 characters, and a verifier the server accepts", async () => {
+    const verifier = generateVerifier((n) => Uint8Array.from({ length: n }, (_, i) => i * 8));
+    expect(verifier).toMatch(/^[A-Za-z0-9._~-]{43,128}$/);
+    expect(await challengeFor(verifier)).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  });
+
   it("encodes base64url without padding", () => {
     expect(base64Url(Uint8Array.from([0xfb, 0xff, 0xfe]))).toBe("-__-");
     expect(base64Url(Uint8Array.from([1]))).toBe("AQ");

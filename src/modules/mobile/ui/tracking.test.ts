@@ -158,6 +158,29 @@ describe("local mode", () => {
   });
 });
 
+describe("watchers left by an earlier page", () => {
+  it("removes them before it starts its own, and remembers its own id", async () => {
+    let stored = ["old1", "old2"];
+    const removed: string[] = [];
+    const tracker = createTracker({
+      watcher: {
+        addWatcher: async () => "new1",
+        removeWatcher: async ({ id }) => void removed.push(id),
+      },
+      getToken: async () => "T",
+      clearToken: async () => {},
+      post: async () => ({ status: 201, data: {} }),
+      watcherIds: { read: async () => stored, write: async (ids) => void (stored = ids) },
+    });
+    await tracker.setMode("sharing");
+    expect(removed).toEqual(["old1", "old2"]);
+    expect(stored).toEqual(["new1"]);
+    await tracker.setMode("off");
+    expect(removed).toEqual(["old1", "old2", "new1"]);
+    expect(stored).toEqual([]);
+  });
+});
+
 describe("starting and stopping", () => {
   it("removes a watcher that was still being added when tracking was switched off", async () => {
     const { tracker, removed, release } = setup({ holdAdd: true });

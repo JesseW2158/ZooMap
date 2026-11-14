@@ -20,6 +20,8 @@ export const PREF_KEYS = {
   handoffLastCode: "zoomap.handoff.lastCode",
   /** The device token for background pings. */
   deviceToken: "zoomap.deviceToken",
+  /** JSON array of the plugin watcher ids this page started, so the next page can remove them. */
+  watcherIds: "zoomap.location.watcherIds",
   /** "1" once the user has accepted the location disclosure. */
   locationConsent: "zoomap.location.consent",
   /** "1" once the user has been taken to settings for "Allow all the time". */

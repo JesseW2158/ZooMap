@@ -14,7 +14,8 @@ afterEach(() => {
 function setup(result: PingResult | (() => Promise<PingResult>) = "ok") {
   const sentAt: number[] = [];
   const t0 = Date.now();
-  const send = vi.fn(async () => {
+  const send = vi.fn(async (fix: Fix) => {
+    void fix;
     sentAt.push((Date.now() - t0) / 1000);
     return typeof result === "function" ? result() : result;
   });
