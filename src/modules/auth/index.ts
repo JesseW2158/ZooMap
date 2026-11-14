@@ -4,3 +4,4 @@ export { handlers, auth, signIn, signOut } from "./config";
 export { resolveDeviceToken } from "./device-token";
 export { seedUsers } from "./seed-users";
 export type { SeedUser } from "./seed-users";
+export { challengeFor, consumeHandoffCode, createHandoffCode, isValidChallenge } from "./handoff";
