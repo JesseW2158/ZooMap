@@ -6,8 +6,9 @@ import type { BuildingCollection, DensityResponse } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { haversineM } from "@/shared/geo";
 import { isNativeShell, useUserLocation } from "@/shared/platform";
-import { addLayerToSlot, removeLayersAndSources, useApi, useMapEffect, usePolling } from "@/shared/ui";
+import { addLayerToSlot, removeLayersAndSources, useApi, useMapEffect, useMapStore, usePolling } from "@/shared/ui";
 import { useStore } from "@/shared/ui/store";
+import { growBuildings } from "./geometry";
 import { LEVEL_COLORS } from "./levels";
 import { Legend } from "./Legend";
 import { densityStore, loadSharing, loadSnapshot, PING_MS, POLL_MS } from "./state";
@@ -22,21 +23,22 @@ import { densityStore, loadSharing, loadSnapshot, PING_MS, POLL_MS } from "./sta
 
 const HEAT_SRC = "density-points";
 const HEAT_LAYER = "density-heat";
-const CAP_SRC = "density-caps";
-const CAP_LAYER = "density-caps-3d";
-/** The cap sits on the roof so it never fights the campus building underneath it. */
-const CAP_THICKNESS_M = 2.5;
+const TINT_SRC = "density-tint";
+const TINT_LAYER = "density-tint-3d";
+/** The tint is a full-height copy of each busy building, this much bigger so its walls never share a plane with the campus building. */
+const TINT_GROW_M = 0.3;
 
 const HEAT_COLOR: ExpressionSpecification = [
   "interpolate", ["linear"], ["heatmap-density"],
-  0, "rgba(246,231,161,0)",
-  0.15, "rgba(246,231,161,0.55)",
-  0.4, "rgba(244,184,96,0.7)",
-  0.7, "rgba(228,87,46,0.8)",
-  1, "rgba(140,28,19,0.9)",
+  0, "rgba(255,214,102,0)",
+  0.1, "rgba(255,214,102,0.7)",
+  0.3, "rgba(250,160,50,0.85)",
+  0.55, "rgba(236,84,40,0.92)",
+  0.8, "rgba(196,30,28,0.96)",
+  1, "rgba(120,10,20,1)",
 ];
 
-const CAP_COLOR: ExpressionSpecification = [
+const TINT_COLOR: ExpressionSpecification = [
   "match", ["get", "level"],
   1, LEVEL_COLORS[1],
   2, LEVEL_COLORS[2],
@@ -114,7 +116,9 @@ export function DensityLayer() {
   }, [buildings.data]);
 
   const heat = useMemo(() => heatData(snapshot), [snapshot]);
-  const caps = useMemo(() => capData(buildings.data, snapshot), [buildings.data, snapshot]);
+  const grown = useMemo(() => (buildings.data ? growBuildings(buildings.data, TINT_GROW_M) : []), [buildings.data]);
+  const caps = useMemo(() => tintData(grown, snapshot), [grown, snapshot]);
+  const { selectedPlaceId } = useMapStore();
   // read the freshest data inside the effects that create the sources
   const latest = useRef({ heat, caps });
   useEffect(() => {
@@ -130,11 +134,12 @@ export function DensityLayer() {
         type: "heatmap",
         source: HEAT_SRC,
         paint: {
-          "heatmap-weight": ["get", "weight"],
-          "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 14, 0.9, 19, 1.8],
-          "heatmap-radius": ["interpolate", ["exponential", 2], ["zoom"], 14, 22, 19, 360],
+          // weights from the API reach 1 only at 50 people, so boost them: a busy place should glow
+          "heatmap-weight": ["min", 1, ["*", ["get", "weight"], 3]],
+          "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 14, 1.6, 19, 3],
+          "heatmap-radius": ["interpolate", ["exponential", 2], ["zoom"], 14, 34, 19, 520],
           "heatmap-color": HEAT_COLOR,
-          "heatmap-opacity": 0.85,
+          "heatmap-opacity": 0.95,
         },
       },
       "slot-ground",
@@ -145,24 +150,25 @@ export function DensityLayer() {
   useMapEffect(
     (map) => {
       if (!buildings.data) return;
-      map.addSource(CAP_SRC, { type: "geojson", data: latest.current.caps, tolerance: 0.2 });
+      map.addSource(TINT_SRC, { type: "geojson", data: latest.current.caps, tolerance: 0.2 });
       addLayerToSlot(
         map,
         {
-          id: CAP_LAYER,
+          id: TINT_LAYER,
           type: "fill-extrusion",
-          source: CAP_SRC,
+          source: TINT_SRC,
           filter: [">", ["get", "level"], 1],
           paint: {
-            "fill-extrusion-base": ["get", "heightM"],
-            "fill-extrusion-height": ["+", ["get", "heightM"], CAP_THICKNESS_M],
-            "fill-extrusion-color": CAP_COLOR,
-            "fill-extrusion-opacity": 0.95,
+            "fill-extrusion-base": 0,
+            // a hair taller than the building, so the roof wins the depth test too
+            "fill-extrusion-height": ["+", ["get", "heightM"], 0.15],
+            "fill-extrusion-color": TINT_COLOR,
+            "fill-extrusion-opacity": 0.93,
           },
         },
         "slot-buildings",
       );
-      return () => removeLayersAndSources(map, [CAP_LAYER], [CAP_SRC]);
+      return () => removeLayersAndSources(map, [TINT_LAYER], [TINT_SRC]);
     },
     [Boolean(buildings.data)],
   );
@@ -171,9 +177,22 @@ export function DensityLayer() {
   useMapEffect(
     (map) => {
       (map.getSource(HEAT_SRC) as { setData?: (d: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(heat);
-      (map.getSource(CAP_SRC) as { setData?: (d: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(caps);
+      (map.getSource(TINT_SRC) as { setData?: (d: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(caps);
     },
     [heat, caps],
+  );
+
+  // leave the selected building to the campus layer's maroon highlight
+  useMapEffect(
+    (map) => {
+      if (!map.getLayer(TINT_LAYER)) return;
+      map.setFilter(TINT_LAYER, [
+        "all",
+        [">", ["get", "level"], 1],
+        ["!=", ["get", "placeId"], selectedPlaceId ?? ""],
+      ]);
+    },
+    [selectedPlaceId, Boolean(buildings.data)],
   );
 
   return <Legend overlay snapshot={snapshot} />;
@@ -190,14 +209,13 @@ function heatData(snapshot: DensityResponse | null): GeoJSON.FeatureCollection {
   };
 }
 
-function capData(buildings: BuildingCollection | null, snapshot: DensityResponse | null): GeoJSON.FeatureCollection {
-  if (!buildings) return { type: "FeatureCollection", features: [] };
+function tintData(grown: GeoJSON.Feature[], snapshot: DensityResponse | null): GeoJSON.FeatureCollection {
   const level = new Map((snapshot?.places ?? []).map((p) => [p.placeId, p.level]));
   return {
     type: "FeatureCollection",
-    features: buildings.features.map((f) => ({
-      ...f,
-      properties: { heightM: f.properties.heightM, placeId: f.properties.placeId ?? "", level: level.get(f.properties.placeId ?? "") ?? 0 },
-    })) as GeoJSON.Feature[],
+    features: grown.map((f) => {
+      const placeId = (f.properties?.placeId as string | undefined) ?? "";
+      return { ...f, properties: { heightM: f.properties?.heightM, placeId, level: level.get(placeId) ?? 0 } };
+    }),
   };
 }
