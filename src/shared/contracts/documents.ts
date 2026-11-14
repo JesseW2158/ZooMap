@@ -122,6 +122,8 @@ export const ScheduleConnectionDoc = z.object({
   createdAt: z.date().optional(),
   lastSyncAt: z.date().optional(),
   lastError: z.string().optional(),
+  /** Added after Phase 0: ids of single occurrences the user skipped. */
+  skipped: z.array(z.string()).optional(),
 });
 export type ScheduleConnectionDoc = z.infer<typeof ScheduleConnectionDoc>;
 

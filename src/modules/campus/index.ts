@@ -8,7 +8,11 @@ import type {
   WalkGraph,
 } from "@/shared/contracts";
 import { haversineM } from "@/shared/geo";
-import { loadBuildings, loadFootprints, loadGround, loadPlaceById, loadPlaces, loadWalkGraph } from "./data";
+import { loadBuildings, loadFootprints, loadGround, loadPlaceById, loadPlaces, loadWalkEdgeInfo, loadWalkGraph } from "./data";
+import type { WalkEdgeInfo } from "./walk-kinds";
+
+export { WALK_KIND } from "./walk-kinds";
+export type { WalkEdgeInfo, WalkKind } from "./walk-kinds";
 
 /**
  * Campus module (owner: 01-campus-map). Serves the OpenStreetMap extract committed in
@@ -90,6 +94,11 @@ export async function nearestPlace(pos: LatLng, maxM: number): Promise<NearestPl
 
 export async function getWalkGraph(): Promise<WalkGraph> {
   return loadWalkGraph();
+}
+
+/** Kind and street name of each walk-graph edge, same order as `getWalkGraph().edges`. */
+export async function getWalkEdgeInfo(): Promise<WalkEdgeInfo> {
+  return loadWalkEdgeInfo();
 }
 
 /**

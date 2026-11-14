@@ -10,6 +10,7 @@ import {
   DeleteConnectionQuery,
   ScheduleConnection,
   ScheduleConnectionList,
+  UpdateConnectionBody,
   ScheduleEventList,
   ScheduleEventsQuery,
 } from "./schedule";
@@ -69,6 +70,13 @@ export const API_ROUTES = {
     method: "POST",
     status: 201,
     body: CreateConnectionBody,
+    response: ScheduleConnection,
+  },
+  scheduleConnectionsUpdate: {
+    path: "/api/schedule/connections",
+    method: "PUT",
+    status: 200,
+    body: UpdateConnectionBody,
     response: ScheduleConnection,
   },
   scheduleConnectionsDelete: {

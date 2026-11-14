@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapProvider } from "@/shared/ui";
+import { MapProvider, useMapStore } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
@@ -18,6 +18,9 @@ export function AppShell({ user }: { user: ShellUser }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const active = registry.panels.find((p) => p.id === activeId);
   const label = user.name ?? user.email;
+  // while a route is on the map, the sheet sits lower so the route stays visible
+  const { routeRequest } = useMapStore();
+  const routing = routeRequest !== null;
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-neutral-200">
@@ -43,9 +46,24 @@ export function AppShell({ user }: { user: ShellUser }) {
 
       <section
         aria-label="Panels"
-        className="absolute inset-x-0 bottom-0 z-10 flex max-h-[60dvh] flex-col rounded-t-2xl bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.18)]"
+        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col rounded-t-2xl bg-white text-neutral-900 shadow-[0_-4px_24px_rgba(0,0,0,0.18)] transition-[max-height] duration-300 ${
+          routing ? "max-h-[34dvh]" : "max-h-[60dvh]"
+        }`}
       >
-        <div className="flex items-center gap-1 border-b border-neutral-100 px-2 pt-2">
+        {/* handle: collapse or expand the sheet */}
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={open ? "Hide panel" : "Show panel"}
+          onClick={() => setOpen((o) => !o)}
+          className="group flex w-full flex-col items-center gap-0.5 rounded-t-2xl pb-0.5 pt-1.5 hover:bg-neutral-50"
+        >
+          <span className="h-1 w-10 rounded-full bg-neutral-300 group-hover:bg-neutral-400" aria-hidden />
+          <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-400 group-hover:text-neutral-600">
+            {open ? "▾ Hide" : "▴ Show"}
+          </span>
+        </button>
+        <div className="flex items-center gap-1 border-b border-neutral-100 px-2">
           <div role="tablist" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
             {registry.panels.map((panel) => {
               const selected = panel.id === activeId;

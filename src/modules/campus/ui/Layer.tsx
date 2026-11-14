@@ -5,6 +5,7 @@ import type { ExpressionSpecification, Map as MapLibreMap, Popup } from "maplibr
 import type { BuildingCollection, GroundCollection } from "@/shared/contracts";
 import { isDevPickingNow } from "@/shared/platform";
 import { addLayerToSlot, removeLayersAndSources, useApi, useMap, useMapEffect, useMapStore } from "@/shared/ui";
+import { CAMPUS_VIEW, MapControls } from "./Controls";
 
 /**
  * The 3D campus: ground (lawns, water, parking, roads, paths) and buildings extruded to
@@ -32,7 +33,6 @@ const BUILDING_COLOR: ExpressionSpecification = [
 
 /** South-west and north-east corners the camera may not leave. */
 const MAX_BOUNDS: [[number, number], [number, number]] = [[-72.548, 42.370], [-72.506, 42.406]];
-const START = { center: [-72.5275, 42.389] as [number, number], zoom: 16, pitch: 55, bearing: -20 };
 
 const lineWidth = (atZ15: number, atZ19: number): ExpressionSpecification =>
   ["interpolate", ["exponential", 2], ["zoom"], 15, atZ15, 19, atZ19];
@@ -42,7 +42,7 @@ function setupCamera(map: MapLibreMap) {
   map.setMinZoom(14.5);
   map.setMaxZoom(19.5);
   map.setMaxPitch(70);
-  map.jumpTo(START);
+  map.jumpTo(CAMPUS_VIEW);
 }
 
 export function CampusLayer() {
@@ -200,12 +200,16 @@ export function CampusLayer() {
   );
 
   return (
-    <div className="pointer-events-auto absolute right-2 top-[calc(env(safe-area-inset-top)+7.5rem)] z-[5] rounded bg-white/80 px-1.5 py-0.5 text-[10px] text-neutral-600">
-      ©{" "}
-      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">
-        OpenStreetMap
-      </a>{" "}
-      contributors
-    </div>
+    <>
+      {map ? <MapControls map={map} /> : null}
+      {/* just under the search bar, where cards and controls never cover it */}
+      <div className="pointer-events-auto absolute right-14 top-[calc(env(safe-area-inset-top)+3.3rem)] z-[5] rounded bg-white/80 px-1.5 text-[10px] leading-4 text-neutral-600">
+        ©{" "}
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">
+          OpenStreetMap
+        </a>{" "}
+        contributors
+      </div>
+    </>
   );
 }
