@@ -269,7 +269,7 @@ describe("manual classes", () => {
       { from: new Date("2026-10-31T00:00:00Z"), to: new Date("2026-11-05T00:00:00Z") },
     );
     expect(events.map((e) => e.start.toISOString())).toEqual(["2026-11-02T15:10:00.000Z", "2026-11-04T15:10:00.000Z"]);
-    expect(events[0]).toMatchObject({ placeId: "w292876549", locationText: "S131", deadline: false });
+    expect(events[0]).toMatchObject({ placeId: "w292876549", locationText: "ILC S131", deadline: false });
   });
 
   it("describe themselves", () => {

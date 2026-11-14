@@ -1,4 +1,5 @@
 import { ManualClass, type ProviderConnection, type ScheduleRange } from "@/shared/contracts";
+import { getPlace } from "@/modules/campus";
 import type { ProviderEvent } from "../ics";
 import { localDays, zonedTimeToUtc } from "../time";
 
@@ -31,6 +32,9 @@ export const manualProvider = {
   id: "manual" as const,
   async fetchEvents(connection: ProviderConnection, range: ScheduleRange): Promise<ProviderEvent[]> {
     const c = parseStoredClass(connection.secret);
+    const place = c.placeId ? await getPlace(c.placeId) : null;
+    // "ILC S131": the short name people use, then the room
+    const locationText = [place?.aliases[0] ?? place?.name, c.room].filter(Boolean).join(" ") || undefined;
     const [sh, sm] = c.start.split(":").map(Number);
     const [eh, em] = c.end.split(":").map(Number);
     const out: ProviderEvent[] = [];
@@ -45,7 +49,7 @@ export const manualProvider = {
         course: c.label,
         start,
         end,
-        locationText: c.room,
+        locationText,
         placeId: c.placeId,
         allDay: false,
         deadline: false,
