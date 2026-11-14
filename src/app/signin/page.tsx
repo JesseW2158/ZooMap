@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { env } from "@/shared/config/env";
 import { getSessionUser, seedUsers, signIn } from "@/modules/auth";
+// eslint-disable-next-line no-restricted-imports -- client-only component; the module index is server code
+import { ShellSignIn } from "@/modules/mobile/ui/ShellSignIn";
 
 export const metadata = { title: "Sign in · ZooMap" };
 
@@ -40,6 +42,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
         </p>
       ) : null}
 
+      <ShellSignIn>
       <form
         action={async () => {
           "use server";
@@ -69,6 +72,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           ))}
         </section>
       ) : null}
+      </ShellSignIn>
     </main>
   );
 }

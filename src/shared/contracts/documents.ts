@@ -143,6 +143,8 @@ export const HandoffCodeDoc = z.object({
   /** Hash of the code. */
   _id: id,
   userId: id,
+  /** base64url(SHA-256(verifier)) sent by the app when it opened the sign-in. The `finish` step must present the verifier. */
+  challenge: z.string(),
   expiresAt: z.date(),
 });
 export type HandoffCodeDoc = z.infer<typeof HandoffCodeDoc>;
