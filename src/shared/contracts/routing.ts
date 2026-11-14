@@ -2,8 +2,8 @@ import { z } from "zod";
 import { GeoJsonLineString, Id, LatLng } from "./common";
 import { Place } from "./campus";
 
-/** GET /api/places?q= : up to ten results. */
-export const PlacesQuery = z.object({ q: z.string().trim().max(100).default("") });
+/** GET /api/places?q= : up to ten results. `?id=` (added after Phase 0) returns that one place, or []. */
+export const PlacesQuery = z.object({ q: z.string().trim().max(100).default(""), id: Id.optional() });
 export const PlaceList = z.array(Place);
 
 /** `fastest` may use stairs (weighted); `stepfree` never does. Default `fastest`. */
