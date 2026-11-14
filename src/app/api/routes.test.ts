@@ -71,6 +71,9 @@ vi.mock("@/modules/friends", async (importOriginal) => {
   };
 });
 
+// The real `createDeviceToken` writes to the database; `src/modules/auth/device-token.db.test.ts` covers it.
+vi.mock("@/modules/mobile", () => ({ createDeviceToken: async () => ({ token: "FIXTURE-DEVICE-TOKEN" }) }));
+
 vi.mock("@/modules/schedule", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/schedule")>();
   const f = actual.fixtures;
