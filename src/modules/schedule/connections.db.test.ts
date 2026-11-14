@@ -63,4 +63,11 @@ describe("schedule connections (database)", () => {
     const cls = await createConnection("u5", { provider: "manual", label: "X", days: ["MO"], start: "09:00", end: "10:00" });
     await expect(updateConnection("u5", { id: cls.id, plan: { start: "11:00" } })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
+
+  it("refuses skip ids that cannot be events, and caps the skip list", async () => {
+    const created = await createConnection("u6", { provider: "manual", label: "Y", days: ["MO"], start: "09:00", end: "10:00" });
+    await expect(updateConnection("u6", { id: created.id, skip: { eventId: "x".repeat(5000), skipped: true } })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await t.cols.schedule_connections.updateOne({ _id: created.id }, { $set: { skipped: Array.from({ length: 500 }, (_, i) => String(i).padStart(20, "a")) } });
+    await expect(updateConnection("u6", { id: created.id, skip: { eventId: "b".repeat(20), skipped: true } })).rejects.toMatchObject({ code: "UNPROCESSABLE" });
+  });
 });

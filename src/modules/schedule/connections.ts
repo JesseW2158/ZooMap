@@ -14,6 +14,8 @@ import { normalizeFeedUrl, urlProblem } from "./safe-fetch";
  */
 
 export const MAX_CONNECTIONS = 30;
+/** Most occurrences one connection can have skipped. */
+export const MAX_SKIPPED = 500;
 
 async function summaryOf(doc: ScheduleConnectionDoc): Promise<string | undefined> {
   if (doc.provider === "google") return "Your Google Calendar";
@@ -111,10 +113,18 @@ export async function updateConnection(userId: string, body: UpdateConnectionBod
   const doc = await schedule_connections.findOne({ _id: body.id, userId });
   if (!doc) throw new ApiError("NOT_FOUND", "No such calendar");
   if (body.skip) {
-    await schedule_connections.updateOne(
-      { _id: doc._id },
-      body.skip.skipped ? { $addToSet: { skipped: body.skip.eventId } } : { $pull: { skipped: body.skip.eventId } },
-    );
+    // event ids are 20-char base64url hashes (events.ts); anything else cannot be a real occurrence
+    if (!/^[A-Za-z0-9_-]{20}$/.test(body.skip.eventId)) throw new ApiError("BAD_REQUEST", "Unknown event");
+    if (body.skip.skipped) {
+      // bounded: refuse once 500 occurrences are skipped on one connection
+      const res = await schedule_connections.updateOne(
+        { _id: doc._id, [`skipped.${MAX_SKIPPED - 1}`]: { $exists: false } },
+        { $addToSet: { skipped: body.skip.eventId } },
+      );
+      if (res.matchedCount === 0) throw new ApiError("UNPROCESSABLE", "Too many skipped events on this calendar");
+    } else {
+      await schedule_connections.updateOne({ _id: doc._id }, { $pull: { skipped: body.skip.eventId } });
+    }
   }
   if (body.plan) {
     if (doc.provider !== "plan") throw new ApiError("BAD_REQUEST", "Only plans can be moved");
