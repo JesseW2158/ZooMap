@@ -14,6 +14,8 @@
 - `src/app/signin/page.tsx` imports `@/modules/mobile/ui/ShellSignIn` with an `eslint-disable-next-line no-restricted-imports`: the deep-import rule exempts only `registry.ts`, and the module index is server code.
 - Handoff: verifier kept in Preferences before the tab opens; the last finished code is remembered because `App.getLaunchUrl()` keeps returning the cold-start link for the life of the process.
 
+- Device token is stored as JSON `{ token, userId }`. The server deletes tokens only on explicit sign-out, not on session expiry or cleared cookies, so `ensureDeviceToken` compares the stored user id with `GET /api/auth/session` (`user.id`) and, on a mismatch or a legacy bare string, stops tracking, drops the token and issues a new one. No session means it does nothing. `startHandoff` clears the token and stops tracking before the Custom Tab opens.
+
 ## Not verified (all on-device)
 
 Debug APK builds (Gradle with the plugin's own `buildscript` AGP 8.0.0 block is the first suspect); site loads in the WebView; Custom Tab sign-in and return link, cold-start path; permission prompts and the disclosure flow; foreground service and notification appear and disappear; fixes arrive while the phone lies still; WebView JavaScript keeps running (timers, `CapacitorHttp`) with the screen off; pings keep `presence.updatedAt` within 150 s over 15 minutes; Android 13+ notification visibility without `POST_NOTIFICATIONS`.

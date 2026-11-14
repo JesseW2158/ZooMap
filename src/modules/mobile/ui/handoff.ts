@@ -1,5 +1,6 @@
 "use client";
 
+import { resetDeviceToken } from "./device-token";
 import { PREF_KEYS, nativePrefs, type KeyValueStore } from "./prefs";
 
 /**
@@ -20,6 +21,8 @@ export interface HandoffDeps {
   navigate(path: string): void;
   origin(): string;
   randomBytes(length: number): Uint8Array;
+  /** Forget the stored device token and stop tracking: whoever signs in next must not inherit them. */
+  resetDevice(): Promise<void>;
 }
 
 export function nativeHandoffDeps(): HandoffDeps {
@@ -36,6 +39,7 @@ export function nativeHandoffDeps(): HandoffDeps {
     navigate: (path) => window.location.assign(path),
     origin: () => window.location.origin,
     randomBytes: (length) => crypto.getRandomValues(new Uint8Array(length)),
+    resetDevice: () => resetDeviceToken(),
   };
 }
 
@@ -78,8 +82,13 @@ export function finishPath(code: string, verifier: string): string {
   return `/auth/mobile/finish?code=${encodeURIComponent(code)}&verifier=${encodeURIComponent(verifier)}`;
 }
 
-/** Open the system browser for sign-in. The verifier is saved before the tab opens. */
+/**
+ * Open the system browser for sign-in. The verifier is saved before the tab opens, and the stored
+ * device token is dropped (and tracking stopped) first, so a different account signing in cannot
+ * inherit the previous one's token.
+ */
 export async function startHandoff(deps: HandoffDeps = nativeHandoffDeps()): Promise<void> {
+  await deps.resetDevice();
   const verifier = generateVerifier(deps.randomBytes);
   const challenge = await challengeFor(verifier);
   await deps.store.set(PREF_KEYS.handoffVerifier, verifier);

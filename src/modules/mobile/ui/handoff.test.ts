@@ -14,10 +14,11 @@ import { PREF_KEYS, memoryPrefs } from "./prefs";
 
 function fakeDeps(initial: Record<string, string> = {}) {
   const store = memoryPrefs(initial);
-  const calls = { opened: [] as string[], closed: 0, navigated: [] as string[] };
+  const calls = { opened: [] as string[], closed: 0, navigated: [] as string[], order: [] as string[] };
   const deps: HandoffDeps = {
     store,
-    openBrowser: async (url) => void calls.opened.push(url),
+    openBrowser: async (url) => void (calls.opened.push(url), calls.order.push("open")),
+    resetDevice: async () => void calls.order.push("reset"),
     closeBrowser: async () => void (calls.closed += 1),
     navigate: (path) => void calls.navigated.push(path),
     origin: () => "https://zoomap.example",
@@ -85,6 +86,14 @@ describe("startHandoff", () => {
     const verifier = (await store.get(PREF_KEYS.handoffVerifier))!;
     expect(calls.opened).toEqual([startUrl("https://zoomap.example", await challengeFor(verifier))]);
     expect(calls.opened[0]).not.toContain(verifier);
+  });
+});
+
+describe("startHandoff and the device token", () => {
+  it("clears the stored token and stops tracking before the tab opens", async () => {
+    const { deps, calls } = fakeDeps();
+    await startHandoff(deps);
+    expect(calls.order).toEqual(["reset", "open"]);
   });
 });
 

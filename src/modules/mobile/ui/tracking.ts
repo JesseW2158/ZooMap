@@ -3,6 +3,7 @@
 import type { BackgroundGeolocationPlugin } from "@capacitor-community/background-geolocation";
 import { createPinger, type Fix, type PingResult, type Pinger } from "./pinger";
 import { PREF_KEYS, nativePrefs } from "./prefs";
+import { readTokenForPing } from "./stored-token";
 
 /**
  * Native location tracking for the Android shell, on @capacitor-community/background-geolocation.
@@ -302,7 +303,7 @@ export function nativeTrackerDeps(): TrackerDeps {
       addWatcher: async (options, callback) => (await loadPlugin()).addWatcher(options, callback as never),
       removeWatcher: async (options) => (await loadPlugin()).removeWatcher(options),
     },
-    getToken: () => nativePrefs.get(PREF_KEYS.deviceToken),
+    getToken: () => readTokenForPing(nativePrefs),
     clearToken: () => nativePrefs.remove(PREF_KEYS.deviceToken),
     watcherIds: {
       async read() {
