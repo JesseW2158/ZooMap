@@ -1,0 +1,48 @@
+{
+  "name": "zoomap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZooMap: UMass Amherst campus map with a density heatmap, routes, schedule, activities and points",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "db:setup": "tsx scripts/db-setup.ts",
+    "campus:build": "tsx scripts/build-campus.ts"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "@google/genai": "3.3.0",
+    "h3-js": "4.5.0",
+    "maplibre-gl": "6.18.0",
+    "mongodb": "7.9.0",
+    "next": "16.4.6",
+    "next-auth": "5.0.0-beta.32",
+    "node-ical": "0.27.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2",
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "osmtogeojson": "3.0.0-beta.5",
+    "tailwindcss": "4.3.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
+  }
+}

@@ -1,0 +1,44 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files: never commit secrets; the template is .env.example
+.env
+.env.*
+!.env.example
+.env*.local
+
+# vercel
+.vercel
+
+# local tooling
+.graph-indexer/
+.remember/
+
+# android build output (the shell itself is committed by the mobile stream)
+/android/**/build/
+/android/.gradle/
+/android/local.properties
