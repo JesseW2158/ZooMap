@@ -77,6 +77,15 @@ vi.mock("@/modules/rewards", async (importOriginal) => {
   };
 });
 
+// The chain summary reaches Solana devnet when its env vars are set; keep this test offline.
+vi.mock("@/modules/chain", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/modules/chain")>();
+  return {
+    ...real,
+    getChainSummary: async () => ({ enabled: false, address: null, balance: 0, pendingCount: 0, explorerUrl: null }),
+  };
+});
+
 const loaders = import.meta.glob<Record<string, (req: NextRequest, ctx?: unknown) => Promise<Response>>>("./**/route.ts");
 
 /** A valid request for each route. Keyed like `API_ROUTES`. */
