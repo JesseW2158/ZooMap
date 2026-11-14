@@ -71,11 +71,13 @@ interface Overrides {
     studyFriendly?: boolean;
     exclude?: boolean;
     /**
-     * The building's inner rings are its tower, not courtyards: OSM maps a podium with the
-     * tower as a hole, which extrudes into a tower-shaped hole in a block. Draw the outer ring
-     * (with its holes) at `baseHeightM` and each inner ring as a solid tower at full height.
+     * The building is a tall tower on a low base, and OSM gives only the base (with an inner
+     * ring), so extruding it whole draws one tall block. Draw the outer ring (with its holes) at
+     * `baseHeightM` and a solid tower at full height with each inner ring's footprint.
+     * `mirror`: the inner ring is a courtyard on the far side of the plot from the tower, so the
+     * tower goes at the inner ring rotated 180 degrees about the plot's centre, and the hole stays.
      */
-    towerFromInner?: { baseHeightM: number };
+    towerFromInner?: { baseHeightM: number; mirror?: boolean };
   };
 }
 
@@ -166,6 +168,18 @@ function segmentCross(p: XY, q: XY, a: XY, b: XY): number | null {
   const t = ((a[0] - p[0]) * sy - (a[1] - p[1]) * sx) / den;
   const u = ((a[0] - p[0]) * ry - (a[1] - p[1]) * rx) / den;
   return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
+}
+
+/** Area centroid of a simple ring. */
+function ringCentroid(ring: XY[]): XY {
+  let a = 0, cx = 0, cy = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const cross = ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1];
+    a += cross;
+    cx += (ring[j][0] + ring[i][0]) * cross;
+    cy += (ring[j][1] + ring[i][1]) * cross;
+  }
+  return [cx / (3 * a), cy / (3 * a)];
 }
 
 function ringArea(ring: XY[]): number {
@@ -719,9 +733,13 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
         return { type: "Feature", properties: props, geometry: toGeometry(rings) };
       };
       const tower = overrides[b.osmId]?.towerFromInner;
-      const inners = b.rings.flatMap((poly) => poly.slice(1));
-      if (!tower || inners.length === 0) return [feature(b.heightM, b.rings)];
-      return [feature(tower.baseHeightM, b.rings), ...inners.map((ring) => feature(b.heightM, [[ring]]))];
+      if (!tower || !b.rings.some((poly) => poly.length > 1)) return [feature(b.heightM, b.rings)];
+      const towers = b.rings.flatMap(([outer, ...inners]) => {
+        if (!tower.mirror) return inners;
+        const [cx, cy] = ringCentroid(outer);
+        return inners.map((ring) => ring.map(([x, y]): XY => [2 * cx - x, 2 * cy - y]));
+      });
+      return [feature(tower.baseHeightM, b.rings), ...towers.map((ring) => feature(b.heightM, [[ring]]))];
     }),
   };
 

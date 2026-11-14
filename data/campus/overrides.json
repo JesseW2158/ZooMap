@@ -1,6 +1,6 @@
 {
-  "$comment": "Hand-written. Keyed by place id (OSM id). Supplies aliases (abbreviations from course listings and what students say), studyFriendly, category or name fixes, and towerFromInner for a building whose OSM inner ring is its tower (drawn solid, with the outer ring as a low base). Merged by npm run campus:build.",
-  "r4054634": { "aliases": ["Du Bois", "DuBois", "Du Bois Library", "W.E.B. Du Bois", "Library", "Learning Commons"], "studyFriendly": true, "towerFromInner": { "baseHeightM": 3 } },
+  "$comment": "Hand-written. Keyed by place id (OSM id). Supplies aliases (abbreviations from course listings and what students say), studyFriendly, category or name fixes, and towerFromInner for a tower on a low base that OSM maps as one polygon with an inner ring (mirror: the tower is opposite that ring). Merged by npm run campus:build.",
+  "r4054634": { "aliases": ["Du Bois", "DuBois", "Du Bois Library", "W.E.B. Du Bois", "Library", "Learning Commons"], "studyFriendly": true, "towerFromInner": { "baseHeightM": 3, "mirror": true } },
   "n13278568851": { "aliases": ["Sci Eng Library", "Science Library", "S&E Library"], "studyFriendly": true },
   "w292876549": { "aliases": ["ILC", "Integrated Learning Center"], "studyFriendly": true },
   "w122196717": { "aliases": ["LGRT", "Lederle Tower", "Lederle"], "studyFriendly": true },
