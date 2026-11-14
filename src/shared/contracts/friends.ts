@@ -18,11 +18,14 @@ export const SocialInput = z.strictObject({
 });
 export type SocialInput = z.infer<typeof SocialInput>;
 
-/** A social link as returned: `url` is built by the server from a fixed table and is always https. */
+/**
+ * A social link as returned: `url` is built by the server from a fixed table and is always
+ * https, or null where the service has no public profile URL for a username (Discord).
+ */
 export const SocialLink = z.object({
   kind: SocialKind,
   handle: z.string(),
-  url: z.url({ protocol: /^https$/ }),
+  url: z.url({ protocol: /^https$/ }).nullable(),
 });
 export type SocialLink = z.infer<typeof SocialLink>;
 
