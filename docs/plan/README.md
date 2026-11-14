@@ -82,6 +82,8 @@ flowchart LR
   D --> G[Recommend]
   R --> G
   W --> X[Chain - stretch]
+  A --> FR[Friends]
+  FR --> I
   C --> I[99 Integration]
   G --> I
   M --> I
@@ -99,6 +101,7 @@ flowchart LR
 | 2 | [ws-schedule.md](ws-schedule.md) | Parallel | Calendar test with a UMass account |
 | 3 | [ws-recommend.md](ws-recommend.md) | After density and routing merge | Gemini key |
 | 3 | [ws-chain.md](ws-chain.md) | Stretch, after rewards merges | No |
+| 3 | [ws-friends.md](ws-friends.md) | After activities merges (done); needs a registry line and a QR-library yes | QR scan test on two phones |
 | 4 | [99-integration.md](99-integration.md) | Alone, last | Demo rehearsal |
 
 Rows 1 and 2 all start when Foundation merges, in the priority order shown. With four sessions, start campus map, density, activities and routing. Each builds against Foundation's stubs and fixture campus, so none waits for another.

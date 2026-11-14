@@ -1,6 +1,10 @@
 import type { Collection, Db } from "mongodb";
 import type {
   ActivityDoc,
+  ActivityInviteDoc,
+  FriendshipDoc,
+  ProfileDoc,
+  RateLimitDoc,
   ChainOutboxDoc,
   DeviceTokenDoc,
   HandoffCodeDoc,
@@ -27,6 +31,10 @@ export interface CollectionMap {
   device_tokens: DeviceTokenDoc;
   handoff_codes: HandoffCodeDoc;
   chain_outbox: ChainOutboxDoc;
+  profiles: ProfileDoc;
+  friendships: FriendshipDoc;
+  activity_invites: ActivityInviteDoc;
+  rate_limits: RateLimitDoc;
 }
 
 export type CollectionName = keyof CollectionMap;
@@ -43,6 +51,10 @@ export const COLLECTION_NAMES: CollectionName[] = [
   "device_tokens",
   "handoff_codes",
   "chain_outbox",
+  "profiles",
+  "friendships",
+  "activity_invites",
+  "rate_limits",
 ];
 
 export type Collections = { [K in CollectionName]: Collection<CollectionMap[K]> };
@@ -61,6 +73,10 @@ export function collectionsOf(db: Db): Collections {
     device_tokens: db.collection("device_tokens"),
     handoff_codes: db.collection("handoff_codes"),
     chain_outbox: db.collection("chain_outbox"),
+    profiles: db.collection("profiles"),
+    friendships: db.collection("friendships"),
+    activity_invites: db.collection("activity_invites"),
+    rate_limits: db.collection("rate_limits"),
   } as Collections;
 }
 

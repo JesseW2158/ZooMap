@@ -52,6 +52,18 @@ export const INDEXES: IndexDefinition[] = [
 
   // Stretch (chain): one outbox row per ledger entry, so replaying an event adds nothing.
   { collection: "chain_outbox", key: { ledgerEntryId: 1 }, options: { name: "ledgerEntryId_unique", unique: true } },
+
+  // Friends. A friend code resolves through its hash; sparse so profiles with no code yet don't collide.
+  { collection: "profiles", key: { friendCodeHash: 1 }, options: { name: "friendCodeHash_unique", unique: true, sparse: true } },
+  { collection: "friendships", key: { userIds: 1 }, options: { name: "userIds" } },
+  // One pending invite per person per activity.
+  {
+    collection: "activity_invites",
+    key: { activityId: 1, toUserId: 1 },
+    options: { name: "one_pending_invite_unique", unique: true, partialFilterExpression: { status: "pending" } },
+  },
+  { collection: "activity_invites", key: { toUserId: 1, status: 1 }, options: { name: "toUserId_status" } },
+  { collection: "rate_limits", key: { expiresAt: 1 }, options: { name: "expires_ttl", expireAfterSeconds: 0 } },
 ];
 
 export async function ensureIndexes(db: Db): Promise<void> {

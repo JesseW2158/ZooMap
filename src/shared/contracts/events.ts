@@ -57,6 +57,24 @@ export const EVENT_SCHEMAS = {
     itemId: Id,
     cost: z.number().int().positive(),
   }),
+  /** friends -> everyone. Emitted once per new friendship (adding again is a no-op). */
+  "friendship.created": z.object({
+    friendshipId: Id,
+    userIds: z.tuple([Id, Id]),
+    at: z.date(),
+  }),
+  "friendship.ended": z.object({
+    friendshipId: Id,
+    userIds: z.tuple([Id, Id]),
+    at: z.date(),
+  }),
+  "activity.invite.created": z.object({
+    inviteId: Id,
+    activityId: Id,
+    fromUserId: Id,
+    toUserId: Id,
+    at: z.date(),
+  }),
 } as const;
 
 export type EventType = keyof typeof EVENT_SCHEMAS;
