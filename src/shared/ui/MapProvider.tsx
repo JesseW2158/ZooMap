@@ -93,7 +93,7 @@ export function MapProvider({ children }: { children?: ReactNode }) {
         maxPitch: 80,
         attributionControl: { compact: true, customAttribution: "© OpenStreetMap contributors" },
       });
-      instance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+      // on-screen controls are the campus module's MapControls (labelled, with gesture help)
       instance.on("load", () => {
         if (!cancelled && instance) setMap(instance);
       });
