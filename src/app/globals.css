@@ -1,15 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * Light only. Every surface (the sheet, panels, the search bar) is white over a light map, so
+ * a dark-scheme text colour made panel text white on white. `color-scheme` keeps form
+ * controls and placeholders light too. A dark theme would need dark surfaces first.
+ */
 :root {
+  color-scheme: light;
   --background: #fafaf9;
   --foreground: #1c1917;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1c1917;
-    --foreground: #fafaf9;
-  }
 }
 
 html,
