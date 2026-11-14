@@ -74,8 +74,9 @@ interface Overrides {
      * The building is a tall tower on a low base, and OSM gives only the base (with an inner
      * ring), so extruding it whole draws one tall block. Draw the outer ring (with its holes) at
      * `baseHeightM` and a solid tower at full height with each inner ring's footprint.
-     * `mirror`: the inner ring is a courtyard on the far side of the plot from the tower, so the
-     * tower goes at the inner ring rotated 180 degrees about the plot's centre, and the hole stays.
+     * `mirror`: the inner ring is a courtyard at the far end of the plot from the tower, so the
+     * tower takes its footprint moved along the plot's long axis to the same distance on the other
+     * side of the centre (in line with the courtyard), and the hole stays.
      */
     towerFromInner?: { baseHeightM: number; mirror?: boolean };
   };
@@ -170,16 +171,29 @@ function segmentCross(p: XY, q: XY, a: XY, b: XY): number | null {
   return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
 }
 
-/** Area centroid of a simple ring. */
-function ringCentroid(ring: XY[]): XY {
-  let a = 0, cx = 0, cy = 0;
+/** Area centroid of a simple ring and the direction of its long (major principal) axis. */
+function ringAxis(ring: XY[]): { centroid: XY; axis: XY } {
+  let a = 0, cx = 0, cy = 0, xx = 0, yy = 0, xy = 0;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const cross = ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1];
+    const [x0, y0] = ring[j];
+    const [x1, y1] = ring[i];
+    const cross = x0 * y1 - x1 * y0;
     a += cross;
-    cx += (ring[j][0] + ring[i][0]) * cross;
-    cy += (ring[j][1] + ring[i][1]) * cross;
+    cx += (x0 + x1) * cross;
+    cy += (y0 + y1) * cross;
+    xx += (x0 * x0 + x0 * x1 + x1 * x1) * cross;
+    yy += (y0 * y0 + y0 * y1 + y1 * y1) * cross;
+    xy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * cross;
   }
-  return [cx / (3 * a), cy / (3 * a)];
+  a /= 2;
+  cx /= 6 * a;
+  cy /= 6 * a;
+  // central second moments per unit area; dividing by the signed area makes winding irrelevant
+  const sxx = xx / (12 * a) - cx * cx;
+  const syy = yy / (12 * a) - cy * cy;
+  const sxy = xy / (24 * a) - cx * cy;
+  const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  return { centroid: [cx, cy], axis: [Math.cos(theta), Math.sin(theta)] };
 }
 
 function ringArea(ring: XY[]): number {
@@ -736,8 +750,14 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
       if (!tower || !b.rings.some((poly) => poly.length > 1)) return [feature(b.heightM, b.rings)];
       const towers = b.rings.flatMap(([outer, ...inners]) => {
         if (!tower.mirror) return inners;
-        const [cx, cy] = ringCentroid(outer);
-        return inners.map((ring) => ring.map(([x, y]): XY => [2 * cx - x, 2 * cy - y]));
+        // Slide each inner ring along the plot's long axis to the same distance on the other side
+        // of the centre, so the tower lines up with the courtyard instead of being offset sideways.
+        const { centroid: [cx, cy], axis: [ux, uy] } = ringAxis(outer);
+        return inners.map((ring) => {
+          const [ix, iy] = ringAxis(ring).centroid;
+          const shift = 2 * ((cx - ix) * ux + (cy - iy) * uy);
+          return ring.map(([x, y]): XY => [x + shift * ux, y + shift * uy]);
+        });
       });
       return [feature(tower.baseHeightM, b.rings), ...towers.map((ring) => feature(b.heightM, [[ring]]))];
     }),
