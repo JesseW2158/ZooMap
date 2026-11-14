@@ -45,6 +45,12 @@ export async function recordPing(
     { h3: latLngToCell(pos.lat, pos.lng, H3_RESOLUTION), placeId, source, updatedAt: now, expiresAt },
     { upsert: true },
   );
+  // Sharing may have been switched off while this ping was in flight: setSharing deleted the
+  // document, and the upsert above would have brought it back. Re-check, and undo if so.
+  if (!(await getSharing(userId))) {
+    await presence.deleteOne({ _id: userId });
+    throw new ApiError("SHARING_OFF", "Location sharing is off");
+  }
   await emit("presence.updated", { userId, position: { lat: pos.lat, lng: pos.lng }, placeId, at: now });
   return { placeId, expiresAt };
 }
