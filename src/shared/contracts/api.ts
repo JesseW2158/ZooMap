@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ActivityList, ActivityMe, CreateActivityBody, Activity, ParticipationResult } from "./activities";
+import { ActivityList, ActivityMe, ActivityPlacesQuery, CreateActivityBody, Activity, ParticipationResult } from "./activities";
 import { PlaceList, PlacesQuery, RouteQuery, RouteResult } from "./routing";
 import { BuildingCollection, GroundCollection } from "./campus";
 import { DensityResponse, PingBody, PingResponse, SharingBody, SharingState } from "./density";
@@ -51,6 +51,7 @@ export const API_ROUTES = {
   activitiesJoin: { path: "/api/activities/[id]/join", method: "POST", status: 200, response: ParticipationResult },
   activitiesLeave: { path: "/api/activities/[id]/leave", method: "POST", status: 200, response: ParticipationResult },
   activitiesEnd: { path: "/api/activities/[id]/end", method: "POST", status: 200, response: Activity },
+  activitiesPlaces: { path: "/api/activities/places", method: "GET", status: 200, query: ActivityPlacesQuery, response: PlaceList },
   rewardsMe: { path: "/api/rewards/me", method: "GET", status: 200, response: RewardsMe },
   storeItems: { path: "/api/store/items", method: "GET", status: 200, response: StoreItemList },
   storeRedeem: {
