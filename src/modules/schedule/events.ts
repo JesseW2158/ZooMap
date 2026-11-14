@@ -15,6 +15,24 @@ import { FeedError } from "./safe-fetch";
  */
 
 const CACHE_MS = 5 * 60_000;
+const CACHE_MAX_ENTRIES = 500;
+/** The widest range served; `from`/`to` come from the query string. */
+export const MAX_RANGE_MS = 62 * 86_400_000;
+const MAX_DISTANCE_MS = 366 * 86_400_000;
+
+/** Keep requests to at most 62 days, within a year of now, so expansion and caching stay bounded. */
+export function clampRange(range: ScheduleRange, now = Date.now()): ScheduleRange {
+  const lo = now - MAX_DISTANCE_MS, hi = now + MAX_DISTANCE_MS;
+  const from = Math.min(Math.max(range.from.getTime(), lo), hi);
+  const to = Math.min(Math.max(range.to.getTime(), from), from + MAX_RANGE_MS, hi);
+  return { from: new Date(from), to: new Date(to) };
+}
+
+function remember(key: string, entry: { at: number; events: ProviderEvent[] }) {
+  for (const [k, v] of cache) if (entry.at - v.at >= CACHE_MS) cache.delete(k);
+  while (cache.size >= CACHE_MAX_ENTRIES) cache.delete(cache.keys().next().value!);
+  cache.set(key, entry);
+}
 const cacheHolder = globalThis as unknown as { __zoomapScheduleCache?: Map<string, { at: number; events: ProviderEvent[] }> };
 const cache = (cacheHolder.__zoomapScheduleCache ??= new Map());
 
@@ -44,7 +62,7 @@ async function eventsOf(doc: ScheduleConnectionDoc, range: ScheduleRange, now: n
       { id: doc._id, userId: doc.userId, provider: doc.provider, label: doc.label, secret: decryptSecret(doc.secretEnc) },
       win,
     );
-    cache.set(key, { at: now, events });
+    remember(key, { at: now, events });
     // hand-entered classes need no sync bookkeeping
     if (doc.provider !== "manual" && (doc.lastError || !doc.lastSyncAt || now - doc.lastSyncAt.getTime() > CACHE_MS)) await markSynced(doc._id);
     return events;
@@ -58,7 +76,8 @@ async function eventsOf(doc: ScheduleConnectionDoc, range: ScheduleRange, now: n
 
 const eventId = (connectionId: string, uid: string) => createHash("sha256").update(`${connectionId}|${uid}`).digest("base64url").slice(0, 20);
 
-export async function mergeEvents(userId: string, range: ScheduleRange, now = Date.now()): Promise<ScheduleEvent[]> {
+export async function mergeEvents(userId: string, requested: ScheduleRange, now = Date.now()): Promise<ScheduleEvent[]> {
+  const range = clampRange(requested, now);
   const docs = await listConnectionDocs(userId);
   const perConnection = await Promise.all(docs.map(async (doc) => ({ doc, events: await eventsOf(doc, range, now) })));
   const out: ScheduleEvent[] = [];

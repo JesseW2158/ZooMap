@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { getPlaces } from "@/modules/campus";
 import type { Place, ScheduleConnectionDoc } from "@/shared/contracts";
 import { toApi } from "./connections";
+import { clampRange, MAX_RANGE_MS } from "./events";
 import { decryptSecret, encryptSecret } from "./crypto";
 import { signState, verifyState } from "./google";
 import { parseFeed, splitCourse } from "./ics";
@@ -105,6 +106,19 @@ describe("parseFeed", () => {
     expect(splitCourse("🏗️ Challenge 06: Binary Tree [COMPSCI 198C (173435) FA26]")).toEqual({ title: "🏗️ Challenge 06: Binary Tree", course: "COMPSCI 198C" });
     expect(splitCourse("Week 8 Attendance [FYS 191MCS26 (175100) FA26]")).toEqual({ title: "Week 8 Attendance", course: "FYS 191MCS26" });
     expect(splitCourse("Dentist [maybe]")).toEqual({ title: "Dentist [maybe]" });
+  });
+});
+
+describe("event range", () => {
+  it("is clamped to 62 days within a year of now", () => {
+    const now = Date.parse("2026-11-14T12:00:00Z");
+    const huge = clampRange({ from: new Date("1990-01-01"), to: new Date("2099-01-01") }, now);
+    expect(huge.to.getTime() - huge.from.getTime()).toBeLessThanOrEqual(MAX_RANGE_MS);
+    expect(huge.from.getTime()).toBeGreaterThanOrEqual(now - 366 * 86_400_000);
+    const normal = { from: new Date(now), to: new Date(now + 7 * 86_400_000) };
+    expect(clampRange(normal, now)).toEqual(normal);
+    const reversed = clampRange({ from: new Date(now), to: new Date(now - 1000) }, now);
+    expect(reversed.to.getTime()).toBe(reversed.from.getTime());
   });
 });
 

@@ -15,6 +15,10 @@ export interface ProviderEvent {
   placeId?: string;
 }
 
+/** Caps so a hostile or huge feed cannot make expansion unbounded. */
+const MAX_PERIODS_PER_EVENT = 2_000;
+const MAX_INSTANCES = 5_000;
+
 const text = (v: unknown): string | undefined => {
   if (typeof v === "string") return v.trim() || undefined;
   if (v && typeof v === "object" && "val" in v) return text((v as { val: unknown }).val);
@@ -46,7 +50,7 @@ export function parseFeed(body: string, range: ScheduleRange, opts: { deadlines?
     if (ev.status === "CANCELLED" || !ev.start) continue;
     let instances;
     try {
-      instances = ical.expandRecurringEvent(ev, { from, to: range.to, expandOngoing: true });
+      instances = ical.expandRecurringEvent(ev, { from, to: range.to, expandOngoing: true, maxIterations: MAX_PERIODS_PER_EVENT });
     } catch {
       continue;
     }
@@ -68,7 +72,9 @@ export function parseFeed(body: string, range: ScheduleRange, opts: { deadlines?
         allDay,
         deadline: !!opts.deadlines && (allDay || zeroLength),
       });
+      if (out.length >= MAX_INSTANCES) break;
     }
+    if (out.length >= MAX_INSTANCES) break;
   }
   return out.sort((a, b) => a.start.getTime() - b.start.getTime());
 }
