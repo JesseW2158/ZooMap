@@ -64,7 +64,19 @@ type LngLat = [number, number];
 type XY = [number, number];
 
 interface Overrides {
-  [placeId: string]: { name?: string; aliases?: string[]; category?: PlaceCategory; studyFriendly?: boolean; exclude?: boolean };
+  [placeId: string]: {
+    name?: string;
+    aliases?: string[];
+    category?: PlaceCategory;
+    studyFriendly?: boolean;
+    exclude?: boolean;
+    /**
+     * The building's inner rings are its tower, not courtyards: OSM maps a podium with the
+     * tower as a hole, which extrudes into a tower-shaped hole in a block. Draw the outer ring
+     * (with its holes) at `baseHeightM` and each inner ring as a solid tower at full height.
+     */
+    towerFromInner?: { baseHeightM: number };
+  };
 }
 
 // ---------------------------------------------------------------- fetch
@@ -689,16 +701,27 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
   }
   places.sort((a, b) => a.name.localeCompare(b.name, "en") || (a.id < b.id ? -1 : 1));
   for (const id of Object.keys(overrides)) if (!seen.has(id)) report.push(`WARNING: override ${id} matches no place`);
+  for (const b of buildings) {
+    if (overrides[b.osmId]?.towerFromInner && !b.rings.some((poly) => poly.length > 1)) {
+      report.push(`WARNING: override ${b.osmId} sets towerFromInner but the building has no inner ring`);
+    }
+  }
 
   // ------------------------------------------------ buildings output
   const buildingsOut: BuildingCollection = {
     type: "FeatureCollection",
-    features: buildings.map((b, bi) => {
+    features: buildings.flatMap((b, bi) => {
       const placeId = placeOfBuilding.get(bi);
       const place = placeId && !overrides[placeId]?.exclude ? places.find((p) => p.id === placeId) : undefined;
-      const props: BuildingCollection["features"][number]["properties"] = { heightM: b.heightM };
-      if (place) { props.placeId = place.id; props.name = place.name; }
-      return { type: "Feature", properties: props, geometry: toGeometry(b.rings) };
+      const feature = (heightM: number, rings: XY[][][]): BuildingCollection["features"][number] => {
+        const props: BuildingCollection["features"][number]["properties"] = { heightM };
+        if (place) { props.placeId = place.id; props.name = place.name; }
+        return { type: "Feature", properties: props, geometry: toGeometry(rings) };
+      };
+      const tower = overrides[b.osmId]?.towerFromInner;
+      const inners = b.rings.flatMap((poly) => poly.slice(1));
+      if (!tower || inners.length === 0) return [feature(b.heightM, b.rings)];
+      return [feature(tower.baseHeightM, b.rings), ...inners.map((ring) => feature(b.heightM, [[ring]]))];
     }),
   };
 
