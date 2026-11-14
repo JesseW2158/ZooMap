@@ -15,6 +15,20 @@ import {
   ScheduleEventsQuery,
 } from "./schedule";
 import { ChainMe, DeviceTokenResponse } from "./platform";
+import {
+  AcceptInviteBody,
+  AddFriendBody,
+  Friend,
+  FriendCode,
+  FriendList,
+  FriendPreview,
+  FriendPreviewQuery,
+  InviteBody,
+  InviteList,
+  InviteResult,
+  Profile,
+  ProfileUpdateBody,
+} from "./friends";
 import { Ok } from "./common";
 
 /**
@@ -89,6 +103,24 @@ export const API_ROUTES = {
   recommend: { path: "/api/recommend", method: "POST", status: 200, body: RecommendBody, response: RecommendResponse },
   mobileDeviceToken: { path: "/api/mobile/device-token", method: "POST", status: 201, response: DeviceTokenResponse },
   chainMe: { path: "/api/chain/me", method: "GET", status: 200, response: ChainMe },
+  profileMe: { path: "/api/profile/me", method: "GET", status: 200, response: Profile },
+  profileUpdate: { path: "/api/profile/me", method: "PUT", status: 200, body: ProfileUpdateBody, response: Profile },
+  profileGet: { path: "/api/profile/[id]", method: "GET", status: 200, response: Profile },
+  friendsList: { path: "/api/friends", method: "GET", status: 200, response: FriendList },
+  friendsAdd: { path: "/api/friends", method: "POST", status: 200, body: AddFriendBody, response: Friend },
+  friendsRemove: { path: "/api/friends/[id]", method: "DELETE", status: 200, response: Ok },
+  friendCodeNew: { path: "/api/friends/code", method: "POST", status: 200, response: FriendCode },
+  friendPreview: { path: "/api/friends/preview", method: "GET", status: 200, query: FriendPreviewQuery, response: FriendPreview },
+  invitesList: { path: "/api/friends/invites", method: "GET", status: 200, response: InviteList },
+  invitesSend: { path: "/api/friends/invites", method: "POST", status: 200, body: InviteBody, response: InviteResult },
+  inviteAccept: {
+    path: "/api/friends/invites/[id]/accept",
+    method: "POST",
+    status: 200,
+    body: AcceptInviteBody,
+    response: ParticipationResult,
+  },
+  inviteDecline: { path: "/api/friends/invites/[id]/decline", method: "POST", status: 200, response: Ok },
 } as const satisfies Record<string, ApiRouteSpec>;
 
 export type ApiRouteName = keyof typeof API_ROUTES;
