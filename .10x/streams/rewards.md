@@ -32,15 +32,19 @@ With `npm run dev` running and signed in as `seed-alex`, the in-process bus is i
 ```bash
 npx tsx -e '
 import { loadEnv } from "./scripts/load-env"; loadEnv();
-const { emit } = await import("@/shared/events");
-const { closeClient } = await import("@/shared/db");
-const now = new Date();
-await emit("participation.ended", { participationId: "dev-" + now.getTime(), activityId: "dev", userId: "seed-alex",
-  role: "guest", joinedAt: new Date(now.getTime() - 30 * 60_000), endedAt: now, verifiedSeconds: 30 * 60 });
-await closeClient();'
+import { emit } from "@/shared/events";
+import { closeClient } from "@/shared/db";
+(async () => {
+  const now = new Date();
+  await emit("participation.ended", { participationId: "dev-" + now.getTime(), activityId: "dev", userId: "seed-alex",
+    role: "guest", joinedAt: new Date(now.getTime() - 30 * 60_000), endedAt: now, verifiedSeconds: 30 * 60 });
+  await closeClient();
+})();'
 ```
 
-The Points panel shows +30 within 10 s.
+(`tsx -e` has no top-level await, so the body sits in an async function. Verified 2026-11-14: seed-alex went from 0 to 30.)
+
+The Points panel shows +30 within 10 s, as "30 min at an activity" because `dev` is not a real activity id.
 
 ## Next
 
