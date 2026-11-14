@@ -22,6 +22,11 @@ const config: CapacitorConfig = {
     // stop reaching the WebView about five minutes after the app is backgrounded.
     useLegacyBridge: true,
   },
+  plugins: {
+    // The default ("css") writes --safe-area-inset-* onto <html> before React hydrates, which
+    // causes a hydration mismatch. The app uses env(safe-area-inset-*), which "native" keeps correct.
+    SystemBars: { insetsHandling: "native" },
+  },
 };
 
 export default config;

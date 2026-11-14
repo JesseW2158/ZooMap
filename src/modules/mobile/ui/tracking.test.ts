@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BACKGROUND_MESSAGE,
+  boxPlugin,
   createTracker,
   interpretPingResponse,
   type StopReason,
@@ -210,5 +211,28 @@ describe("starting and stopping", () => {
     expect(added).toHaveLength(2);
     expect(removed).toEqual(["w1"]);
     expect(tracker.mode()).toBe("local");
+  });
+});
+
+describe("boxPlugin", () => {
+  // Capacitor's plugin proxy throws when `.then` is read, which is what resolving a promise with it does.
+  const capacitorLikePlugin = () =>
+    new Proxy(
+      { checkPermissions: async () => ({ location: "prompt" }) },
+      {
+        get(target, prop) {
+          if (prop === "then") throw new Error('"BackgroundGeolocation.then()" is not implemented on android');
+          return (target as Record<string | symbol, unknown>)[prop];
+        },
+      },
+    );
+
+  it("shows that the bare plugin cannot travel through a promise", async () => {
+    await expect(Promise.resolve().then(() => capacitorLikePlugin())).rejects.toThrow(/is not implemented/);
+  });
+
+  it("lets the plugin through a promise inside a box", async () => {
+    const box = await Promise.resolve().then(() => boxPlugin(capacitorLikePlugin));
+    await expect(box.plugin.checkPermissions()).resolves.toEqual({ location: "prompt" });
   });
 });

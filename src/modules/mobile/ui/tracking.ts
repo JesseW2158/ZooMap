@@ -288,11 +288,28 @@ export function createTracker(deps: TrackerDeps): Tracker {
 
 type RawPlugin = BackgroundGeolocationPlugin & { checkPermissions(): Promise<{ location?: string }> };
 
-let pluginPromise: Promise<RawPlugin> | null = null;
+/**
+ * Capacitor plugin handles are Proxies that throw `"<Plugin>.then() is not implemented"` when
+ * something reads `.then` on them. Resolving a promise with one (`async () => plugin`, or a
+ * `.then(() => registerPlugin(...))` chain) does exactly that read, so the plugin is boxed in a
+ * plain object and never returned from an async function or a promise callback directly.
+ */
+export interface PluginBox<T> {
+  plugin: T;
+}
 
-/** The plugin handle. `registerPlugin` may run once per name, so everything shares this one. */
-function loadPlugin(): Promise<RawPlugin> {
-  pluginPromise ??= import("@capacitor/core").then(({ registerPlugin }) => registerPlugin<RawPlugin>("BackgroundGeolocation"));
+/** Box the plugin that `make` returns. `make` must be synchronous: an async one would resolve with the bare plugin. */
+export function boxPlugin<T extends object>(make: () => T): PluginBox<T> {
+  return { plugin: make() };
+}
+
+let pluginPromise: Promise<PluginBox<RawPlugin>> | null = null;
+
+/** The plugin handle, boxed (see `PluginBox`). `registerPlugin` may run once per name, so everything shares this one. */
+function loadPlugin(): Promise<PluginBox<RawPlugin>> {
+  pluginPromise ??= import("@capacitor/core").then(({ registerPlugin }) =>
+    boxPlugin(() => registerPlugin<RawPlugin>("BackgroundGeolocation")),
+  );
   return pluginPromise;
 }
 
@@ -300,8 +317,8 @@ function loadPlugin(): Promise<RawPlugin> {
 export function nativeTrackerDeps(): TrackerDeps {
   return {
     watcher: {
-      addWatcher: async (options, callback) => (await loadPlugin()).addWatcher(options, callback as never),
-      removeWatcher: async (options) => (await loadPlugin()).removeWatcher(options),
+      addWatcher: async (options, callback) => (await loadPlugin()).plugin.addWatcher(options, callback as never),
+      removeWatcher: async (options) => (await loadPlugin()).plugin.removeWatcher(options),
     },
     getToken: () => readTokenForPing(nativePrefs),
     clearToken: () => nativePrefs.remove(PREF_KEYS.deviceToken),
@@ -347,7 +364,7 @@ export async function locationPermission(): Promise<"granted" | "denied" | "prom
   try {
     // checkPermissions exists on every Capacitor plugin that declares permissions; this plugin's
     // typings just do not list it.
-    const { location } = await (await loadPlugin()).checkPermissions();
+    const { location } = await (await loadPlugin()).plugin.checkPermissions();
     return location === "granted" || location === "denied" || location === "prompt" ? location : "unknown";
   } catch {
     return "unknown";
@@ -356,5 +373,5 @@ export async function locationPermission(): Promise<"granted" | "denied" | "prom
 
 /** Open Android's settings page for this app (where "Allow all the time" and Notifications live). */
 export async function openAppSettings(): Promise<void> {
-  await (await loadPlugin()).openSettings();
+  await (await loadPlugin()).plugin.openSettings();
 }
