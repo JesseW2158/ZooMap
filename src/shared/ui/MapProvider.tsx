@@ -108,7 +108,11 @@ export function MapProvider({ children }: { children?: ReactNode }) {
 
   return (
     <MapContext.Provider value={map}>
-      <div ref={container} className="absolute inset-0" />
+      {/* MapLibre's CSS sets `.maplibregl-map { position: relative }` on the element it is given,
+          which would override `absolute` and collapse it to zero height. Size a wrapper instead. */}
+      <div className="absolute inset-0">
+        <div ref={container} className="h-full w-full" />
+      </div>
       {map ? <MapBehaviours map={map} /> : null}
       {children}
     </MapContext.Provider>
