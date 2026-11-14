@@ -2,52 +2,94 @@ import type {
   BuildingCollection,
   GroundCollection,
   LatLng,
+  LngLat,
   NearestPlace,
   Place,
   WalkGraph,
 } from "@/shared/contracts";
 import { haversineM } from "@/shared/geo";
-import { FIXTURE_BUILDINGS, FIXTURE_GRAPH, FIXTURE_GROUND, FIXTURE_PLACES } from "./fixtures/campus";
+import { loadBuildings, loadFootprints, loadGround, loadPlaceById, loadPlaces, loadWalkGraph } from "./data";
 
 /**
- * Campus module (owner: 01-campus-map). FOUNDATION STUB: serves the fixture campus in
- * `fixtures/`. The owning stream replaces these bodies with the committed `data/campus/`
- * files and never changes a signature.
+ * Campus module (owner: 01-campus-map). Serves the OpenStreetMap extract committed in
+ * `data/campus/`, built by `npm run campus:build`.
  */
 
 export async function getPlaces(): Promise<Place[]> {
-  return FIXTURE_PLACES;
+  return loadPlaces();
 }
 
 export async function getPlace(id: string): Promise<Place | null> {
-  return FIXTURE_PLACES.find((p) => p.id === id) ?? null;
+  return loadPlaceById().get(id) ?? null;
 }
 
-/** Case-insensitive match on name and aliases, prefix matches first. */
+const normalize = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").trim();
+
+/**
+ * Case-insensitive match on name and aliases: exact matches first, then prefix matches
+ * (of the whole name or of any word), then substring matches. Ties go to places with an
+ * alias match, then by name.
+ */
 export async function searchPlaces(q: string, limit = 10): Promise<Place[]> {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return FIXTURE_PLACES.slice(0, limit);
-  const names = (p: Place) => [p.name, ...p.aliases].map((n) => n.toLowerCase());
-  const prefix = FIXTURE_PLACES.filter((p) => names(p).some((n) => n.startsWith(needle)));
-  const contains = FIXTURE_PLACES.filter((p) => !prefix.includes(p) && names(p).some((n) => n.includes(needle)));
-  return [...prefix, ...contains].slice(0, limit);
+  const places = loadPlaces();
+  const needle = normalize(q);
+  if (!needle) return places.slice(0, limit);
+  const scored: { place: Place; score: number }[] = [];
+  for (const place of places) {
+    let score = Infinity;
+    const candidates: [string, boolean][] = [[place.name, false], ...place.aliases.map((a): [string, boolean] => [a, true])];
+    for (const [text, isAlias] of candidates) {
+      const n = normalize(text);
+      const bonus = isAlias ? 0 : 0.5;
+      if (n === needle) score = Math.min(score, 0 + bonus);
+      else if (n.startsWith(needle)) score = Math.min(score, 2 + bonus);
+      else if (n.split(/[^a-z0-9&]+/).some((w) => w.startsWith(needle))) score = Math.min(score, 4 + bonus);
+      else if (n.includes(needle)) score = Math.min(score, 6 + bonus);
+    }
+    if (score < Infinity) scored.push({ place, score });
+  }
+  scored.sort((a, b) => a.score - b.score || a.place.name.localeCompare(b.place.name, "en"));
+  return scored.slice(0, limit).map((s) => s.place);
+}
+
+/** Metres from `pos` to the polygon ring (0 when inside), on a local flat projection. */
+function distanceToRingM(pos: LatLng, ring: LngLat[]): number {
+  const kx = 111_320 * Math.cos((pos.lat * Math.PI) / 180);
+  const ky = 110_540;
+  const pts = ring.map(([lng, lat]) => [(lng - pos.lng) * kx, (lat - pos.lat) * ky] as const);
+  let inside = false;
+  let best = Infinity;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [ax, ay] = pts[i];
+    const [bx, by] = pts[j];
+    if (ay > 0 !== by > 0 && 0 < ax + ((0 - ay) * (bx - ax)) / (by - ay)) inside = !inside;
+    const dx = bx - ax, dy = by - ay;
+    const l2 = dx * dx + dy * dy;
+    const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, (-ax * dx - ay * dy) / l2));
+    best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+  }
+  return inside ? 0 : best;
 }
 
 /**
- * The closest place within `maxM` metres, or null. The real version measures to the building
- * footprint (0 when inside); this stub measures to the centre.
+ * The closest place within `maxM` metres, or null. Distance is to the building footprint
+ * (0 when inside it) where the place has one, otherwise to its centre.
  */
 export async function nearestPlace(pos: LatLng, maxM: number): Promise<NearestPlace | null> {
+  const footprints = loadFootprints();
   let best: NearestPlace | null = null;
-  for (const place of FIXTURE_PLACES) {
-    const distanceM = haversineM(pos, place.center);
+  for (const place of loadPlaces()) {
+    // cheap reject: no campus building is wider than ~600 m
+    if (haversineM(pos, place.center) > maxM + 600) continue;
+    const rings = footprints.get(place.id);
+    const distanceM = rings ? Math.min(...rings.map((r) => distanceToRingM(pos, r))) : haversineM(pos, place.center);
     if (distanceM <= maxM && (!best || distanceM < best.distanceM)) best = { place, distanceM };
   }
   return best;
 }
 
 export async function getWalkGraph(): Promise<WalkGraph> {
-  return FIXTURE_GRAPH;
+  return loadWalkGraph();
 }
 
 /**
@@ -55,9 +97,9 @@ export async function getWalkGraph(): Promise<WalkGraph> {
  * `GET /api/campus/buildings` and `/ground` instead of bundling it into the client.
  */
 export async function getBuildings(): Promise<BuildingCollection> {
-  return FIXTURE_BUILDINGS;
+  return loadBuildings();
 }
 
 export async function getGround(): Promise<GroundCollection> {
-  return FIXTURE_GROUND;
+  return loadGround();
 }

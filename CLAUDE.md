@@ -37,6 +37,7 @@ One Next.js app in TypeScript, deployed on Vercel, with MongoDB Atlas. An Androi
 - All `_id`s and references are strings (`newId()`), never ObjectIds. Dates cross the API as ISO strings and the event bus as `Date`.
 - Routes: `apiRoute(handler, { status })`, `await requireUser(req)` first, `parseBody`/`parseQuery` with zod, throw `ApiError(code)`. `src/app/api/routes.test.ts` walks `API_ROUTES`, so a new route needs a table entry.
 - Emit events with `emit()` from `@/shared/events`; it registers every module's subscribers first. Subscriptions are keyed by id, so registering twice replaces.
+- MapLibre's worker is copied to `public/maplibre/` by `predev`/`prebuild` (Turbopack breaks its default worker lookup); do not remove `setWorkerUrl` in `MapProvider`.
 - Map layers: `useMapEffect`, `addLayerToSlot(map, spec, "slot-lines")`, ids prefixed with the module name. Panels reach the map only through `useMapStore()`. There is no glyph source, so no text labels on the map.
 - Indexes live only in `src/shared/db/indexes.ts`; a new one is a single-purpose commit touching that file, and `npm run db:setup` applies it.
 - DB tests: `const t = withTestDb()` from `@/shared/db/testing` in a `*.db.test.ts` file.

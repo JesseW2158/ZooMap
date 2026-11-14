@@ -80,6 +80,9 @@ export function MapProvider({ children }: { children?: ReactNode }) {
     (async () => {
       const maplibregl = await import("maplibre-gl");
       if (cancelled || !container.current) return;
+      // Turbopack rewrites import.meta.url, so MapLibre cannot find its own worker.
+      // `npm run dev` and `build` copy it to public/ (scripts/copy-maplibre-worker.mjs).
+      maplibregl.setWorkerUrl(`${window.location.origin}/maplibre/maplibre-gl-worker.mjs`);
       instance = new maplibregl.Map({
         container: container.current,
         style: STYLE,

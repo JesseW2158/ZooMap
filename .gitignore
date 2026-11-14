@@ -42,3 +42,6 @@ yarn-error.log*
 /android/**/build/
 /android/.gradle/
 /android/local.properties
+
+# copied from node_modules by scripts/copy-maplibre-worker.mjs
+/public/maplibre/
