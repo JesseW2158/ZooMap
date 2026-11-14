@@ -108,7 +108,9 @@ export function MapProvider({ children }: { children?: ReactNode }) {
 
   return (
     <MapContext.Provider value={map}>
-      <div ref={container} className="absolute inset-0" />
+      {/* maplibre-gl.css sets `.maplibregl-map { position: relative }` outside any CSS layer, which
+          beats Tailwind's layered `absolute`, leaving the map 0 px tall. The inline style wins. */}
+      <div ref={container} className="absolute inset-0" style={{ position: "absolute" }} />
       {map ? <MapBehaviours map={map} /> : null}
       {children}
     </MapContext.Provider>
