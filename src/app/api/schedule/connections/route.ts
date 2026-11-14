@@ -1,31 +1,39 @@
-import { CreateConnectionBody, DeleteConnectionQuery } from "@/shared/contracts";
+import { CreateConnectionBody, DeleteConnectionQuery, UpdateConnectionBody } from "@/shared/contracts";
 import { apiRoute, parseBody, parseQuery } from "@/shared/http";
 import { requireUser } from "@/modules/auth";
-import { fixtures } from "@/modules/schedule";
+import { createConnection, deleteConnection, listConnections, updateConnection } from "@/modules/schedule";
 
 /**
- * Calendar connections. Secrets (feed URL, refresh token) are never returned. Owner: schedule.
- * FOUNDATION STUB: stores nothing.
+ * Calendar connections and hand-entered classes. Secrets (feed URL, refresh token) are never
+ * returned. Owner: schedule.
  *   GET    -> ScheduleConnection[]
- *   POST   -> 201 ScheduleConnection   body { provider: "ics", label, url }
+ *   POST   -> 201 ScheduleConnection   body { provider: "ics", label, url } | { provider: "manual", label, placeId?, room?, days, start, end }
+ *   PUT    -> ScheduleConnection       body { id, skip?: { eventId, skipped }, plan?: { label?, placeId?, date?, start?, end? } }
  *   DELETE -> { ok: true }             query ?id=
  */
 export const GET = apiRoute(async (req) => {
-  await requireUser(req);
-  return fixtures.connectionsFixture;
+  const user = await requireUser(req);
+  return listConnections(user.id);
 });
 
 export const POST = apiRoute(
   async (req) => {
-    await requireUser(req);
+    const user = await requireUser(req);
     const body = await parseBody(req, CreateConnectionBody);
-    return { id: "fixture-connection-new", provider: body.provider, label: body.label };
+    return createConnection(user.id, body);
   },
   { status: 201 },
 );
 
 export const DELETE = apiRoute(async (req) => {
-  await requireUser(req);
-  parseQuery(req, DeleteConnectionQuery);
+  const user = await requireUser(req);
+  const { id } = parseQuery(req, DeleteConnectionQuery);
+  await deleteConnection(user.id, id);
   return { ok: true };
+});
+
+export const PUT = apiRoute(async (req) => {
+  const user = await requireUser(req);
+  const body = await parseBody(req, UpdateConnectionBody);
+  return updateConnection(user.id, body);
 });

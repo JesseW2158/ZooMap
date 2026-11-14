@@ -15,6 +15,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { BuildingCollection, GroundCollection, GroundKind, Place, PlaceCategory, WalkGraph } from "../src/shared/contracts";
+import { WALK_KIND, type WalkEdgeInfo, type WalkKind } from "../src/modules/campus/walk-kinds";
 
 // ---------------------------------------------------------------- configuration
 
@@ -300,6 +301,7 @@ export interface BuildResult {
   ground: GroundCollection;
   places: Place[];
   graph: WalkGraph;
+  edgeInfo: WalkEdgeInfo;
   report: string[];
 }
 
@@ -441,22 +443,45 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
   const coords: XY[] = [];
   const graphIdOf = new Map<number, number>();
   const edgeSet = new Map<string, [number, number]>();
+  const edgeMeta = new Map<string, [WalkKind, number]>(); // key -> [kind, name index]
+  const names = [""];
+  const nameIndex = new Map<string, number>([["", 0]]);
+  const nameOf = (n: string | undefined) => {
+    const v = n?.trim() ?? "";
+    let i = nameIndex.get(v);
+    if (i === undefined) { i = names.length; names.push(v); nameIndex.set(v, i); }
+    return i;
+  };
   const gnode = (osmId: number): number => {
     let g = graphIdOf.get(osmId);
     if (g === undefined) { g = coords.length; graphIdOf.set(osmId, g); coords.push(toXY(nodeLngLat(osmId)!)); }
     return g;
   };
-  const addEdge = (a: number, b: number) => {
+  const addEdge = (a: number, b: number, kind: WalkKind, name = 0) => {
     if (a === b) return;
     const [x, y] = a < b ? [a, b] : [b, a];
-    edgeSet.set(`${x},${y}`, [x, y]);
+    const key = `${x},${y}`;
+    const prev = edgeMeta.get(key);
+    edgeSet.set(key, [x, y]);
+    // two ways sharing a segment: keep the more walkable description
+    if (!prev || kind < prev[0]) edgeMeta.set(key, [kind, name]);
+  };
+  const kindOfHighway = (t: Record<string, string>): WalkKind => {
+    const hw = t.highway;
+    if (hw === "steps") return WALK_KIND.steps;
+    if ((hw === "footway" && t.footway === "crossing") || ((hw === "footway" || hw === "path" || hw === "cycleway") && t.crossing)) return WALK_KIND.crossing;
+    if (hw === "tertiary" || hw === "tertiary_link") return WALK_KIND.majorRoad;
+    if (hw === "residential" || hw === "service" || hw === "unclassified" || hw === "living_street") return WALK_KIND.minorRoad;
+    return WALK_KIND.walk;
   };
   for (const w of ways.values()) {
     const t = w.tags ?? {};
     if (!WALKABLE.has(t.highway ?? "")) continue;
     if (t.foot === "no" || t.access === "private" || (t.access === "no" && !["yes", "designated", "permissive"].includes(t.foot ?? ""))) continue;
     const ids = w.nodes.filter((id) => nodes.has(id));
-    for (let i = 1; i < ids.length; i++) addEdge(gnode(ids[i - 1]), gnode(ids[i]));
+    const kind = kindOfHighway(t);
+    const name = kind === WALK_KIND.steps ? 0 : nameOf(t.name);
+    for (let i = 1; i < ids.length; i++) addEdge(gnode(ids[i - 1]), gnode(ids[i]), kind, name);
   }
   const walkableNodeCount = coords.length;
 
@@ -512,7 +537,7 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
       }
     }
     const door = coords.length; coords.push(p);
-    addEdge(door, target);
+    addEdge(door, target, WALK_KIND.door);
     return door;
   }
 
@@ -639,10 +664,12 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
   for (const [key, list] of splits) {
     const e = edgeSet.get(key);
     if (!e) continue;
+    const [kind, name] = edgeMeta.get(key)!;
     edgeSet.delete(key);
+    edgeMeta.delete(key);
     list.sort((m, n) => m.t - n.t);
     const chain = [e[0], ...list.map((s) => s.node), e[1]];
-    for (let i = 1; i < chain.length; i++) addEdge(chain[i - 1], chain[i]);
+    for (let i = 1; i < chain.length; i++) addEdge(chain[i - 1], chain[i], kind, name);
   }
 
   // largest connected component
@@ -665,13 +692,19 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
   const main = sizes.indexOf(Math.max(...sizes));
   const keep = [...adj.keys()].filter((n) => comp.get(n) === main).sort((a, b) => a - b);
   const remap = new Map(keep.map((n, i) => [n, i]));
-  const graph: WalkGraph = {
-    nodes: keep.map((n) => toLngLat(coords[n])),
-    edges: [...edgeSet.values()]
-      .filter(([a, b]) => remap.has(a) && remap.has(b))
-      .map(([a, b]): [number, number, number] => [remap.get(a)!, remap.get(b)!, round1(dist(coords[a], coords[b]))])
-      .sort((m, n) => m[0] - n[0] || m[1] - n[1]),
-  };
+  const keptEdges = [...edgeSet.entries()]
+    .filter(([, [a, b]]) => remap.has(a) && remap.has(b))
+    .map(([key, [a, b]]) => ({ edge: [remap.get(a)!, remap.get(b)!, round1(dist(coords[a], coords[b]))] as [number, number, number], meta: edgeMeta.get(key)! }))
+    .sort((m, n) => m.edge[0] - n.edge[0] || m.edge[1] - n.edge[1]);
+  const graph: WalkGraph = { nodes: keep.map((n) => toLngLat(coords[n])), edges: keptEdges.map((e) => e.edge) };
+  // compact the name table to names still used, in first-use order
+  const usedNames = new Map<number, number>([[0, 0]]);
+  const edgeInfo: WalkEdgeInfo = { names: [""], edges: [] };
+  for (const { meta: [kind, name] } of keptEdges) {
+    let ni = usedNames.get(name);
+    if (ni === undefined) { ni = edgeInfo.names.length; edgeInfo.names.push(names[name]); usedNames.set(name, ni); }
+    edgeInfo.edges.push([kind, ni]);
+  }
   const keptXY = keep.map((n) => coords[n]);
   const nodeGrid = new Grid<number>(50);
   keptXY.forEach((p, i) => nodeGrid.insertBox(p[0], p[1], p[0], p[1], i));
@@ -806,7 +839,9 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
   );
   if (farFromEntrance.length) report.push(`Places with no entrance within ${ENTRANCE_REPORT_M} m:`, ...farFromEntrance);
 
-  return { buildings: buildingsOut, ground: groundOut, places, graph, report };
+  const kindCounts = Object.entries(WALK_KIND).map(([k, v]) => `${k} ${edgeInfo.edges.filter((e) => e[0] === v).length}`).join(", ");
+  report.splice(5, 0, `Edge kinds: ${kindCounts}`);
+  return { buildings: buildingsOut, ground: groundOut, places, graph, edgeInfo, report };
 }
 
 // ---------------------------------------------------------------- write
@@ -829,6 +864,10 @@ async function main() {
   writeFileSync(
     path.join(OUT_DIR, "walk-graph.json"),
     `{"nodes":[\n${out.graph.nodes.map((n) => JSON.stringify(n)).join(",\n")}\n],"edges":[\n${out.graph.edges.map((e) => JSON.stringify(e)).join(",\n")}\n]}\n`,
+  );
+  writeFileSync(
+    path.join(OUT_DIR, "walk-edges.json"),
+    `{"names":${JSON.stringify(out.edgeInfo.names)},"edges":[\n${out.edgeInfo.edges.map((e) => JSON.stringify(e)).join(",\n")}\n]}\n`,
   );
   console.log(out.report.join("\n"));
 }
