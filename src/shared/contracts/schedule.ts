@@ -10,8 +10,12 @@ export const RawEvent = z.object({
 });
 export type RawEvent = z.infer<typeof RawEvent>;
 
-/** `manual` (added after Phase 0): a class the user entered by hand. */
-export const ScheduleSource = z.enum(["google", "ics", "manual"]);
+/**
+ * `manual` (added after Phase 0): a weekly class entered by hand.
+ * `plan` (added after Phase 0): a one-off plan on a date, e.g. "Study at Du Bois"; made by the
+ * user now, and by the recommend module later.
+ */
+export const ScheduleSource = z.enum(["google", "ics", "manual", "plan"]);
 export type ScheduleSource = z.infer<typeof ScheduleSource>;
 
 export const ScheduleEvent = RawEvent.extend({
@@ -25,6 +29,10 @@ export const ScheduleEvent = RawEvent.extend({
   deadline: z.boolean().optional(),
   /** Added after Phase 0 (optional): course code parsed from the title, e.g. "CICS 210". */
   course: z.string().optional(),
+  /** Added after Phase 0 (optional): the connection this came from, for skip / delete / edit. */
+  connectionId: Id.optional(),
+  /** Added after Phase 0 (optional): the user skipped this one occurrence; still listed so it can be undone. */
+  skipped: z.boolean().optional(),
 });
 export type ScheduleEvent = z.infer<typeof ScheduleEvent>;
 
@@ -75,8 +83,45 @@ export const ManualClass = z
   .refine((c) => c.end > c.start, { message: "end must be after start", path: ["end"] });
 export type ManualClass = z.infer<typeof ManualClass>;
 
-/** Either a feed link or (added after Phase 0) a class entered by hand. */
-export const CreateConnectionBody = z.union([CreateIcsConnectionBody, ManualClass]);
+/** "YYYY-MM-DD", campus local date. */
+export const LocalDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "use YYYY-MM-DD");
+
+/** Added after Phase 0: a one-off plan, e.g. { label: "Study", placeId, date, start, end }. */
+export const PlanBody = z
+  .strictObject({
+    provider: z.literal("plan"),
+    label: z.string().trim().min(1).max(60),
+    placeId: Id.optional(),
+    room: z.string().trim().max(30).optional(),
+    date: LocalDate,
+    start: LocalTime,
+    end: LocalTime,
+    note: z.string().trim().max(200).optional(),
+  })
+  .refine((c) => c.end > c.start, { message: "end must be after start", path: ["end"] });
+export type PlanBody = z.infer<typeof PlanBody>;
+
+/** A feed link, or (added after Phase 0) a class entered by hand or a one-off plan. */
+export const CreateConnectionBody = z.union([CreateIcsConnectionBody, ManualClass, PlanBody]);
+
+/**
+ * PUT /api/schedule/connections (added after Phase 0): skip or un-skip one occurrence, or
+ * move a plan. Returns the updated ScheduleConnection.
+ */
+export const UpdateConnectionBody = z.strictObject({
+  id: Id,
+  skip: z.strictObject({ eventId: Id, skipped: z.boolean() }).optional(),
+  plan: z
+    .strictObject({
+      label: z.string().trim().min(1).max(60).optional(),
+      placeId: Id.nullable().optional(),
+      date: LocalDate.optional(),
+      start: LocalTime.optional(),
+      end: LocalTime.optional(),
+    })
+    .optional(),
+});
+export type UpdateConnectionBody = z.infer<typeof UpdateConnectionBody>;
 export type CreateConnectionBody = z.infer<typeof CreateConnectionBody>;
 
 /** DELETE /api/schedule/connections?id= */
