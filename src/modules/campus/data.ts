@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { BuildingCollection, GroundCollection, LngLat, Place, WalkGraph } from "@/shared/contracts";
+import type { WalkEdgeInfo } from "./walk-kinds";
 
 /**
  * Loads the committed `data/campus/` files once per server instance. The paths are static
@@ -12,6 +13,7 @@ const read = <T>(file: string): T => JSON.parse(readFileSync(path.join(process.c
 let places: Place[] | undefined;
 let placeById: Map<string, Place> | undefined;
 let graph: WalkGraph | undefined;
+let edgeInfo: WalkEdgeInfo | undefined;
 let buildings: BuildingCollection | undefined;
 let ground: GroundCollection | undefined;
 let footprints: Map<string, LngLat[][]> | undefined;
@@ -26,6 +28,10 @@ export function loadPlaceById(): Map<string, Place> {
 
 export function loadWalkGraph(): WalkGraph {
   return (graph ??= read<WalkGraph>("walk-graph.json"));
+}
+
+export function loadWalkEdgeInfo(): WalkEdgeInfo {
+  return (edgeInfo ??= read<WalkEdgeInfo>("walk-edges.json"));
 }
 
 export function loadBuildings(): BuildingCollection {
