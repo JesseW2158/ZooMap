@@ -1,23 +1,13 @@
-import type { Activity, ActivityMe } from "@/shared/contracts";
-import { activitiesFixture, noParticipationFixture } from "./fixtures";
-
+// Activities module: hosting and joining activities, and location-verified time at them.
+// Server-side only.
+export {
+  listActiveActivities,
+  getActiveParticipation,
+  createActivity,
+  joinActivity,
+  leaveActivity,
+  endActivityAsHost,
+  suggestPlaces,
+} from "./service";
+export { settleStale } from "./settle";
 export * as fixtures from "./fixtures";
-
-/**
- * Activities module (owner: activities). FOUNDATION STUBS: made-up activities and no
- * participation. The owning stream replaces the bodies (and calls `settleStale`); the
- * signatures stay.
- */
-
-/** Active activities with participant counts. */
-export async function listActiveActivities(): Promise<Activity[]> {
-  // FOUNDATION STUB
-  return activitiesFixture(new Date());
-}
-
-/** The user's current participation and its activity, or `{ participation: null, activity: null }`. */
-export async function getActiveParticipation(userId: string): Promise<ActivityMe> {
-  // FOUNDATION STUB
-  void userId;
-  return noParticipationFixture;
-}

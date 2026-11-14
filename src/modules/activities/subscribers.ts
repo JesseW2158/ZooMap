@@ -1,9 +1,7 @@
 import type { EventBus } from "@/shared/events";
+import { recordPresence } from "./presence";
 
-/**
- * Event subscribers for this module. The activities stream subscribes to `presence.updated`
- * here to add verified time. Subscription ids look like "activities:<what>".
- */
+/** Each presence ping settles stale activities and adds verified time to the user's participation. */
 export function registerSubscribers(bus: EventBus): void {
-  void bus;
+  bus.on("presence.updated", "activities:verified-time", recordPresence);
 }
