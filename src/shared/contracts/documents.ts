@@ -67,6 +67,11 @@ export const ParticipationDoc = z.object({
   joinedAt: z.date(),
   leftAt: z.date().optional(),
   lastVerifiedAt: z.date().optional(),
+  /**
+   * Added by activities (additive): the latest in-range ping. Unlike `lastVerifiedAt` it is not
+   * cleared by an out-of-range ping, so settling can tell how long since the user was last there.
+   */
+  lastInRangeAt: z.date().optional(),
   verifiedSeconds: z.number().int().nonnegative(),
 });
 export type ParticipationDoc = z.infer<typeof ParticipationDoc>;
