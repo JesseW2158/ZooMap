@@ -15,3 +15,31 @@ Started: 2026-11-14
 - **Trade-offs accepted:** What we're giving up
 - **Impacts:** Which roles/components this affects
 -->
+
+### 2026-11-14 — Owner + planner: Scope and platform
+- **Decision:** Hackathon demo in 24-48 hours. One Next.js web app in TypeScript; an Android app shell (Capacitor) wraps the deployed site to add background location. iPhone users get the browser version.
+- **Why:** The owner wants background location, which a web page cannot do. A shell keeps every screen testable in a browser by parallel sessions.
+- **Alternatives considered:** Fully native React Native app; web page only.
+- **Trade-offs accepted:** Sign-in and background pings need native workarounds (see docs/plan/ws-mobile.md). No iPhone app.
+- **Impacts:** All roles. Plan in docs/plan/.
+
+### 2026-11-14 — Owner + planner: Data and integrations
+- **Decision:** Density from opt-in user location plus a labelled simulated source. Google sign-in restricted to umass.edu. Schedule from Google Calendar and a Canvas calendar feed link. Outdoor walking routes computed in-app from OpenStreetMap. Gemini picks a study spot from server-computed candidates. MongoDB Atlas. Vercel hosting.
+- **Why:** Each is the shortest route to a working demo that needs no agreement with UMass.
+- **Alternatives considered:** Official campus occupancy data; emailed sign-in codes; full Canvas integration; a hosted routing service; indoor routing.
+- **Trade-offs accepted:** The heatmap is mostly simulated at demo time. UMass may block outside apps on student Google accounts; unverified.
+- **Impacts:** Density, auth, schedule, routing, recommend.
+
+### 2026-11-14 — Owner + planner: Points, store and Solana
+- **Decision:** Points are paid per minute of location-verified time at an activity, from an append-only MongoDB ledger. A user can be in one activity at a time; hosting counts. Store is a mock catalog with claim codes. Solana is an optional devnet mirror of the ledger, built last.
+- **Why:** Database-first works without wallets and lets Solana be added or dropped without touching anything else. Real redemption value on a live token raises legal questions nobody has reviewed.
+- **Alternatives considered:** Token as the points; mainnet token; no Solana; points for merely joining; host-confirmed attendance.
+- **Trade-offs accepted:** The "one activity at a time" rule was the planner's default, not an explicit owner choice.
+- **Impacts:** Activities, rewards, chain.
+
+### 2026-11-14 — Planner: Architecture for parallel work
+- **Decision:** Feature modules behind `index.ts`, domain events, plug-in registries and zod contracts, all fixed in a serial foundation phase. Six feature workstreams plus mobile then run in parallel on owned paths, in separate worktrees, databases and ports.
+- **Why:** 4-6 sessions will build at once; shared files and the lockfile are what break parallel merges.
+- **Alternatives considered:** Fewer, larger workstreams; a separate backend service.
+- **Trade-offs accepted:** The foundation phase is large and blocks everything.
+- **Impacts:** All roles. Rules are in CLAUDE.md.

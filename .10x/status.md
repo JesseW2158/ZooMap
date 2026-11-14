@@ -1,34 +1,35 @@
 # Project Status
 
 ## Project: ZooMap
-**Current Phase:** Brainstorming
-**Last Updated:** 2026-11-14 by init-project
+**Current Phase:** Planning complete, ready for Foundation
+**Last Updated:** 2026-11-14 by planner
 **Health:** On Track
 
 ## Progress
 
 ### Done
-(none yet)
+- [x] Requirements and scope agreed with the owner (see decisions.md)
+- [x] Build plan written: docs/plan/
 
 ### In Progress
 (none yet)
 
 ### Pending
-- [ ] CTO: Strategic direction and tech decisions
-- [ ] PM: Requirements and scope definition
-- [ ] Architect: System design
-- [ ] Staff Engineer: Coding standards and patterns
-- [ ] EM: Task breakdown and estimation
-- [ ] Senior Engineer: Implementation planning
-- [ ] SDE: Code implementation
-- [ ] DBA: Schema and data modeling
-- [ ] Security: Threat model and security review
-- [ ] QA: Test strategy and verification
-- [ ] DevOps: CI/CD and deployment
-- [ ] SRE: Monitoring and reliability
+- [ ] Owner: setup checklist in docs/plan/README.md (Atlas, Google OAuth, Gemini key, Vercel, Android Studio)
+- [ ] 00 Foundation
+- [ ] 01 Campus map
+- [ ] Density
+- [ ] Activities
+- [ ] Routing and search
+- [ ] Mobile shell
+- [ ] Rewards and store
+- [ ] Schedule
+- [ ] Recommend
+- [ ] Chain (stretch)
+- [ ] 99 Integration
 
 ### Blocked
 (none)
 
 ## Risks
-(none identified yet)
+See "Risks" in docs/plan/README.md. The first to test: whether UMass allows outside apps to sign in with student Google accounts.
