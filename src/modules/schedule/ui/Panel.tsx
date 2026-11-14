@@ -335,10 +335,17 @@ function DayTimeline(props: { items: ScheduleEvent[]; date: string; now: number;
     if (prev && !item.skipped) {
       rows.push(<Between key={`gap-${item.id}`} from={prev} to={item} now={now} onAddPlan={props.onAddPlan} />);
     }
-    rows.push(<ItemCard key={item.id} event={item} past={new Date(item.end).getTime() < now} onChanged={props.onChanged} />);
+    // the stop before this one, with a place: the walk is previewed from there
+    const from = [...items].slice(0, items.indexOf(item)).reverse().find((x) => !x.skipped && x.placeId);
+    rows.push(<ItemCard key={item.id} event={item} previous={from} past={new Date(item.end).getTime() < now} onChanged={props.onChanged} />);
     if (!item.skipped) prev = item;
   }
-  return <ol className="space-y-0">{rows}</ol>;
+  return (
+    <div>
+      <p className="mb-1.5 text-xs text-neutral-500">Tap a class or plan to preview the walk there.</p>
+      <ol className="space-y-0">{rows}</ol>
+    </div>
+  );
 }
 
 /** The walk between two items, with Preview, and a "plan something here" offer when the gap is long. */
@@ -386,8 +393,8 @@ function Between({ from, to, now, onAddPlan }: { from: ScheduleEvent; to: Schedu
 
 const short = (e: ScheduleEvent) => e.locationText?.split(" ").slice(0, 2).join(" ") ?? e.title;
 
-function ItemCard({ event, past, onChanged }: { event: ScheduleEvent; past: boolean; onChanged: () => void }) {
-  const { requestRoute, selectPlace } = useMapStore();
+function ItemCard({ event, previous, past, onChanged }: { event: ScheduleEvent; previous?: ScheduleEvent; past: boolean; onChanged: () => void }) {
+  const { requestRoute, selectPlace, routeRequest } = useMapStore();
   const [mode, setMode] = useState<null | "confirm-delete" | "move">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -403,11 +410,35 @@ function ItemCard({ event, past, onChanged }: { event: ScheduleEvent; past: bool
     act(() => apiFetch("/api/schedule/connections", { method: "PUT", body: { id: event.connectionId, skip: { eventId: event.id, skipped } } }));
   const remove = () => act(() => apiFetch(`/api/schedule/connections?id=${encodeURIComponent(event.connectionId!)}`, { method: "DELETE" }));
 
+  // walk from the previous stop of the day, or from the user's location for the first one
+  const fromPlaceId = previous?.placeId && previous.placeId !== event.placeId ? previous.placeId : undefined;
+  const canPreview = !!event.placeId && !event.skipped;
+  const preview = () => {
+    if (!event.placeId) return;
+    selectPlace(event.placeId);
+    requestRoute(event.placeId, fromPlaceId ? { fromPlaceId } : {});
+  };
+  const fromMe = () => {
+    if (!event.placeId) return;
+    selectPlace(event.placeId);
+    requestRoute(event.placeId);
+  };
+  const previewing = !!routeRequest && routeRequest.toPlaceId === event.placeId && (routeRequest.fromPlaceId ?? undefined) === fromPlaceId;
+  const fromName = fromPlaceId ? short(previous!) : "you";
+
   const badge = isPlan ? "Plan" : event.source === "manual" ? "Class" : event.source === "google" ? "Google" : "Calendar";
   const small = "rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-xs font-medium hover:bg-neutral-100";
 
   return (
-    <li className={`flex gap-3 rounded-xl border p-2.5 ${event.skipped ? "border-dashed border-neutral-200 bg-white" : isPlan ? "border-[#881c1c]/30 bg-red-50/40" : "border-neutral-200 bg-white"} ${past && !event.skipped ? "opacity-60" : ""}`}>
+    <li
+      onClick={canPreview && !mode ? preview : undefined}
+      onKeyDown={canPreview && !mode ? (e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); preview(); } } : undefined}
+      tabIndex={canPreview ? 0 : undefined}
+      aria-label={canPreview ? `${event.title}: preview the walk from ${fromName}` : undefined}
+      className={`flex gap-3 rounded-xl border p-2.5 ${canPreview && !mode ? "cursor-pointer hover:border-[#1663d6]/60" : ""} ${
+        previewing ? "border-[#1663d6] ring-2 ring-[#1663d6]/30" : event.skipped ? "border-dashed border-neutral-200 bg-white" : isPlan ? "border-[#881c1c]/30 bg-red-50/40" : "border-neutral-200 bg-white"
+      } ${past && !event.skipped && !previewing ? "opacity-60" : ""}`}
+    >
       <div className="w-[2.75rem] shrink-0 text-right text-xs tabular-nums text-neutral-600">
         <div className="font-semibold text-neutral-900">{fmtTime(event.start)}</div>
         <div>{fmtTime(event.end)}</div>
@@ -428,7 +459,7 @@ function ItemCard({ event, past, onChanged }: { event: ScheduleEvent; past: bool
             <button type="button" onClick={() => setMode(null)} className={small}>Keep</button>
           </div>
         ) : (
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <div className="mt-1.5 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
             {event.skipped ? (
               <>
                 <span className="text-xs text-neutral-500">Skipped</span>
@@ -436,11 +467,18 @@ function ItemCard({ event, past, onChanged }: { event: ScheduleEvent; past: bool
               </>
             ) : (
               <>
-                {event.placeId && !past ? (
-                  <button type="button" onClick={() => { selectPlace(event.placeId!); requestRoute(event.placeId!); }} className={`${small} text-[#881c1c]`}>Go</button>
+                {canPreview ? (
+                  <button
+                    type="button"
+                    onClick={preview}
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${previewing ? "bg-[#1663d6] text-white" : "border border-[#1663d6]/40 bg-white text-[#1663d6] hover:bg-blue-50"}`}
+                  >
+                    {previewing ? "Previewing" : "Preview route"}
+                    {fromPlaceId ? ` from ${fromName}` : ""}
+                  </button>
                 ) : null}
-                {event.placeId ? (
-                  <button type="button" onClick={() => selectPlace(event.placeId!)} className={small}>Show</button>
+                {canPreview && fromPlaceId ? (
+                  <button type="button" onClick={fromMe} className={small}>From me</button>
                 ) : null}
                 {isPlan ? (
                   <>
