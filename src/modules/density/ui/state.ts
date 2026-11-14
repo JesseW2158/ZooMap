@@ -1,6 +1,7 @@
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { DensityResponse, SharingState } from "@/shared/contracts";
 import { createStore } from "@/shared/ui/store";
+import { DEFAULT_MODE, HEAT_MODES, type HeatModeId } from "./modes";
 
 /**
  * Client state shared by the map layer (which polls and pings) and the panel (which shows
@@ -14,11 +15,11 @@ export interface DensityUiState {
   /** placeId to building name, filled by the layer from the campus buildings */
   names: Record<string, string>;
   error: string | null;
-  /** the heatmap and coloured buildings; on by default */
-  heatOn: boolean;
+  /** which map the user picked: a heat scale, heat over grass, or no heat */
+  mode: HeatModeId;
 }
 
-export const densityStore = createStore<DensityUiState>({ snapshot: null, sharing: null, names: {}, error: null, heatOn: true });
+export const densityStore = createStore<DensityUiState>({ snapshot: null, sharing: null, names: {}, error: null, mode: DEFAULT_MODE });
 
 export const POLL_MS = 10_000;
 export const PING_MS = 60_000;
@@ -67,22 +68,25 @@ export const markIntroSeen = (): void => {
   }
 };
 
-const HEAT_KEY = "zoomap.density.heat";
+const MODE_KEY = "zoomap.density.mode";
+const OLD_HEAT_KEY = "zoomap.density.heat"; // v1 stored "0" for off
 
-/** Show or hide the heatmap (and with it the green-to-red campus and its coloured buildings). Remembered on this device. */
-export function setHeatOn(on: boolean): void {
-  densityStore.set({ heatOn: on });
+/** Pick the map mode. Remembered on this device. */
+export function setHeatMode(mode: HeatModeId): void {
+  densityStore.set({ mode });
   try {
-    localStorage.setItem(HEAT_KEY, on ? "1" : "0");
+    localStorage.setItem(MODE_KEY, mode);
   } catch {
     // private mode: it just resets next visit
   }
 }
 
-/** Read the remembered choice. Called after mount so server and client first render agree. */
-export function restoreHeatPref(): void {
+/** Read the remembered mode. Called after mount so server and client first render agree. */
+export function restoreHeatMode(): void {
   try {
-    if (localStorage.getItem(HEAT_KEY) === "0") densityStore.set({ heatOn: false });
+    const saved = localStorage.getItem(MODE_KEY);
+    if (saved && HEAT_MODES.some((m) => m.id === saved)) densityStore.set({ mode: saved as HeatModeId });
+    else if (localStorage.getItem(OLD_HEAT_KEY) === "0") densityStore.set({ mode: "off" });
   } catch {
     // keep the default
   }

@@ -8,15 +8,17 @@ import { haversineM } from "@/shared/geo";
 import { isNativeShell, useUserLocation } from "@/shared/platform";
 import { addLayerToSlot, removeLayersAndSources, useApi, useMapEffect, useMapStore, usePolling } from "@/shared/ui";
 import { useStore } from "@/shared/ui/store";
-import { densityAt, pointWeight, rampColor, rampExpression } from "./field";
+import { densityAt, pointWeight, rampColor, rampExpression, type RampId } from "./field";
 import { featureCenter, growBuildings } from "./geometry";
 import { Legend } from "./Legend";
-import { densityStore, loadSharing, loadSnapshot, PING_MS, POLL_MS, restoreHeatPref } from "./state";
+import { modeById } from "./modes";
+import { densityStore, loadSharing, loadSnapshot, PING_MS, POLL_MS, restoreHeatMode } from "./state";
 
 /**
- * The crowd heatmap. With it on, the whole campus is one green-to-red field (grass, parking
- * and gaps are hidden; roads, paths and the pond stay) and every building is painted the
- * colour of the field under it. With it off, the normal campus map is back.
+ * The crowd heatmap, in one of four modes (see modes.ts). In the two full modes the whole campus
+ * is one field (grass, parking and gaps are hidden; roads, paths and the pond stay); in the
+ * grass mode the heat is laid over the normal map; with heat off the normal map is untouched.
+ * Wherever heat shows, every building is painted the colour of the field under it.
  *
  * Polls the snapshot every ten seconds (paused while the tab is hidden) and, when the user
  * has chosen to share, pings the server with their position. In the Android shell the native
@@ -32,6 +34,8 @@ const TINT_GROW_M = 0.3;
 
 /** The campus layer that draws grass, water and parking. While the heatmap is on it shows only the water. */
 const GROUND_FILL = "campus-ground-fill";
+/** The heat sits just under the roads when it is laid over the grass. */
+const ROAD_CASING = "campus-road-casing";
 const WATER_ONLY: FilterSpecification = ["==", ["get", "kind"], "water"];
 
 /**
@@ -96,12 +100,13 @@ export function DensityLayer() {
   useSharingPinger();
 
   const snapshot = useStore(densityStore, (s) => s.snapshot);
-  const heatOn = useStore(densityStore, (s) => s.heatOn);
+  const mode = modeById(useStore(densityStore, (s) => s.mode));
+  const ramp: RampId = mode.ramp ?? "green";
   const buildings = useApi<BuildingCollection>("/api/campus/buildings");
   const { selectedPlaceId } = useMapStore();
 
   // the remembered on/off choice, read after mount so the first render matches the server's
-  useEffect(() => restoreHeatPref(), []);
+  useEffect(() => restoreHeatMode(), []);
 
   // names for the panel
   useEffect(() => {
@@ -120,7 +125,7 @@ export function DensityLayer() {
     const features = buildings.data ? growBuildings(buildings.data, TINT_GROW_M) : [];
     return features.map((f) => ({ feature: f, center: featureCenter(f) }));
   }, [buildings.data]);
-  const tint = useMemo(() => tintData(grown, snapshot), [grown, snapshot]);
+  const tint = useMemo(() => tintData(grown, snapshot, ramp), [grown, snapshot, ramp]);
   // read the freshest data inside the effects that create the sources
   const latest = useRef({ heat, tint });
   useEffect(() => {
@@ -140,7 +145,7 @@ export function DensityLayer() {
           "heatmap-intensity": 3.2, // FIELD_INTENSITY
           "heatmap-radius": HEAT_RADIUS,
           // opaque green at zero density: the field covers the whole map, not just near people
-          "heatmap-color": rampExpression() as ExpressionSpecification,
+          "heatmap-color": rampExpression(ramp, mode.grass) as ExpressionSpecification,
           "heatmap-opacity": 1,
         },
       },
@@ -189,18 +194,32 @@ export function DensityLayer() {
   useMapEffect(
     (map) => {
       let original: FilterSpecification | null | undefined;
+      const hasHeat = mode.ramp !== null;
+      const colorKey = JSON.stringify(rampExpression(ramp, mode.grass));
       const apply = () => {
-        const visibility = heatOn ? "visible" : "none";
+        const visibility = hasHeat ? "visible" : "none";
         for (const id of [HEAT_LAYER, TINT_LAYER]) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visibility);
+        if (map.getLayer(HEAT_LAYER) && hasHeat) {
+          if (JSON.stringify(map.getPaintProperty(HEAT_LAYER, "heatmap-color")) !== colorKey) {
+            map.setPaintProperty(HEAT_LAYER, "heatmap-color", JSON.parse(colorKey) as ExpressionSpecification);
+          }
+        }
         if (!map.getLayer(GROUND_FILL)) return;
-        if (heatOn) {
+        // grass, parking and water: hidden (water stays) in the full modes, as campus draws them otherwise
+        const hideGrass = hasHeat && !mode.grass;
+        if (hideGrass) {
           original ??= map.getFilter(GROUND_FILL) ?? null;
           if (JSON.stringify(map.getFilter(GROUND_FILL)) !== JSON.stringify(WATER_ONLY)) map.setFilter(GROUND_FILL, WATER_ONLY);
-          // the field goes under the water, roads and paths, which campus drew first
-          const order = map.getStyle().layers.map((l) => l.id);
-          if (map.getLayer(HEAT_LAYER) && order.indexOf(HEAT_LAYER) > order.indexOf(GROUND_FILL)) map.moveLayer(HEAT_LAYER, GROUND_FILL);
         } else if (original !== undefined) {
           map.setFilter(GROUND_FILL, original);
+        }
+        // Where the heat sits: under the ground fill (full modes) or under the roads, over the grass.
+        if (hasHeat && map.getLayer(HEAT_LAYER)) {
+          const anchor = mode.grass ? ROAD_CASING : GROUND_FILL;
+          if (map.getLayer(anchor)) {
+            const order = map.getStyle().layers.map((l) => l.id);
+            if (order.indexOf(HEAT_LAYER) !== order.indexOf(anchor) - 1) map.moveLayer(HEAT_LAYER, anchor);
+          }
         }
       };
       apply();
@@ -211,7 +230,7 @@ export function DensityLayer() {
         if (original !== undefined && map.getLayer(GROUND_FILL)) map.setFilter(GROUND_FILL, original);
       };
     },
-    [heatOn],
+    [mode.id],
   );
 
   // leave the selected building to the campus layer's maroon highlight
@@ -241,6 +260,7 @@ function heatData(snapshot: DensityResponse | null): GeoJSON.FeatureCollection {
 function tintData(
   grown: { feature: GeoJSON.Feature; center: { lat: number; lng: number } }[],
   snapshot: DensityResponse | null,
+  ramp: RampId,
 ): GeoJSON.FeatureCollection {
   const points = snapshot?.points ?? [];
   return {
@@ -250,7 +270,7 @@ function tintData(
       properties: {
         heightM: feature.properties?.heightM,
         placeId: (feature.properties?.placeId as string | undefined) ?? "",
-        color: rampColor(densityAt(points, center)),
+        color: rampColor(densityAt(points, center), ramp),
       },
     })),
   };

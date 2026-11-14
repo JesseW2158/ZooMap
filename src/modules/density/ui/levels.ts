@@ -1,8 +1,12 @@
-import { RAMP, rampColor } from "./field";
+import { RAMPS, rampColor, type RampId } from "./field";
 
-/** Colour for each density level 0-4 (the panel's swatches): points along the same green-to-red ramp as the map. */
-export const LEVEL_COLORS = [0, 0.2, 0.4, 0.65, 0.9].map(rampColor) as readonly string[];
+/** Colour for each density level 0-4 (the panel's swatches): points along the active ramp. */
+export const levelColors = (ramp: RampId): readonly string[] => [0, 0.2, 0.4, 0.65, 0.9].map((d) => rampColor(d, ramp));
 export const LEVEL_LABELS = ["Empty", "Quiet", "Moderate", "Busy", "Packed"] as const;
 
-/** CSS gradient of the whole ramp, left (quiet) to right (crowded). */
-export const RAMP_GRADIENT = `linear-gradient(to right, ${RAMP.map(([d, [r, g, b]]) => `rgb(${r},${g},${b}) ${(d / RAMP[RAMP.length - 1][0]) * 100}%`).join(", ")})`;
+/** CSS gradient of a whole ramp, left (quiet) to right (crowded). */
+export function rampGradient(ramp: RampId): string {
+  const stops = RAMPS[ramp];
+  const end = stops[stops.length - 1][0];
+  return `linear-gradient(to right, ${stops.map(([d, [r, g, b]]) => `rgb(${r},${g},${b}) ${(d / end) * 100}%`).join(", ")})`;
+}

@@ -5,8 +5,10 @@ import { useMapStore, usePolling } from "@/shared/ui";
 import { useStore } from "@/shared/ui/store";
 import { startLocation } from "@/shared/platform";
 import { Legend } from "./Legend";
-import { LEVEL_COLORS, LEVEL_LABELS } from "./levels";
-import { densityStore, introSeen, loadSharing, markIntroSeen, setHeatOn, updateSharing } from "./state";
+import { levelColors, LEVEL_LABELS } from "./levels";
+import { ModePicker } from "./ModePicker";
+import { modeById } from "./modes";
+import { densityStore, introSeen, loadSharing, markIntroSeen, updateSharing } from "./state";
 
 /** Crowd panel: what is shared, the sharing switch, and the busiest places right now. */
 export function DensityPanel() {
@@ -14,7 +16,8 @@ export function DensityPanel() {
   const sharing = useStore(densityStore, (s) => s.sharing);
   const names = useStore(densityStore, (s) => s.names);
   const error = useStore(densityStore, (s) => s.error);
-  const heatOn = useStore(densityStore, (s) => s.heatOn);
+  const mode = useStore(densityStore, (s) => s.mode);
+  const colors = levelColors(modeById(mode).ramp ?? "green");
   const { selectPlace } = useMapStore();
   const [introDismissed, setIntroDismissed] = useState(introSeen);
   // first run: explain before asking, but only to people who have not opted in
@@ -85,19 +88,10 @@ export function DensityPanel() {
         </label>
       </div>
 
-      <label className="flex items-center justify-between gap-3 text-xs text-neutral-700">
-        <span>
-          Heatmap
-          <span className="block text-neutral-500">Colours the whole campus green (quiet) to red (crowded).</span>
-        </span>
-        <input
-          type="checkbox"
-          role="switch"
-          className="size-5 shrink-0 accent-[#881c1c]"
-          checked={heatOn}
-          onChange={(e) => setHeatOn(e.target.checked)}
-        />
-      </label>
+      <div className="space-y-1.5">
+        <h3 className="text-xs font-medium text-neutral-700">Map colours</h3>
+        <ModePicker />
+      </div>
 
       <Legend snapshot={snapshot} />
       {error && !snapshot ? <p className="text-xs text-red-700">{error}</p> : null}
@@ -111,7 +105,7 @@ export function DensityPanel() {
                 className="flex w-full items-center gap-2 py-1.5 text-left"
                 onClick={() => selectPlace(p.placeId)}
               >
-                <span className="inline-block size-3 shrink-0 rounded-sm" style={{ background: LEVEL_COLORS[p.level] }} />
+                <span className="inline-block size-3 shrink-0 rounded-sm" style={{ background: colors[p.level] }} />
                 <span className="min-w-0 flex-1 truncate">{names[p.placeId]}</span>
                 <span className="text-xs text-neutral-500">
                   {LEVEL_LABELS[p.level]}
