@@ -32,3 +32,13 @@ A real UMass Canvas feed (`umamherst.instructure.com`, matches the default `ICS_
 - [ ] A pasted feed link shows events in the panel: needs a database
 - [ ] Google end to end: needs the OAuth client (setup checklist step 2) and a test user
 - [~] `npm run check` passes with `SKIP_DB_TESTS=1` (177 tests)
+
+## Day planner (2026-11-14, later)
+
+Why it exists (owner): the schedule plus navigation is the base for a day plan. The free gaps between classes are where the recommend module (Gemini) will suggest the best study spot, using noise levels, density and peers studying similar topics. Not built yet.
+
+- **Plans** (`provider: "plan"`): one-off items on a date at a building. Recommend can add one with `createConnection(userId, { provider: "plan", label: "Study at …", placeId, date, start, end })` from the schedule module's index.
+- **Skip** one occurrence of any event (`PUT /api/schedule/connections`, `skip: { eventId, skipped }`); skipped items stay listed with Undo. **Move** a plan (`plan: { start, end, … }`).
+- Panel: day chips, timeline with the walk between consecutive items (Preview draws it via `requestRoute(to, { fromPlaceId })`), "Plan something here" in gaps of 30+ min, Next up with Go from here / Preview from previous stop.
+- Contract change `24b5468` (additive): `plan` source, PlanBody, UpdateConnectionBody, PUT route, `connectionId` and `skipped` on events, `skipped` on the document.
+- Full `npm run check` **with database tests** passed (195 tests) against a local in-memory MongoDB replica set.
