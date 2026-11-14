@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { IDEMPOTENCY_HEADER, Redemption, RewardsMe, StoreItemList, type StoreItem } from "@/shared/contracts";
+import { ChainMe, IDEMPOTENCY_HEADER, Redemption, RewardsMe, StoreItemList, type StoreItem } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { useApi } from "@/shared/ui";
 
@@ -28,6 +28,8 @@ function errorText(error: unknown): string {
 export function RewardsPanel() {
   const me = useApi<RewardsMe>("/api/rewards/me", { pollMs: POLL_MS, schema: RewardsMe });
   const items = useApi<StoreItem[]>("/api/store/items", { schema: StoreItemList });
+  // The devnet mirror (chain module). Opening it also syncs pending entries; hidden when off.
+  const chain = useApi<ChainMe>("/api/chain/me", { pollMs: 20_000, schema: ChainMe });
 
   // The key is made when the confirmation opens, so a double tap on "Redeem" sends one key.
   const [confirm, setConfirm] = useState<{ item: StoreItem; key: string } | null>(null);
@@ -61,6 +63,7 @@ export function RewardsPanel() {
       setBusy(false);
       void me.refresh();
       void items.refresh();
+      void chain.refresh();
     }
   }
 
@@ -76,6 +79,21 @@ export function RewardsPanel() {
         </div>
         <p className="max-w-[12rem] text-right text-xs text-neutral-500">Earn points for verified time at activities.</p>
       </section>
+
+      {chain.data?.enabled ? (
+        <section className="rounded-lg bg-neutral-50 p-2 text-xs text-neutral-600">
+          <p>
+            On Solana devnet: <strong className="tabular-nums text-neutral-900">{chain.data.balance}</strong> ZooMap tokens
+            {chain.data.pendingCount > 0 ? ` · ${chain.data.pendingCount} syncing` : " · in sync"}
+          </p>
+          {chain.data.explorerUrl ? (
+            <a href={chain.data.explorerUrl} target="_blank" rel="noreferrer" className="text-[#881c1c] underline">
+              View on the Solana explorer
+            </a>
+          ) : null}
+          <p className="mt-0.5 text-neutral-500">A public receipt of your points on a test network. Your points balance above is the real one.</p>
+        </section>
+      ) : null}
 
       {me.error ? <p className="rounded-lg bg-red-50 p-2 text-red-700">{me.error.message}</p> : null}
       {message ? (
