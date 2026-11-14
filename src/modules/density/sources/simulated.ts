@@ -91,8 +91,8 @@ function hash01(text: string): number {
 export function simulatedCount(place: Pick<Place, "id" | "category">, at: Date): number {
   const bucket = Math.floor(at.getTime() / BUCKET_MS);
   // each place has its own popularity and wobbles a little per bucket
-  const popularity = 0.6 + 0.8 * hash01(`pop:${place.id}`);
-  const wobble = 0.85 + 0.3 * hash01(`${place.id}:${bucket}`);
+  const popularity = 0.4 + 0.65 * hash01(`pop:${place.id}`);
+  const wobble = 0.9 + 0.2 * hash01(`${place.id}:${bucket}`);
   const clock = localClock(new Date(bucket * BUCKET_MS));
   return Math.max(0, Math.round(CAPACITY[place.category] * busyness(place.category, clock) * popularity * wobble));
 }

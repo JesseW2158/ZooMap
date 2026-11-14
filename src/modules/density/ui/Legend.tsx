@@ -6,7 +6,7 @@ import { LEVEL_COLORS, LEVEL_LABELS } from "./levels";
 /** Colour key for the heatmap. Says "includes simulated data" whenever the snapshot does. */
 export function Legend({ snapshot, overlay = false }: { snapshot: DensityResponse | null; overlay?: boolean }) {
   const box = overlay
-    ? "pointer-events-none absolute left-3 top-[calc(env(safe-area-inset-top)+3.3rem)] z-[5] rounded-lg bg-white/85 px-2 py-1.5 shadow-sm"
+    ? "pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] left-3 z-[5] rounded-lg bg-white/85 px-2 py-1.5 shadow-sm"
     : "rounded-lg bg-neutral-50 px-2 py-1.5";
   return (
     <div className={box} aria-label="Crowd legend">

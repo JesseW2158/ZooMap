@@ -152,7 +152,7 @@ export function DensityLayer() {
           id: CAP_LAYER,
           type: "fill-extrusion",
           source: CAP_SRC,
-          filter: [">", ["get", "level"], 0],
+          filter: [">", ["get", "level"], 1],
           paint: {
             "fill-extrusion-base": ["get", "heightM"],
             "fill-extrusion-height": ["+", ["get", "heightM"], CAP_THICKNESS_M],
