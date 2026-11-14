@@ -48,6 +48,29 @@ vi.mock("@/modules/activities", async (importOriginal) => {
   };
 });
 
+vi.mock("@/modules/friends", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/friends")>();
+  const f = actual.fixtures;
+  return {
+    ...actual,
+    getMyProfile: async (user: AuthUser) => f.profileFixture(user.id, user.name ?? user.email),
+    updateProfile: async (user: AuthUser) => f.profileFixture(user.id, user.name ?? user.email),
+    getProfile: async (_viewerId: string, id: string) => f.profileFixture(id, "Blair Dev"),
+    listFriends: async () => [f.friendFixture()],
+    addFriend: async () => f.friendFixture(),
+    removeFriend: async () => ({ ok: true as const }),
+    issueFriendCode: async () => f.friendCodeFixture(),
+    previewFriendCode: async () => f.previewFixture(),
+    listInvites: async () => [f.inviteFixture()],
+    sendInvites: async (_user: AuthUser, body: { toUserIds: string[] }) => f.inviteResultFixture(body.toUserIds),
+    acceptInvite: async (user: AuthUser) => {
+      const { fixtures } = await import("@/modules/activities");
+      return fixtures.participationResultFixture("fixture-activity-1", user.id, new Date());
+    },
+    declineInvite: async () => ({ ok: true as const }),
+  };
+});
+
 vi.mock("@/modules/schedule", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/schedule")>();
   const f = actual.fixtures;
@@ -77,6 +100,11 @@ const SAMPLES: Record<string, { query?: string; body?: unknown; headers?: Record
   scheduleConnectionsDelete: { query: "?id=fixture-connection-1" },
   scheduleConnectionsUpdate: { body: { id: "fixture-connection-1", skip: { eventId: "fixture-event-1", skipped: true } } },
   recommend: { body: { origin: { placeId: "w292876549" }, prefs: {} } },
+  profileUpdate: { body: { pronouns: "they/them" } },
+  friendsAdd: { body: { code: "ABCDEFGHJKLMNPQRSTUV" } },
+  friendPreview: { query: "?code=ABCDEFGHJKLMNPQRSTUV" },
+  invitesSend: { body: { activityId: "act-1", toUserIds: ["seed-blair"] } },
+  inviteAccept: { body: {} },
 };
 
 function routeFile(path: string): string {
