@@ -8,7 +8,8 @@ Done-when list:
 - [x] Tests: concurrent second host gets 409; joining while in another activity gets 409; verified-time arithmetic incl. a gap over 300 s, an out-of-range ping and `GEOFENCE_ENFORCED=0`; `participation.ended` emitted once when leave and settle race. (`src/modules/activities/activities.db.test.ts`, `rules.test.ts`)
 - [x] Two dev users against the dev server: host, second host refused (409), join, pings in/out of range, leave. Verified 40 s = 20 + 0 (out of range) + 0 (restart) + 20, and the leave response matched. Run with a local, uncommitted patch to density's ping route that emits `presence.updated` (reverted).
 - [x] `npm run check` green with DB tests (in-memory replica set, not Atlas); `npm run build` green.
-- [ ] Not merged: waiting for the owner's go-ahead.
+- [x] Rebased onto `main` after the campus merge; DB tests now use a real campus place instead of the `fx-*` fixtures.
+- [ ] Not merged: PR open, waiting for the owner.
 
 ## What other streams need to know
 
@@ -28,7 +29,7 @@ Done-when list:
 
 ## Found, not ours (for integration / foundation)
 
-- **The map does not render in `next dev`**: MapLibre logs "Worker failed to load. Check that the worker URL is correct." (Turbopack). It's in `src/shared/ui/MapProvider.tsx`, so no layer is visible. Probably needs `maplibregl.setWorkerUrl(...)` or the CSP/worker build. Markers and the geofence ring are therefore checked by typecheck only.
+- ~~The map did not render in `next dev` (MapLibre worker).~~ Fixed on `main` (worker served from `public/maplibre/`); this branch is rebased onto it. The markers and geofence ring were still only typechecked when written; check them in a browser.
 - **Dark mode makes panel text invisible**: `globals.css` sets `--foreground: #fafaf9` under `prefers-color-scheme: dark`, but the sheet is `bg-white`. The activities panel pins `text-neutral-900`; other panels will need the same fix, or the shell should set the sheet's text colour.
 
 ## Local setup used

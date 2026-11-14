@@ -3,7 +3,7 @@ import type { EventPayload, LatLng } from "@/shared/contracts";
 import { withTestDb } from "@/shared/db/testing";
 import { bus, emit } from "@/shared/events";
 import { offsetM } from "@/shared/geo";
-import { getPlace } from "@/modules/campus";
+import { getPlaces } from "@/modules/campus";
 import {
   createActivity,
   endActivityAsHost,
@@ -23,9 +23,11 @@ const casey = user("casey");
 
 const T = new Date("2026-11-14T15:00:00Z");
 const at = (s: number) => new Date(T.getTime() + s * 1000);
+// Any real campus place: the tests depend on a place existing, not on which one.
+let placeId: string;
 const body = (title = "Study group", extra: Record<string, unknown> = {}) => ({
   title,
-  placeId: "fx-dubois",
+  placeId,
   category: "study" as const,
   ...extra,
 });
@@ -39,7 +41,9 @@ let activityEnded: EventPayload<"activity.ended">[] = [];
 
 beforeEach(async () => {
   await Promise.all([t.cols.activities.deleteMany({}), t.cols.participations.deleteMany({})]);
-  center = (await getPlace("fx-dubois"))!.center;
+  const place = (await getPlaces())[0];
+  placeId = place.id;
+  center = place.center;
   ended = [];
   activityEnded = [];
   bus.on("participation.ended", "test:capture", (e) => void ended.push(e));
@@ -174,8 +178,8 @@ describe("verified time", () => {
   it("a ping at the same place counts even far from the centre", async () => {
     const a = await createActivity(alex, body(), T);
     await joinActivity(blair, a.id, T);
-    await ping(blair.id, 10, far(), "fx-dubois");
-    await ping(blair.id, 40, far(), "fx-dubois");
+    await ping(blair.id, 10, far(), placeId);
+    await ping(blair.id, 40, far(), placeId);
     expect(await verifiedSeconds(blair.id)).toBe(30);
   });
 
