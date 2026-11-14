@@ -6,7 +6,8 @@ export const metadata = { title: "Sign in · ZooMap" };
 
 const ERRORS: Record<string, string> = {
   AccessDenied: "That account is not allowed. Sign in with your UMass Google account.",
-  Configuration: "Sign-in is not configured on this server.",
+  Database: "Could not reach the database, so sign-in could not finish. Try again in a minute.",
+  Configuration: "Sign-in failed on the server. The server log has the cause.",
 };
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {

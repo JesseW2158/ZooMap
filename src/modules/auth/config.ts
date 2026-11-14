@@ -2,11 +2,24 @@ import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { env } from "@/shared/config/env";
+import { getDb } from "@/shared/db";
 import { signInCallback } from "./callbacks";
 import { seedUsers } from "./seed-users";
 import { upsertUser } from "./users";
 
 const SESSION_MAX_AGE_S = 14 * 24 * 60 * 60;
+
+async function databaseReachable(): Promise<boolean> {
+  try {
+    await (await getDb()).command({ ping: 1 });
+    return true;
+  } catch (error) {
+    // name and message only: never the connection string
+    const { name, message } = error instanceof Error ? error : { name: "Error", message: String(error) };
+    console.error(`[auth] database unreachable during sign-in: ${name}: ${message}`);
+    return false;
+  }
+}
 
 /** Lazy: read at request time, so `next build` needs no secrets and tests can change env. */
 function buildConfig(): NextAuthConfig {
@@ -49,7 +62,13 @@ function buildConfig(): NextAuthConfig {
     session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_S },
     pages: { signIn: "/signin", error: "/signin" },
     callbacks: {
-      signIn: signInCallback,
+      async signIn(params) {
+        if (!(await signInCallback(params))) return false;
+        // The user is written in `jwt` below, and Auth.js reports any error there as a bare
+        // "Configuration". Check the database here so an outage gets its own message.
+        if (!(await databaseReachable())) return "/signin?error=Database";
+        return true;
+      },
       async jwt({ token, user, account }) {
         // `user` and `account` are present only on the sign-in itself.
         if (user?.email && account) {
