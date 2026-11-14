@@ -1,0 +1,3992 @@
+[
+  {
+    "id": "w217243440",
+    "name": "10 Allen",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3832213,
+      "lng": -72.5225752
+    },
+    "entranceNodes": [
+      13092
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "r19376045",
+    "name": "472 North Pleasant Street",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3866503,
+      "lng": -72.5231311
+    },
+    "entranceNodes": [
+      12683,
+      12685,
+      12687
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w147156720",
+    "name": "Agricultural Engineering Annex A",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3922098,
+      "lng": -72.5313278
+    },
+    "entranceNodes": [
+      12818,
+      12820
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156716",
+    "name": "Agricultural Engineering Annex B",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3915544,
+      "lng": -72.5311124
+    },
+    "entranceNodes": [
+      12812,
+      12814
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w304036835",
+    "name": "Agricultural Engineering Center",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3919619,
+      "lng": -72.5311071
+    },
+    "entranceNodes": [
+      13150,
+      13152
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w304036834",
+    "name": "Agricultural Engineering North",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3922152,
+      "lng": -72.5309956
+    },
+    "entranceNodes": [
+      12613
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w304036836",
+    "name": "Agricultural Engineering South",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3916664,
+      "lng": -72.530872
+    },
+    "entranceNodes": [
+      13154,
+      13155,
+      13156
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217056235",
+    "name": "Amherst Fire Department",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3988845,
+      "lng": -72.5151529
+    },
+    "entranceNodes": [
+      12979,
+      12981,
+      12983
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156733",
+    "name": "Army ROTC",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.385198,
+      "lng": -72.5296485
+    },
+    "entranceNodes": [
+      12829,
+      12831
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w216996563",
+    "name": "Arnold House",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3944389,
+      "lng": -72.5260619
+    },
+    "entranceNodes": [
+      12941,
+      12943,
+      12945
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n12569496623",
+    "name": "ASCEND",
+    "aliases": [],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3849253,
+      "lng": -72.5263808
+    },
+    "entranceNodes": [
+      12703,
+      12705
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w149698370",
+    "name": "Astronomy",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3948312,
+      "lng": -72.5296879
+    },
+    "entranceNodes": [
+      12632
+    ],
+    "heightM": 3.5
+  },
+  {
+    "id": "w149698365",
+    "name": "Auxilliary Services Warehouse",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3940236,
+      "lng": -72.5352639
+    },
+    "entranceNodes": [
+      12856,
+      12857
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217242795",
+    "name": "Baker Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3896069,
+      "lng": -72.5197853
+    },
+    "entranceNodes": [
+      13031,
+      13032
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w147156714",
+    "name": "Bartlett Hall",
+    "aliases": [
+      "Bartlett",
+      "BART"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3879164,
+      "lng": -72.5286542
+    },
+    "entranceNodes": [
+      2202,
+      12806,
+      12808,
+      12810
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w184350201",
+    "name": "Berkshire Dining Commons",
+    "aliases": [
+      "Berkshire",
+      "Berk",
+      "Berkshire DC"
+    ],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3819368,
+      "lng": -72.5299389
+    },
+    "entranceNodes": [
+      11927,
+      12879,
+      12880
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w147156721",
+    "name": "Berkshire House",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3855504,
+      "lng": -72.5289376
+    },
+    "entranceNodes": [
+      12821,
+      12823
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w220564408",
+    "name": "Birch Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3880444,
+      "lng": -72.5313653
+    },
+    "entranceNodes": [
+      13123,
+      13125,
+      13127
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w217245362",
+    "name": "Blaisdell House",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3900637,
+      "lng": -72.5307043
+    },
+    "entranceNodes": [
+      13121,
+      13122
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n2447736167",
+    "name": "Blue Wall Cafe",
+    "aliases": [
+      "Blue Wall"
+    ],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3915299,
+      "lng": -72.5268798
+    },
+    "entranceNodes": [
+      2320,
+      6921,
+      8956
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1466891949",
+    "name": "Bowditch Hall",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3927046,
+      "lng": -72.5319007
+    },
+    "entranceNodes": [
+      12765
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w213384152",
+    "name": "Bowditch Lodge",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3814191,
+      "lng": -72.5345061
+    },
+    "entranceNodes": [
+      12921
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n6214868248",
+    "name": "Bowker Auditorium",
+    "aliases": [],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3923025,
+      "lng": -72.5296061
+    },
+    "entranceNodes": [
+      10217
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w130730304",
+    "name": "Boyden Gym",
+    "aliases": [
+      "Boyden"
+    ],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3863932,
+      "lng": -72.5304617
+    },
+    "entranceNodes": [
+      1749,
+      1883,
+      12634,
+      12673,
+      12675,
+      12677
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243181",
+    "name": "Brett Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3896373,
+      "lng": -72.5215383
+    },
+    "entranceNodes": [
+      13066,
+      13068
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w217242999",
+    "name": "Brooks Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3899177,
+      "lng": -72.5210108
+    },
+    "entranceNodes": [
+      13050,
+      13052
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w216996564",
+    "name": "Brown Hall",
+    "aliases": [
+      "Brown"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3974613,
+      "lng": -72.5229433
+    },
+    "entranceNodes": [
+      12947,
+      12949
+    ],
+    "heightM": 28
+  },
+  {
+    "id": "w217242558",
+    "name": "Butterfield Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3885663,
+      "lng": -72.5181722
+    },
+    "entranceNodes": [
+      12998,
+      13000,
+      13002
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w30698364",
+    "name": "Campus Center Parking Garage",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.391239,
+      "lng": -72.5290807
+    },
+    "entranceNodes": [
+      12285,
+      12546
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "n8697693899",
+    "name": "Campus Pizza",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3812419,
+      "lng": -72.5276009
+    },
+    "entranceNodes": [
+      6331
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w187132539",
+    "name": "Cance Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3812156,
+      "lng": -72.529678
+    },
+    "entranceNodes": [
+      12882,
+      12884,
+      12885
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w216996565",
+    "name": "Cashin Hall",
+    "aliases": [
+      "Cashin"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3975025,
+      "lng": -72.5218074
+    },
+    "entranceNodes": [
+      12950,
+      12952
+    ],
+    "heightM": 28
+  },
+  {
+    "id": "w147156738",
+    "name": "Central Hall",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3878431,
+      "lng": -72.5295155
+    },
+    "entranceNodes": [
+      12836,
+      12837
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w149698359",
+    "name": "Central Heating Plant",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3899486,
+      "lng": -72.5370882
+    },
+    "entranceNodes": [
+      12847,
+      12848,
+      12850
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217242668",
+    "name": "Chadbourne Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3893805,
+      "lng": -72.5190898
+    },
+    "entranceNodes": [
+      13014,
+      13016
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w304036840",
+    "name": "Chenoweth Lab Addition",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3920816,
+      "lng": -72.5303241
+    },
+    "entranceNodes": [
+      10170
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w304036839",
+    "name": "Chenoweth Laboratory",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3916224,
+      "lng": -72.5302591
+    },
+    "entranceNodes": [
+      13160,
+      13162
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w217243747",
+    "name": "Clark Hall",
+    "aliases": [
+      "Clark"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3891917,
+      "lng": -72.523728
+    },
+    "entranceNodes": [
+      10452
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1391070600",
+    "name": "Clark Hall Greenhouses",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3889839,
+      "lng": -72.5237318
+    },
+    "entranceNodes": [
+      12716,
+      12718
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156713",
+    "name": "CNS Research and Education Greenhouse",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3921625,
+      "lng": -72.5318448
+    },
+    "entranceNodes": [
+      12803,
+      12804
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w304036838",
+    "name": "Cold Storage Building",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.391543,
+      "lng": -72.530505
+    },
+    "entranceNodes": [
+      13158
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217242980",
+    "name": "Communication Disorders",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3827928,
+      "lng": -72.5208149
+    },
+    "entranceNodes": [
+      13042,
+      13044
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w51650200",
+    "name": "Computer Science Building",
+    "aliases": [
+      "CS",
+      "CS Building",
+      "CICS",
+      "Computer Science"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3951495,
+      "lng": -72.5312213
+    },
+    "entranceNodes": [
+      3590,
+      11811
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1456797029",
+    "name": "Computer Science Laboratories",
+    "aliases": [
+      "CSL",
+      "CS Labs"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3954013,
+      "lng": -72.5304923
+    },
+    "entranceNodes": [
+      11803,
+      12754,
+      12756
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w122196718",
+    "name": "Conte National Polymer Research Center",
+    "aliases": [
+      "Conte",
+      "Polymer Research Center"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3944011,
+      "lng": -72.528068
+    },
+    "entranceNodes": [
+      7243,
+      10063,
+      10068
+    ],
+    "heightM": 21
+  },
+  {
+    "id": "w187132545",
+    "name": "Coolidge Hall",
+    "aliases": [
+      "Coolidge"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3836704,
+      "lng": -72.5298754
+    },
+    "entranceNodes": [
+      12912
+    ],
+    "heightM": 77
+  },
+  {
+    "id": "n4871005435",
+    "name": "Courtside Café",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3891571,
+      "lng": -72.5316763
+    },
+    "entranceNodes": [
+      12799,
+      12800,
+      12802
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w216996566",
+    "name": "Crabtree Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3940834,
+      "lng": -72.5250968
+    },
+    "entranceNodes": [
+      12953,
+      12955
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w266763173",
+    "name": "Crampton Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3832903,
+      "lng": -72.5289964
+    },
+    "entranceNodes": [
+      13132,
+      13134,
+      13136
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w905886928",
+    "name": "Crotty Hall",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3846028,
+      "lng": -72.5221586
+    },
+    "entranceNodes": [
+      13202,
+      13204
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156702",
+    "name": "Curry Hicks Cage",
+    "aliases": [
+      "Cage",
+      "Curry Hicks"
+    ],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3872046,
+      "lng": -72.5282485
+    },
+    "entranceNodes": [
+      12768,
+      12770,
+      12772
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w149698373",
+    "name": "DCR Amherst field office",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3935081,
+      "lng": -72.5359193
+    },
+    "entranceNodes": [
+      12861,
+      12863
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156743",
+    "name": "Dickinson Hall",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3890724,
+      "lng": -72.5303835
+    },
+    "entranceNodes": [
+      12253
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w147156707",
+    "name": "Draper Hall",
+    "aliases": [
+      "Draper"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3923572,
+      "lng": -72.5284129
+    },
+    "entranceNodes": [
+      12782,
+      12784
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w149698366",
+    "name": "Duda",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3944756,
+      "lng": -72.5303199
+    },
+    "entranceNodes": [
+      12859
+    ],
+    "heightM": 3.5
+  },
+  {
+    "id": "w217243405",
+    "name": "Durfee Conservatory",
+    "aliases": [
+      "Durfee"
+    ],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3906579,
+      "lng": -72.5225436
+    },
+    "entranceNodes": [
+      13080
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w216996567",
+    "name": "Dwight Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3953583,
+      "lng": -72.5251402
+    },
+    "entranceNodes": [
+      2984
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n3829204907",
+    "name": "Earthfoods",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3910021,
+      "lng": -72.5276135
+    },
+    "entranceNodes": [
+      9504,
+      13167,
+      13169
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1059389317",
+    "name": "East Experiment Station",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3933356,
+      "lng": -72.525567
+    },
+    "entranceNodes": [
+      10109,
+      12300
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w145173739",
+    "name": "East Stadium Stands",
+    "aliases": [],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3772757,
+      "lng": -72.5353296
+    },
+    "entranceNodes": [
+      12744,
+      12746,
+      12748
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w304034779",
+    "name": "Elm Hall",
+    "aliases": [
+      "Honors College",
+      "CHC"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3881211,
+      "lng": -72.5299885
+    },
+    "entranceNodes": [
+      12656,
+      12659,
+      12661,
+      12663,
+      12669,
+      12671,
+      12672
+    ],
+    "heightM": 28
+  },
+  {
+    "id": "w187132542",
+    "name": "Emerson Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3835377,
+      "lng": -72.5313954
+    },
+    "entranceNodes": [
+      12895,
+      12897,
+      12899
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w217242684",
+    "name": "Emily E. Dickinson House",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3921369,
+      "lng": -72.5196372
+    },
+    "entranceNodes": [
+      13018,
+      13020,
+      13022
+    ],
+    "heightM": 24.5
+  },
+  {
+    "id": "w149698371",
+    "name": "Engineering Laboratory I",
+    "aliases": [
+      "ELab",
+      "ELab I",
+      "Engineering Lab"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3947528,
+      "lng": -72.5304466
+    },
+    "entranceNodes": [
+      3592,
+      6677,
+      6680,
+      10362
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w149698363",
+    "name": "Engineering Laboratory II",
+    "aliases": [
+      "ELab II",
+      "ELab 2"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3943811,
+      "lng": -72.5311371
+    },
+    "entranceNodes": [
+      3591,
+      6275,
+      11926
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w213384154",
+    "name": "Farley Lodge",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3811569,
+      "lng": -72.5347362
+    },
+    "entranceNodes": [
+      12923
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243423",
+    "name": "Fernald Hall",
+    "aliases": [
+      "Fernald"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3885789,
+      "lng": -72.522395
+    },
+    "entranceNodes": [
+      13086,
+      13088,
+      13090
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w304031887",
+    "name": "Field Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.391659,
+      "lng": -72.5186464
+    },
+    "entranceNodes": [
+      13142,
+      13144,
+      13146
+    ],
+    "heightM": 24.5
+  },
+  {
+    "id": "w1290335063",
+    "name": "Fieldstone Artisan",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3834289,
+      "lng": -72.5255992
+    },
+    "entranceNodes": [
+      12707,
+      12709,
+      12711
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w1283066726",
+    "name": "Fieldstone Slate",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3844612,
+      "lng": -72.5257297
+    },
+    "entranceNodes": [
+      12703,
+      12705
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "n14277622591",
+    "name": "First Baptist Church",
+    "aliases": [],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3851696,
+      "lng": -72.5222741
+    },
+    "entranceNodes": [
+      8034
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156735",
+    "name": "Flint Lab",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3916713,
+      "lng": -72.5296292
+    },
+    "entranceNodes": [
+      12833,
+      12835
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w307329662",
+    "name": "Football Performance Center",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3781229,
+      "lng": -72.5359497
+    },
+    "entranceNodes": [
+      13175,
+      13176,
+      13178
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w304036833",
+    "name": "Former Textbook Annex",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3911879,
+      "lng": -72.5319657
+    },
+    "entranceNodes": [
+      13147,
+      13148,
+      13149
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243328",
+    "name": "Franklin Dining Commons",
+    "aliases": [
+      "Franklin",
+      "Frank",
+      "Franklin DC"
+    ],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3892691,
+      "lng": -72.5225278
+    },
+    "entranceNodes": [
+      13070,
+      13072,
+      13074
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w217243550",
+    "name": "French Hall",
+    "aliases": [
+      "French"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.389981,
+      "lng": -72.5229399
+    },
+    "entranceNodes": [
+      13094,
+      13096
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "r2875758",
+    "name": "Furcolo Hall",
+    "aliases": [
+      "Furcolo"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3982022,
+      "lng": -72.5265973
+    },
+    "entranceNodes": [
+      11887,
+      12692,
+      12694
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156710",
+    "name": "George N. Parks Minuteman Marching Band Building",
+    "aliases": [
+      "Band Building"
+    ],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3896667,
+      "lng": -72.5306623
+    },
+    "entranceNodes": [
+      12792,
+      12794
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w51648973",
+    "name": "Goessmann Laboratory",
+    "aliases": [
+      "Goessmann",
+      "GSMN"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3931484,
+      "lng": -72.5278699
+    },
+    "entranceNodes": [
+      8947,
+      9837,
+      9839,
+      9844,
+      9845,
+      9846,
+      10339,
+      10345,
+      10359
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w147156711",
+    "name": "Goodell Hall",
+    "aliases": [
+      "Goodell"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3887172,
+      "lng": -72.5292065
+    },
+    "entranceNodes": [
+      12658,
+      12795,
+      12797
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w217243406",
+    "name": "Gordon Hall",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3848897,
+      "lng": -72.5222041
+    },
+    "entranceNodes": [
+      13082,
+      13084
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243049",
+    "name": "Gorman Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3875372,
+      "lng": -72.521009
+    },
+    "entranceNodes": [
+      5101,
+      13055,
+      13057
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w217242584",
+    "name": "Grayson Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3922621,
+      "lng": -72.5188364
+    },
+    "entranceNodes": [
+      13004,
+      13006,
+      13008
+    ],
+    "heightM": 24.5
+  },
+  {
+    "id": "n2757590956",
+    "name": "Greeno Subshop",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3899721,
+      "lng": -72.5193333
+    },
+    "entranceNodes": [
+      13024,
+      13025
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w217242715",
+    "name": "Greenough Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3900348,
+      "lng": -72.5192965
+    },
+    "entranceNodes": [
+      13024,
+      13025
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w304034782",
+    "name": "Grinnell Arena",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3895306,
+      "lng": -72.5311135
+    },
+    "entranceNodes": [
+      11402
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w149698361",
+    "name": "Gunness",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3945319,
+      "lng": -72.5296689
+    },
+    "entranceNodes": [
+      8902,
+      12852,
+      12854
+    ],
+    "heightM": 3.5
+  },
+  {
+    "id": "w216996568",
+    "name": "Hamlin Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3949958,
+      "lng": -72.5263338
+    },
+    "entranceNodes": [
+      12957,
+      12959
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w184350144",
+    "name": "Hampden",
+    "aliases": [
+      "Hampden"
+    ],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3828951,
+      "lng": -72.529695
+    },
+    "entranceNodes": [
+      12643,
+      12645,
+      12647,
+      12649
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "n4763295245",
+    "name": "Hampshire Cafè",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3839971,
+      "lng": -72.5304548
+    },
+    "entranceNodes": [
+      11682
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w184350299",
+    "name": "Hampshire Dining Commons",
+    "aliases": [
+      "Hampshire",
+      "Hamp",
+      "Hampshire DC"
+    ],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3838557,
+      "lng": -72.5305157
+    },
+    "entranceNodes": [
+      11682
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w147156730",
+    "name": "Hampshire House",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3851602,
+      "lng": -72.5286156
+    },
+    "entranceNodes": [
+      12828
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n12654261984",
+    "name": "Harvest Market",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3919623,
+      "lng": -72.526957
+    },
+    "entranceNodes": [
+      2320,
+      6921,
+      8956
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w110428293",
+    "name": "Hasbrouck Laboratory",
+    "aliases": [
+      "Hasbrouck",
+      "HAS",
+      "HASA"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.391771,
+      "lng": -72.5258513
+    },
+    "entranceNodes": [
+      10119,
+      10120,
+      10492,
+      12376,
+      12378
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w668103247",
+    "name": "Herter Annex",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3877918,
+      "lng": -72.5273073
+    },
+    "entranceNodes": [
+      12415
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w147156701",
+    "name": "Herter Hall",
+    "aliases": [
+      "Herter",
+      "HERT"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3872595,
+      "lng": -72.5271661
+    },
+    "entranceNodes": [
+      1855,
+      12767
+    ],
+    "heightM": 24.5
+  },
+  {
+    "id": "r2875757",
+    "name": "Hillel House",
+    "aliases": [],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3839342,
+      "lng": -72.5215596
+    },
+    "entranceNodes": [
+      12689,
+      12691
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243028",
+    "name": "Hillside - Chancellor's House",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3915426,
+      "lng": -72.5212087
+    },
+    "entranceNodes": [
+      13053
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156754",
+    "name": "Holdsworth Hall",
+    "aliases": [
+      "Holdsworth",
+      "HOLD"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3928824,
+      "lng": -72.5309435
+    },
+    "entranceNodes": [
+      3575,
+      6596
+    ],
+    "heightM": 42
+  },
+  {
+    "id": "w217244547",
+    "name": "Immanuel Lutheran Church",
+    "aliases": [],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3996168,
+      "lng": -72.5266891
+    },
+    "entranceNodes": [
+      13113,
+      13115
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217244017",
+    "name": "Integrated Sciences Building",
+    "aliases": [
+      "ISB",
+      "Integrated Sciences"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3924913,
+      "lng": -72.524846
+    },
+    "entranceNodes": [
+      8264,
+      8545,
+      8970,
+      9020,
+      10123
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w292876549",
+    "name": "Integrative Learning Center",
+    "aliases": [
+      "ILC",
+      "Integrated Learning Center"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3910208,
+      "lng": -72.5259652
+    },
+    "entranceNodes": [
+      8964,
+      8965,
+      12437,
+      12622
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217242996",
+    "name": "International Programs Office",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3870061,
+      "lng": -72.5209589
+    },
+    "entranceNodes": [
+      13046,
+      13048
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243155",
+    "name": "Iota Gamma Upsilon",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3844577,
+      "lng": -72.5216729
+    },
+    "entranceNodes": [
+      13063,
+      13065
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "n4871005433",
+    "name": "ISB Café",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3926728,
+      "lng": -72.5247848
+    },
+    "entranceNodes": [
+      8264,
+      8545,
+      8970,
+      9020,
+      10123
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "r17798539",
+    "name": "Isenberg School of Management",
+    "aliases": [
+      "Isenberg",
+      "ISOM",
+      "SOM"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3870195,
+      "lng": -72.5248573
+    },
+    "entranceNodes": [
+      2143,
+      7376,
+      9015,
+      10248,
+      10249,
+      10250,
+      10253,
+      10255,
+      10256,
+      10289
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w187132546",
+    "name": "James Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3840847,
+      "lng": -72.531204
+    },
+    "entranceNodes": [
+      12913,
+      12915
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w1391493914",
+    "name": "John Adams Hall",
+    "aliases": [
+      "JA",
+      "John Adams"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.381861,
+      "lng": -72.5288127
+    },
+    "entranceNodes": [
+      12727,
+      12729
+    ],
+    "heightM": 77
+  },
+  {
+    "id": "w1391493916",
+    "name": "John Quincy Adams Hall",
+    "aliases": [
+      "JQA",
+      "John Quincy Adams"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3822515,
+      "lng": -72.5291382
+    },
+    "entranceNodes": [
+      12735,
+      12737
+    ],
+    "heightM": 77
+  },
+  {
+    "id": "w483220334",
+    "name": "John W. Olver Design Building",
+    "aliases": [
+      "Design Building",
+      "Olver",
+      "DES"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3882305,
+      "lng": -72.5235774
+    },
+    "entranceNodes": [
+      10040,
+      10042,
+      11333
+    ],
+    "heightM": 20.7
+  },
+  {
+    "id": "w216996569",
+    "name": "Johnson Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3955877,
+      "lng": -72.5245088
+    },
+    "entranceNodes": [
+      12960,
+      12962
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243903",
+    "name": "Kappa Kappa Gamma",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3837456,
+      "lng": -72.5242419
+    },
+    "entranceNodes": [
+      13108,
+      13110
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w678037640",
+    "name": "Kennedy Champions Center",
+    "aliases": [],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3883547,
+      "lng": -72.5327061
+    },
+    "entranceNodes": [
+      13190,
+      13192,
+      13194
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1391493915",
+    "name": "Kennedy Hall",
+    "aliases": [
+      "Kennedy"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3841094,
+      "lng": -72.5296226
+    },
+    "entranceNodes": [
+      12731,
+      12733
+    ],
+    "heightM": 77
+  },
+  {
+    "id": "w107497663",
+    "name": "Knowles Engineering Building",
+    "aliases": [
+      "Knowles"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3932772,
+      "lng": -72.5289584
+    },
+    "entranceNodes": [
+      10216,
+      12421
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w216996570",
+    "name": "Knowlton Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.393896,
+      "lng": -72.52569
+    },
+    "entranceNodes": [
+      12963,
+      12965
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w216996571",
+    "name": "Leach Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3952051,
+      "lng": -72.5257501
+    },
+    "entranceNodes": [
+      12967,
+      12969
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w122196721",
+    "name": "Lederle Graduate Research Center",
+    "aliases": [
+      "LGRC",
+      "LGRC Lowrise",
+      "Lederle Lowrise"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3943265,
+      "lng": -72.5270364
+    },
+    "entranceNodes": [
+      6118,
+      10086,
+      12358
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w122196717",
+    "name": "Lederle Graduate Research Tower",
+    "aliases": [
+      "LGRT",
+      "Lederle Tower",
+      "Lederle"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3938611,
+      "lng": -72.5276648
+    },
+    "entranceNodes": [
+      6130,
+      10244
+    ],
+    "heightM": 64
+  },
+  {
+    "id": "w216996572",
+    "name": "Lewis Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3950978,
+      "lng": -72.5239627
+    },
+    "entranceNodes": [
+      12970
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w719082384",
+    "name": "LGRC-LGRT Skyway",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3939267,
+      "lng": -72.5273844
+    },
+    "entranceNodes": [
+      10081
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w719082382",
+    "name": "LGRT-Goessmann Skyway",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3935681,
+      "lng": -72.5273669
+    },
+    "entranceNodes": [
+      10111
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "n4759750663",
+    "name": "Life and Earth Cafe",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3896234,
+      "lng": -72.5244919
+    },
+    "entranceNodes": [
+      8985,
+      11747
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w217243843",
+    "name": "Life Science Laboratories",
+    "aliases": [
+      "LSL",
+      "Life Sciences Lab",
+      "Life Science Labs"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3920762,
+      "lng": -72.5237767
+    },
+    "entranceNodes": [
+      9024,
+      10609,
+      12321
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w220564407",
+    "name": "Linden",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3870493,
+      "lng": -72.5308545
+    },
+    "entranceNodes": [
+      12679,
+      12682
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w40693158",
+    "name": "Machmer Hall",
+    "aliases": [
+      "Machmer",
+      "MACH"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3905218,
+      "lng": -72.5287318
+    },
+    "entranceNodes": [
+      2316,
+      2567,
+      11624,
+      12401,
+      12594,
+      12628,
+      12630
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w184350151",
+    "name": "MacKimmie Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3827882,
+      "lng": -72.5286827
+    },
+    "entranceNodes": [
+      12875,
+      12877
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w30700447",
+    "name": "Mahar Auditorium",
+    "aliases": [
+      "Mahar"
+    ],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3865875,
+      "lng": -72.5242193
+    },
+    "entranceNodes": [
+      7263,
+      7264,
+      7265
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w220564409",
+    "name": "Maple Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3875846,
+      "lng": -72.5309428
+    },
+    "entranceNodes": [
+      12654,
+      13128,
+      13130
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w122197832",
+    "name": "Marcus Hall",
+    "aliases": [
+      "Marcus"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3939688,
+      "lng": -72.5285891
+    },
+    "entranceNodes": [
+      6564,
+      12332
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w719082381",
+    "name": "Marcus-Marston Skyway",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3941631,
+      "lng": -72.5289356
+    },
+    "entranceNodes": [
+      13198
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w51649170",
+    "name": "Marston Hall",
+    "aliases": [
+      "Marston"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3940569,
+      "lng": -72.5293846
+    },
+    "entranceNodes": [
+      11246,
+      12624,
+      12626
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w1391300171",
+    "name": "Martin & Richard Jacobson Press & Skybox Complex",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3773571,
+      "lng": -72.5369044
+    },
+    "entranceNodes": [
+      12719,
+      12721
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w216996573",
+    "name": "Mary Lyon Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3943067,
+      "lng": -72.5245317
+    },
+    "entranceNodes": [
+      12971,
+      12973
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w216996574",
+    "name": "McNamara Hall",
+    "aliases": [
+      "McNamara"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3979466,
+      "lng": -72.5222825
+    },
+    "entranceNodes": [
+      12974,
+      12975
+    ],
+    "heightM": 28
+  },
+  {
+    "id": "w187132544",
+    "name": "Melville Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3846669,
+      "lng": -72.5308047
+    },
+    "entranceNodes": [
+      12906,
+      12908,
+      12910
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w147156727",
+    "name": "Memorial Hall",
+    "aliases": [
+      "Memorial Hall"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3884223,
+      "lng": -72.5275732
+    },
+    "entranceNodes": [
+      12600
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217242849",
+    "name": "Mercy House",
+    "aliases": [],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3831035,
+      "lng": -72.5202161
+    },
+    "entranceNodes": [
+      13034,
+      13036
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156717",
+    "name": "Middlesex House",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3856786,
+      "lng": -72.5285075
+    },
+    "entranceNodes": [
+      12816
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217244549",
+    "name": "Montague House",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3977922,
+      "lng": -72.5267817
+    },
+    "entranceNodes": [
+      13117,
+      13119
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w187132540",
+    "name": "Moore Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3820483,
+      "lng": -72.5308152
+    },
+    "entranceNodes": [
+      12887,
+      12889
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w844069509",
+    "name": "Morrill Greenhouses",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3890102,
+      "lng": -72.5242597
+    },
+    "entranceNodes": [
+      8026,
+      13200
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w267026965",
+    "name": "Morrill I",
+    "aliases": [
+      "Morrill",
+      "Morrill 1"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3909754,
+      "lng": -72.523981
+    },
+    "entranceNodes": [
+      4811,
+      13138,
+      13140
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w131281207",
+    "name": "Morrill II",
+    "aliases": [
+      "Morrill 2"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3899621,
+      "lng": -72.5244673
+    },
+    "entranceNodes": [
+      8976,
+      10940,
+      10944
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w267026966",
+    "name": "Morrill III",
+    "aliases": [
+      "Morrill 3"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3894424,
+      "lng": -72.5243673
+    },
+    "entranceNodes": [
+      8985,
+      11747
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w110428294",
+    "name": "Morrill IV North",
+    "aliases": [
+      "Morrill 4",
+      "Morrill 4N"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3908805,
+      "lng": -72.5247478
+    },
+    "entranceNodes": [
+      12699,
+      12700,
+      12702
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w1353190386",
+    "name": "Morrill IV South",
+    "aliases": [
+      "Morrill 4S"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3904911,
+      "lng": -72.5244099
+    },
+    "entranceNodes": [
+      8971
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w30698363",
+    "name": "Mullins Center",
+    "aliases": [
+      "Mullins"
+    ],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3894141,
+      "lng": -72.5334016
+    },
+    "entranceNodes": [
+      11652,
+      13171,
+      13173
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w32316713",
+    "name": "Mullins Center Community Ice Rink",
+    "aliases": [],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.390477,
+      "lng": -72.5339811
+    },
+    "entranceNodes": [
+      13182,
+      13184,
+      13186
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n9459551510",
+    "name": "Mullins Center Rink",
+    "aliases": [],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3893639,
+      "lng": -72.5333454
+    },
+    "entranceNodes": [
+      11652,
+      13171,
+      13173
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156704",
+    "name": "Munson Hall",
+    "aliases": [
+      "Munson"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.386566,
+      "lng": -72.5276478
+    },
+    "entranceNodes": [
+      12779,
+      12781
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w30698361",
+    "name": "Murray D. Lincoln Campus Center",
+    "aliases": [
+      "Campus Center",
+      "CC",
+      "CCA"
+    ],
+    "category": "student_life",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.39177,
+      "lng": -72.5270171
+    },
+    "entranceNodes": [
+      2320,
+      6921,
+      8956,
+      13164,
+      13165,
+      13166
+    ],
+    "heightM": 38.5
+  },
+  {
+    "id": "w217242975",
+    "name": "New Africa House",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3889748,
+      "lng": -72.5206868
+    },
+    "entranceNodes": [
+      13038,
+      13040
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n11905555740",
+    "name": "Newman Cafe",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3872849,
+      "lng": -72.5218025
+    },
+    "entranceNodes": [
+      12712,
+      12714
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w1290335069",
+    "name": "Newman Catholic Center",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3872535,
+      "lng": -72.5219413
+    },
+    "entranceNodes": [
+      12712,
+      12714
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w217242648",
+    "name": "Noah Webster House",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3915065,
+      "lng": -72.5194381
+    },
+    "entranceNodes": [
+      13010,
+      13011,
+      13013
+    ],
+    "heightM": 24.5
+  },
+  {
+    "id": "w216955124",
+    "name": "North A",
+    "aliases": [
+      "North Apartments"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3976045,
+      "lng": -72.5241209
+    },
+    "entranceNodes": [
+      12924,
+      12925,
+      12926
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w216955125",
+    "name": "North B",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3967718,
+      "lng": -72.5241712
+    },
+    "entranceNodes": [
+      12927,
+      12929,
+      12930
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w216955126",
+    "name": "North C",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3975879,
+      "lng": -72.5250765
+    },
+    "entranceNodes": [
+      12931,
+      12932,
+      12933
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w216955127",
+    "name": "North D",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3967514,
+      "lng": -72.5251238
+    },
+    "entranceNodes": [
+      12934,
+      12935,
+      12937
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w704071839",
+    "name": "North Energy Exchange Center",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3944389,
+      "lng": -72.5316675
+    },
+    "entranceNodes": [
+      10162
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w220564406",
+    "name": "Oak Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3875038,
+      "lng": -72.5302715
+    },
+    "entranceNodes": [
+      12652,
+      12681
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156753",
+    "name": "Old Chapel",
+    "aliases": [
+      "Old Chapel",
+      "Chapel"
+    ],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3889855,
+      "lng": -72.5279605
+    },
+    "entranceNodes": [
+      12405
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w495323093",
+    "name": "Orchard Hill Observatory",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3940667,
+      "lng": -72.5215741
+    },
+    "entranceNodes": [
+      13188
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1495880186",
+    "name": "Orchard Hill Pavilion",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3950412,
+      "lng": -72.5204927
+    },
+    "entranceNodes": [
+      12842,
+      12844
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w51649672",
+    "name": "Paige Laboratory",
+    "aliases": [
+      "Paige"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3933421,
+      "lng": -72.5298368
+    },
+    "entranceNodes": [
+      10895,
+      10896
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w184350150",
+    "name": "Patterson Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3818061,
+      "lng": -72.5284287
+    },
+    "entranceNodes": [
+      12871,
+      12873
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "n4871005432",
+    "name": "Peet's Coffee",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3912498,
+      "lng": -72.5262829
+    },
+    "entranceNodes": [
+      8964,
+      8965,
+      12437,
+      12622
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n3829218401",
+    "name": "People's Market",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3906292,
+      "lng": -72.5274584
+    },
+    "entranceNodes": [
+      9504,
+      13167,
+      13169
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n14255728068",
+    "name": "People's Organic Coffee",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3916572,
+      "lng": -72.5269483
+    },
+    "entranceNodes": [
+      2320,
+      6921,
+      8956
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243782",
+    "name": "Phi Sigma Kappa",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3873864,
+      "lng": -72.5237127
+    },
+    "entranceNodes": [
+      13105,
+      13106
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156739",
+    "name": "Photography Laboratory",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3904631,
+      "lng": -72.5304168
+    },
+    "entranceNodes": [
+      12839,
+      12841
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156709",
+    "name": "Physical Plant",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3912837,
+      "lng": -72.5325446
+    },
+    "entranceNodes": [
+      12786,
+      12788,
+      12790
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w678935094",
+    "name": "Physical Sciences Building",
+    "aliases": [
+      "PSB",
+      "Physical Sciences"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3936425,
+      "lng": -72.5266729
+    },
+    "entranceNodes": [
+      9834,
+      10346,
+      10347
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w187132543",
+    "name": "Pierpont Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3814841,
+      "lng": -72.5304972
+    },
+    "entranceNodes": [
+      12901,
+      12903,
+      12904
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "n11769906162",
+    "name": "Post & Bean",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.38823,
+      "lng": -72.5237472
+    },
+    "entranceNodes": [
+      10040,
+      10042,
+      11333
+    ],
+    "heightM": 20.7
+  },
+  {
+    "id": "w32316563",
+    "name": "Prince Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3840236,
+      "lng": -72.5289888
+    },
+    "entranceNodes": [
+      13179,
+      13181
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "n5522689509",
+    "name": "Procrastination Station",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3899151,
+      "lng": -72.5283165
+    },
+    "entranceNodes": [
+      8988,
+      12696,
+      12698
+    ],
+    "heightM": 87.2
+  },
+  {
+    "id": "w719082383",
+    "name": "PSB-Goessmann Skyway",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3934789,
+      "lng": -72.5270657
+    },
+    "entranceNodes": [
+      13199
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w149698362",
+    "name": "PVTA Bus Garage",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3942491,
+      "lng": -72.5335099
+    },
+    "entranceNodes": [
+      10308,
+      10313,
+      10331,
+      10333,
+      12636,
+      12638,
+      12640,
+      12641,
+      12642
+    ],
+    "heightM": 3.5
+  },
+  {
+    "id": "n4935175404",
+    "name": "Quad Café",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.393746,
+      "lng": -72.5285113
+    },
+    "entranceNodes": [
+      6564,
+      12332
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "n6214868249",
+    "name": "Rand Theater",
+    "aliases": [],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3880334,
+      "lng": -72.5265141
+    },
+    "entranceNodes": [
+      1953,
+      10236
+    ],
+    "heightM": 20.1
+  },
+  {
+    "id": "w30698359",
+    "name": "Randolph W. Bromery Center for the Arts",
+    "aliases": [
+      "Bromery",
+      "Bromery Center",
+      "Fine Arts Center",
+      "FAC"
+    ],
+    "category": "student_life",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3882269,
+      "lng": -72.5257995
+    },
+    "entranceNodes": [
+      1953,
+      10236
+    ],
+    "heightM": 20.1
+  },
+  {
+    "id": "w147156712",
+    "name": "Recreation Center",
+    "aliases": [
+      "Rec Center",
+      "Rec"
+    ],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3888403,
+      "lng": -72.5316668
+    },
+    "entranceNodes": [
+      12799,
+      12800,
+      12802
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217244080",
+    "name": "Robsham Visitor's Center",
+    "aliases": [
+      "Visitor Center"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3851394,
+      "lng": -72.525284
+    },
+    "entranceNodes": [
+      13111
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n3828423635",
+    "name": "Roots Cafe",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3881602,
+      "lng": -72.5304735
+    },
+    "entranceNodes": [
+      12650,
+      12662,
+      12665,
+      12667
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w1482052846",
+    "name": "School of Public Health & Health Sciences Hub",
+    "aliases": [
+      "SPHHS",
+      "Public Health"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3960001,
+      "lng": -72.5266831
+    },
+    "entranceNodes": [
+      12157
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n13278568851",
+    "name": "Science & Engineering Library",
+    "aliases": [
+      "Sci Eng Library",
+      "Science Library",
+      "S&E Library"
+    ],
+    "category": "library",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3940536,
+      "lng": -72.5267588
+    },
+    "entranceNodes": [
+      6118,
+      10086,
+      12358
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w217243736",
+    "name": "Shade Tree Lab",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3897395,
+      "lng": -72.5235613
+    },
+    "entranceNodes": [
+      13101,
+      13103
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "r19208020",
+    "name": "Skinner Hall",
+    "aliases": [
+      "Skinner"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3916187,
+      "lng": -72.5246737
+    },
+    "entranceNodes": [
+      8494,
+      9064
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "n4763295246",
+    "name": "Snack Overflow",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3955369,
+      "lng": -72.5305376
+    },
+    "entranceNodes": [
+      11803,
+      12754,
+      12756
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w495323096",
+    "name": "South College",
+    "aliases": [
+      "South College"
+    ],
+    "category": "academic",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3895526,
+      "lng": -72.5293743
+    },
+    "entranceNodes": [
+      6822,
+      6826,
+      6839
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w145173742",
+    "name": "South Football Building",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3761772,
+      "lng": -72.5361277
+    },
+    "entranceNodes": [
+      12749,
+      12750,
+      12752
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156728",
+    "name": "Steam and Condensate Building",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3902787,
+      "lng": -72.5309627
+    },
+    "entranceNodes": [
+      12825,
+      12826
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156749",
+    "name": "Stockbridge Hall",
+    "aliases": [
+      "Stockbridge"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3922636,
+      "lng": -72.5294805
+    },
+    "entranceNodes": [
+      10217
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w30698362",
+    "name": "Student Union",
+    "aliases": [
+      "SU",
+      "Student Union"
+    ],
+    "category": "student_life",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3908769,
+      "lng": -72.5275716
+    },
+    "entranceNodes": [
+      9504,
+      13167,
+      13169
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243375",
+    "name": "Studio Arts Building",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3876564,
+      "lng": -72.5231159
+    },
+    "entranceNodes": [
+      2165,
+      13076,
+      13078
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1554362478",
+    "name": "Sustainable Engineering Laboratories",
+    "aliases": [
+      "Sustainable Engineering"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3928996,
+      "lng": -72.5287008
+    },
+    "entranceNodes": [
+      12865,
+      12867,
+      12869
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "n4870993821",
+    "name": "Sweets & More",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3914342,
+      "lng": -72.5187302
+    },
+    "entranceNodes": [
+      13142,
+      13144,
+      13146
+    ],
+    "heightM": 24.5
+  },
+  {
+    "id": "w304034780",
+    "name": "Sycamore Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3883609,
+      "lng": -72.530707
+    },
+    "entranceNodes": [
+      12650,
+      12662,
+      12665,
+      12667
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "n4870993834",
+    "name": "Sylvan Snack Bar",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3979469,
+      "lng": -72.5222302
+    },
+    "entranceNodes": [
+      12974,
+      12975
+    ],
+    "heightM": 28
+  },
+  {
+    "id": "n12569496622",
+    "name": "Terrace",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3850467,
+      "lng": -72.525899
+    },
+    "entranceNodes": [
+      12703,
+      12705
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "w216996578",
+    "name": "Thatcher Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3944729,
+      "lng": -72.5238028
+    },
+    "entranceNodes": [
+      12976,
+      12977
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n14339729943",
+    "name": "The Commonwealth Restaurant",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3930733,
+      "lng": -72.5249529
+    },
+    "entranceNodes": [
+      11224,
+      12985,
+      12986
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w217243680",
+    "name": "Theta Chi",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3870328,
+      "lng": -72.5232745
+    },
+    "entranceNodes": [
+      13098,
+      13100
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w147156729",
+    "name": "Thompson Hall",
+    "aliases": [
+      "Thompson",
+      "THOM"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3900782,
+      "lng": -72.5298183
+    },
+    "entranceNodes": [
+      6815,
+      6837,
+      6838,
+      6840,
+      6899
+    ],
+    "heightM": 35
+  },
+  {
+    "id": "w187132541",
+    "name": "Thoreau Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3843911,
+      "lng": -72.5299318
+    },
+    "entranceNodes": [
+      12890,
+      12892,
+      12894
+    ],
+    "heightM": 14
+  },
+  {
+    "id": "w147156703",
+    "name": "Tobin Hall",
+    "aliases": [
+      "Tobin",
+      "TOB"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3875038,
+      "lng": -72.5295587
+    },
+    "entranceNodes": [
+      12774,
+      12776,
+      12778
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w213384148",
+    "name": "Toddler House",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3812024,
+      "lng": -72.5342558
+    },
+    "entranceNodes": [
+      12917,
+      12919
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w216955133",
+    "name": "Totman Gym",
+    "aliases": [
+      "Totman"
+    ],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3961776,
+      "lng": -72.525955
+    },
+    "entranceNodes": [
+      8995,
+      12938,
+      12940
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w149698367",
+    "name": "Transit Facility",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3933389,
+      "lng": -72.5334266
+    },
+    "entranceNodes": [
+      10305,
+      10335
+    ],
+    "heightM": 3.5
+  },
+  {
+    "id": "w1457264143",
+    "name": "UMass Bubble",
+    "aliases": [],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.37712,
+      "lng": -72.5382565
+    },
+    "entranceNodes": [
+      12758,
+      12760,
+      12762,
+      12764
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w149698358",
+    "name": "UMass Parking Services",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.392538,
+      "lng": -72.535185
+    },
+    "entranceNodes": [
+      12846
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w678515205",
+    "name": "UMass Receiving",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3908691,
+      "lng": -72.5324062
+    },
+    "entranceNodes": [
+      13195,
+      13197
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243172",
+    "name": "University Health Services",
+    "aliases": [
+      "UHS",
+      "Health Services"
+    ],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3904521,
+      "lng": -72.521588
+    },
+    "entranceNodes": [
+      11063,
+      11067,
+      12308,
+      12316
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217242736",
+    "name": "University Lodge",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3825934,
+      "lng": -72.5196258
+    },
+    "entranceNodes": [
+      13027,
+      13029
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w217056240",
+    "name": "University of Massachusetts Police Department",
+    "aliases": [],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3979373,
+      "lng": -72.5149896
+    },
+    "entranceNodes": [
+      12987,
+      12988,
+      12990
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217242529",
+    "name": "Van Meter Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3898581,
+      "lng": -72.5183389
+    },
+    "entranceNodes": [
+      12992,
+      12994,
+      12996
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "r4054634",
+    "name": "W.E.B. Du Bois Library",
+    "aliases": [
+      "Du Bois",
+      "DuBois",
+      "Du Bois Library",
+      "W.E.B. Du Bois",
+      "Library",
+      "Learning Commons"
+    ],
+    "category": "library",
+    "studyFriendly": true,
+    "center": {
+      "lat": 42.3896626,
+      "lng": -72.5281373
+    },
+    "entranceNodes": [
+      8988,
+      12696,
+      12698
+    ],
+    "heightM": 87.2
+  },
+  {
+    "id": "w182055816",
+    "name": "Warren P. McGuirk Alumni Stadium",
+    "aliases": [
+      "McGuirk",
+      "Stadium"
+    ],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3773118,
+      "lng": -72.5360203
+    },
+    "entranceNodes": [
+      4783
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w1391493913",
+    "name": "Washington Hall",
+    "aliases": [
+      "Washington"
+    ],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3815793,
+      "lng": -72.5293091
+    },
+    "entranceNodes": [
+      12723,
+      12725
+    ],
+    "heightM": 77
+  },
+  {
+    "id": "w217056244",
+    "name": "West Experiment Station",
+    "aliases": [],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3932988,
+      "lng": -72.5267277
+    },
+    "entranceNodes": [
+      8994
+    ],
+    "heightM": 7
+  },
+  {
+    "id": "w145173738",
+    "name": "West Stadium Stands",
+    "aliases": [],
+    "category": "athletic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3773498,
+      "lng": -72.5367112
+    },
+    "entranceNodes": [
+      12739,
+      12740,
+      12742
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243078",
+    "name": "Wheeler Hall",
+    "aliases": [],
+    "category": "residence",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3889141,
+      "lng": -72.5213031
+    },
+    "entranceNodes": [
+      13059,
+      13061
+    ],
+    "heightM": 17.5
+  },
+  {
+    "id": "r9408496",
+    "name": "Whitmore Administration Building",
+    "aliases": [
+      "Whitmore"
+    ],
+    "category": "other",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3859282,
+      "lng": -72.5266951
+    },
+    "entranceNodes": [
+      1774,
+      7293,
+      7294
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n4871005434",
+    "name": "Whitmore Café",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3857854,
+      "lng": -72.5268343
+    },
+    "entranceNodes": [
+      1774,
+      7293,
+      7294
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "w217243792",
+    "name": "Wilder Hall",
+    "aliases": [
+      "Wilder"
+    ],
+    "category": "academic",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3903268,
+      "lng": -72.5237431
+    },
+    "entranceNodes": [
+      2277
+    ],
+    "heightM": 10
+  },
+  {
+    "id": "n13714793769",
+    "name": "Worcester Café",
+    "aliases": [],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.393015,
+      "lng": -72.5250925
+    },
+    "entranceNodes": [
+      11224,
+      12985,
+      12986
+    ],
+    "heightM": 10.5
+  },
+  {
+    "id": "w217056238",
+    "name": "Worcester Commons",
+    "aliases": [
+      "Worcester",
+      "Woo",
+      "Worcester DC"
+    ],
+    "category": "dining",
+    "studyFriendly": false,
+    "center": {
+      "lat": 42.3932466,
+      "lng": -72.5251202
+    },
+    "entranceNodes": [
+      11224,
+      12985,
+      12986
+    ],
+    "heightM": 10.5
+  }
+]

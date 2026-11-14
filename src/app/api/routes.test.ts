@@ -36,16 +36,16 @@ const loaders = import.meta.glob<Record<string, (req: NextRequest, ctx?: unknown
 /** A valid request for each route. Keyed like `API_ROUTES`. */
 const SAMPLES: Record<string, { query?: string; body?: unknown; headers?: Record<string, string> }> = {
   placesSearch: { query: "?q=du" },
-  route: { query: "?to=fx-dubois&fromPlaceId=fx-ilc" },
+  route: { query: "?to=r4054634&fromPlaceId=w292876549" },
   presencePing: { body: { lat: 42.3868, lng: -72.5301 } },
   presenceSharingSet: { body: { enabled: true } },
-  activitiesCreate: { body: { title: "Study group", placeId: "fx-ilc", category: "study" } },
+  activitiesCreate: { body: { title: "Study group", placeId: "w292876549", category: "study" } },
   storeRedeem: { body: { itemId: "fixture-item-1" }, headers: { "Idempotency-Key": "test-key-1" } },
   scheduleConnectionsCreate: {
     body: { provider: "ics", label: "Canvas", url: "https://canvas.instructure.com/feeds/calendars/user_x.ics" },
   },
   scheduleConnectionsDelete: { query: "?id=fixture-connection-1" },
-  recommend: { body: { origin: { placeId: "fx-ilc" }, prefs: {} } },
+  recommend: { body: { origin: { placeId: "w292876549" }, prefs: {} } },
 };
 
 function routeFile(path: string): string {
