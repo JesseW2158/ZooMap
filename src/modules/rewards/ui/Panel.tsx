@@ -96,7 +96,7 @@ export function RewardsPanel() {
                   <span className="block truncate">{e.reason}</span>
                   <span className="text-xs text-neutral-500">{timeAgo(e.createdAt)}</span>
                 </span>
-                <span className={`shrink-0 font-medium tabular-nums ${e.delta > 0 ? "text-emerald-700" : "text-neutral-700"}`}>
+                <span className={`shrink-0 font-medium tabular-nums ${e.delta > 0 ? "text-emerald-700" : "text-red-700"}`}>
                   {e.delta > 0 ? `+${e.delta}` : e.delta}
                 </span>
               </li>
