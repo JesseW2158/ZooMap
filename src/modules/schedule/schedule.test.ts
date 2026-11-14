@@ -8,6 +8,7 @@ import { decryptSecret, encryptSecret } from "./crypto";
 import { signState, verifyState } from "./google";
 import { parseFeed, splitCourse } from "./ics";
 import { describeClass, manualProvider } from "./providers/manual";
+import { planProvider } from "./providers/plan";
 import { resolvePlaceWith } from "./resolve-place";
 import { fetchFeed, FeedError, hostAllowed, urlProblem } from "./safe-fetch";
 import { localParts } from "./time";
@@ -274,6 +275,21 @@ describe("manual classes", () => {
 
   it("describe themselves", () => {
     expect(describeClass({ label: "X", days: ["TU", "TH"], start: "13:00", end: "14:15" }, "LGRT")).toBe("TuTh 1:00pm–2:15pm · LGRT");
+  });
+});
+
+describe("plans", () => {
+  const secret = JSON.stringify({ label: "Study", placeId: "r4054634", date: "2026-11-16", start: "11:15", end: "12:00" });
+  const conn = { id: "p1", userId: "u", provider: "plan" as const, label: "Study", secret };
+  it("happen once, on their date, in campus time, at their building", async () => {
+    const [e, ...rest] = await planProvider.fetchEvents(conn, { from: new Date("2026-11-15T00:00:00Z"), to: new Date("2026-11-20T00:00:00Z") });
+    expect(rest).toEqual([]);
+    expect(e.start.toISOString()).toBe("2026-11-16T16:15:00.000Z");
+    expect(e.end.toISOString()).toBe("2026-11-16T17:00:00.000Z");
+    expect(e).toMatchObject({ title: "Study", placeId: "r4054634", locationText: "Du Bois", deadline: false });
+  });
+  it("do not appear outside the range", async () => {
+    expect(await planProvider.fetchEvents(conn, { from: new Date("2026-11-17T00:00:00Z"), to: new Date("2026-11-20T00:00:00Z") })).toEqual([]);
   });
 });
 

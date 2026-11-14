@@ -63,8 +63,8 @@ async function eventsOf(doc: ScheduleConnectionDoc, range: ScheduleRange, now: n
       win,
     );
     remember(key, { at: now, events });
-    // hand-entered classes need no sync bookkeeping
-    if (doc.provider !== "manual" && (doc.lastError || !doc.lastSyncAt || now - doc.lastSyncAt.getTime() > CACHE_MS)) await markSynced(doc._id);
+    // hand-entered classes and plans need no sync bookkeeping
+    if (doc.provider !== "manual" && doc.provider !== "plan" && (doc.lastError || !doc.lastSyncAt || now - doc.lastSyncAt.getTime() > CACHE_MS)) await markSynced(doc._id);
     return events;
   } catch (err) {
     // never log the error object: a fetch error can carry the feed URL
@@ -86,8 +86,10 @@ export async function mergeEvents(userId: string, requested: ScheduleRange, now 
       const endForOverlap = e.end > e.start ? e.end : e.start;
       if (endForOverlap < range.from || e.start > range.to) continue;
       const placeId = e.placeId ?? (e.deadline ? undefined : await resolvePlace(e.locationText));
+      const id = eventId(doc._id, e.uid);
       const ev: ScheduleEvent = {
-        id: eventId(doc._id, e.uid),
+        id,
+        connectionId: doc._id,
         source: doc.provider,
         title: e.title,
         start: e.start.toISOString(),
@@ -98,6 +100,7 @@ export async function mergeEvents(userId: string, requested: ScheduleRange, now 
       if (e.allDay) ev.allDay = true;
       if (e.deadline) ev.deadline = true;
       if (e.course) ev.course = e.course;
+      if (doc.skipped?.includes(id)) ev.skipped = true;
       out.push(ev);
     }
   }

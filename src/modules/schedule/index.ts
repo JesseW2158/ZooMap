@@ -1,10 +1,11 @@
-import type { CreateConnectionBody, ScheduleConnection, ScheduleEvent } from "@/shared/contracts";
+import type { CreateConnectionBody, ScheduleConnection, ScheduleEvent, UpdateConnectionBody } from "@/shared/contracts";
 import { clearScheduleCache, mergeEvents } from "./events";
 import {
   createConnection as create,
   deleteConnection as remove,
   listConnections as list,
   saveGoogleConnection as saveGoogle,
+  updateConnection as update,
 } from "./connections";
 
 export * as fixtures from "./fixtures";
@@ -25,6 +26,16 @@ export async function listConnections(userId: string): Promise<ScheduleConnectio
 
 export async function createConnection(userId: string, body: CreateConnectionBody): Promise<ScheduleConnection> {
   return create(userId, body);
+}
+
+/**
+ * Skip or un-skip one occurrence, or move a plan. The recommend module can add plans with
+ * `createConnection(userId, { provider: "plan", label: "Study at …", placeId, date, start, end })`.
+ */
+export async function updateConnection(userId: string, body: UpdateConnectionBody): Promise<ScheduleConnection> {
+  const out = await update(userId, body);
+  clearScheduleCache(body.id);
+  return out;
 }
 
 export async function deleteConnection(userId: string, id: string): Promise<void> {

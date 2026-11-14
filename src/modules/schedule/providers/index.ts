@@ -3,6 +3,7 @@ import type { ProviderEvent } from "../ics";
 import { googleProvider } from "./google";
 import { icsProvider } from "./ics";
 import { manualProvider } from "./manual";
+import { planProvider } from "./plan";
 
 /**
  * Schedule providers (the plug-in registry from contracts.md). Each returns events in the
@@ -18,4 +19,5 @@ export const PROVIDERS: Record<ScheduleSource, Provider> = {
   ics: icsProvider,
   google: googleProvider,
   manual: manualProvider,
+  plan: planProvider,
 };

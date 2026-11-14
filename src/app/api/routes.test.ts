@@ -40,8 +40,9 @@ vi.mock("@/modules/schedule", async (importOriginal) => {
     ...actual,
     getUpcomingEvents: async (_userId: string, range: { from: Date }) => f.eventsFixture(range.from),
     listConnections: async () => f.connectionsFixture,
-    createConnection: async (_userId: string, body: { provider: "ics" | "manual"; label: string }) => f.createdConnectionFixture(body),
+    createConnection: async (_userId: string, body: { provider: "ics" | "manual" | "plan"; label: string }) => f.createdConnectionFixture(body),
     deleteConnection: async () => undefined,
+    updateConnection: async (_userId: string, body: { id: string }) => ({ ...f.connectionsFixture[0], id: body.id }),
   };
 });
 
@@ -59,6 +60,7 @@ const SAMPLES: Record<string, { query?: string; body?: unknown; headers?: Record
     body: { provider: "ics", label: "Canvas", url: "https://canvas.instructure.com/feeds/calendars/user_x.ics" },
   },
   scheduleConnectionsDelete: { query: "?id=fixture-connection-1" },
+  scheduleConnectionsUpdate: { body: { id: "fixture-connection-1", skip: { eventId: "fixture-event-1", skipped: true } } },
   recommend: { body: { origin: { placeId: "w292876549" }, prefs: {} } },
 };
 

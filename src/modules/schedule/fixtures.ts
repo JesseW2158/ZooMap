@@ -27,6 +27,6 @@ export function eventsFixture(from: Date): ScheduleEvent[] {
 export const connectionsFixture: ScheduleConnection[] = [{ id: "fixture-connection-1", provider: "ics", label: "Canvas (fixture)" }];
 
 /** What creating a connection returns, without a database (the route contract test uses it). */
-export function createdConnectionFixture(body: { provider: "ics" | "manual"; label: string }): ScheduleConnection {
+export function createdConnectionFixture(body: { provider: "ics" | "manual" | "plan"; label: string }): ScheduleConnection {
   return { id: "fixture-connection-new", provider: body.provider, label: body.label };
 }
