@@ -108,7 +108,12 @@ export function MapProvider({ children }: { children?: ReactNode }) {
 
   return (
     <MapContext.Provider value={map}>
-      <div ref={container} className="absolute inset-0" />
+      {/* MapLibre adds `.maplibregl-map { position: relative }` to its container, and that
+          unlayered rule beats Tailwind's layered `.absolute`, collapsing the map to 0px tall.
+          So the positioning lives on a wrapper and the map's own div only fills it. */}
+      <div className="absolute inset-0">
+        <div ref={container} className="h-full w-full" />
+      </div>
       {map ? <MapBehaviours map={map} /> : null}
       {children}
     </MapContext.Provider>
