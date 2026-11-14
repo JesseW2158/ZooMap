@@ -131,7 +131,7 @@ export function RoutingLayer() {
   if (!routeRequest) return null;
 
   return (
-    <div className="pointer-events-auto absolute left-3 right-14 top-[calc(env(safe-area-inset-top)+4rem)] z-[6] max-h-[45dvh] overflow-auto rounded-xl border border-neutral-200 bg-white/95 p-3 shadow-md">
+    <div className="pointer-events-auto absolute left-3 right-14 top-[calc(env(safe-area-inset-top)+4rem)] z-[6] max-h-[45dvh] overflow-auto rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-900 shadow-md">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           {result ? (
@@ -251,7 +251,7 @@ function StartPicker(props: { canLocate: boolean; locating: boolean; onLocate: (
         onChange={(e) => setQ(e.target.value)}
         placeholder="…or start from a building"
         aria-label="Starting building"
-        className="w-full rounded-full border border-neutral-200 px-3 py-1.5 text-sm outline-none focus:border-neutral-400"
+        className="w-full rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400"
       />
       {shown.length ? (
         <ul className="rounded-lg border border-neutral-100">

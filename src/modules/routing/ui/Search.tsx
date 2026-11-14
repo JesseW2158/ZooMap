@@ -73,10 +73,10 @@ export function RoutingSearch() {
         }}
         placeholder="Search buildings: ILC, LGRT, Frank…"
         aria-label="Search buildings"
-        className="w-full rounded-full border border-neutral-200 bg-white/95 px-4 py-2 text-sm shadow-md outline-none focus:border-neutral-400"
+        className="w-full rounded-full border border-neutral-200 bg-white/95 px-4 py-2 text-sm text-neutral-900 shadow-md outline-none placeholder:text-neutral-400 focus:border-neutral-400"
       />
       {shown.length > 0 ? (
-        <ul className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-xl border border-neutral-200 bg-white shadow-lg">
+        <ul className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-xl border border-neutral-200 bg-white text-neutral-900 shadow-lg">
           {shown.map((place) => (
             <li key={place.id}>
               <button

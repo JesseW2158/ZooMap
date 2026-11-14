@@ -336,7 +336,7 @@ function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
     }
   };
 
-  const input = "w-full rounded-lg border border-neutral-200 px-3 py-1.5 text-sm outline-none focus:border-neutral-400";
+  const input = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400";
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-semibold">Add a class</h3>
@@ -431,7 +431,7 @@ function AddFeedForm({ onDone }: { onDone: (saved: boolean) => void }) {
         <li>Paste it here. Treat it like a password: anyone with it can see your calendar.</li>
       </ol>
       <input
-        className="w-full rounded-lg border border-neutral-200 px-3 py-1.5 text-sm outline-none focus:border-neutral-400"
+        className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
         placeholder="https://umamherst.instructure.com/feeds/calendars/user_…ics"
