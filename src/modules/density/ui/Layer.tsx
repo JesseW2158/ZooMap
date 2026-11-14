@@ -1,51 +1,45 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import type { ExpressionSpecification } from "maplibre-gl";
+import type { ExpressionSpecification, FilterSpecification } from "maplibre-gl";
 import type { BuildingCollection, DensityResponse } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { haversineM } from "@/shared/geo";
 import { isNativeShell, useUserLocation } from "@/shared/platform";
 import { addLayerToSlot, removeLayersAndSources, useApi, useMapEffect, useMapStore, usePolling } from "@/shared/ui";
 import { useStore } from "@/shared/ui/store";
-import { growBuildings } from "./geometry";
-import { LEVEL_COLORS } from "./levels";
+import { densityAt, pointWeight, rampColor, rampExpression } from "./field";
+import { featureCenter, growBuildings } from "./geometry";
 import { Legend } from "./Legend";
-import { densityStore, loadSharing, loadSnapshot, PING_MS, POLL_MS } from "./state";
+import { densityStore, loadSharing, loadSnapshot, PING_MS, POLL_MS, restoreHeatPref } from "./state";
 
 /**
- * The heatmap and the building tint. Polls the snapshot every ten seconds (paused while
- * the tab is hidden), draws a heat layer under the lines and a thin coloured cap on top of
- * each busy building, and, when the user has chosen to share, pings the server with their
- * position. In the Android shell the native pinger does the pinging instead.
- * Layer ids are prefixed `density-`.
+ * The crowd heatmap. With it on, the whole campus is one green-to-red field (grass, parking
+ * and gaps are hidden; roads, paths and the pond stay) and every building is painted the
+ * colour of the field under it. With it off, the normal campus map is back.
+ *
+ * Polls the snapshot every ten seconds (paused while the tab is hidden) and, when the user
+ * has chosen to share, pings the server with their position. In the Android shell the native
+ * pinger does the pinging instead. Layer ids are prefixed `density-`.
  */
 
 const HEAT_SRC = "density-points";
 const HEAT_LAYER = "density-heat";
 const TINT_SRC = "density-tint";
 const TINT_LAYER = "density-tint-3d";
-/** The tint is a full-height copy of each busy building, this much bigger so its walls never share a plane with the campus building. */
+/** The coloured buildings are full-height copies of the campus ones, this much bigger so their walls never share a plane with them. */
 const TINT_GROW_M = 0.3;
 
-const HEAT_COLOR: ExpressionSpecification = [
-  "interpolate", ["linear"], ["heatmap-density"],
-  0, "rgba(255,214,102,0)",
-  0.1, "rgba(255,214,102,0.7)",
-  0.3, "rgba(250,160,50,0.85)",
-  0.55, "rgba(236,84,40,0.92)",
-  0.8, "rgba(196,30,28,0.96)",
-  1, "rgba(120,10,20,1)",
-];
+/** The campus layer that draws grass, water and parking. While the heatmap is on it shows only the water. */
+const GROUND_FILL = "campus-ground-fill";
+const WATER_ONLY: FilterSpecification = ["==", ["get", "kind"], "water"];
 
-const TINT_COLOR: ExpressionSpecification = [
-  "match", ["get", "level"],
-  1, LEVEL_COLORS[1],
-  2, LEVEL_COLORS[2],
-  3, LEVEL_COLORS[3],
-  4, LEVEL_COLORS[4],
-  LEVEL_COLORS[0],
-];
+/**
+ * Heat kernel radius, fixed at 130 m on the ground: pixels = metres / (metres per pixel).
+ * At 42.39 N one pixel is 3.53 m at zoom 14 and halves with each zoom, so 130 m is 36.9 px at
+ * zoom 14 and 32 times that at zoom 19. Must match FIELD_RADIUS_M in field.ts.
+ */
+const HEAT_RADIUS: ExpressionSpecification = ["interpolate", ["exponential", 2], ["zoom"], 14, 36.85, 19, 1179.2];
 
 /** Pinging again sooner than this, or for a move smaller than this, is not worth a request. */
 const MIN_MOVE_M = 25;
@@ -102,7 +96,12 @@ export function DensityLayer() {
   useSharingPinger();
 
   const snapshot = useStore(densityStore, (s) => s.snapshot);
+  const heatOn = useStore(densityStore, (s) => s.heatOn);
   const buildings = useApi<BuildingCollection>("/api/campus/buildings");
+  const { selectedPlaceId } = useMapStore();
+
+  // the remembered on/off choice, read after mount so the first render matches the server's
+  useEffect(() => restoreHeatPref(), []);
 
   // names for the panel
   useEffect(() => {
@@ -116,13 +115,16 @@ export function DensityLayer() {
   }, [buildings.data]);
 
   const heat = useMemo(() => heatData(snapshot), [snapshot]);
-  const grown = useMemo(() => (buildings.data ? growBuildings(buildings.data, TINT_GROW_M) : []), [buildings.data]);
-  const caps = useMemo(() => tintData(grown, snapshot), [grown, snapshot]);
-  const { selectedPlaceId } = useMapStore();
+  // slightly enlarged copies of every building, and where to sample the field for each
+  const grown = useMemo(() => {
+    const features = buildings.data ? growBuildings(buildings.data, TINT_GROW_M) : [];
+    return features.map((f) => ({ feature: f, center: featureCenter(f) }));
+  }, [buildings.data]);
+  const tint = useMemo(() => tintData(grown, snapshot), [grown, snapshot]);
   // read the freshest data inside the effects that create the sources
-  const latest = useRef({ heat, caps });
+  const latest = useRef({ heat, tint });
   useEffect(() => {
-    latest.current = { heat, caps };
+    latest.current = { heat, tint };
   });
 
   useMapEffect((map) => {
@@ -134,12 +136,12 @@ export function DensityLayer() {
         type: "heatmap",
         source: HEAT_SRC,
         paint: {
-          // weights from the API reach 1 only at 50 people, so boost them: a busy place should glow
-          "heatmap-weight": ["min", 1, ["*", ["get", "weight"], 3]],
-          "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 14, 1.6, 19, 3],
-          "heatmap-radius": ["interpolate", ["exponential", 2], ["zoom"], 14, 34, 19, 520],
-          "heatmap-color": HEAT_COLOR,
-          "heatmap-opacity": 0.95,
+          "heatmap-weight": ["get", "w"],
+          "heatmap-intensity": 3.2, // FIELD_INTENSITY
+          "heatmap-radius": HEAT_RADIUS,
+          // opaque green at zero density: the field covers the whole map, not just near people
+          "heatmap-color": rampExpression() as ExpressionSpecification,
+          "heatmap-opacity": 1,
         },
       },
       "slot-ground",
@@ -150,20 +152,19 @@ export function DensityLayer() {
   useMapEffect(
     (map) => {
       if (!buildings.data) return;
-      map.addSource(TINT_SRC, { type: "geojson", data: latest.current.caps, tolerance: 0.2 });
+      map.addSource(TINT_SRC, { type: "geojson", data: latest.current.tint, tolerance: 0.2 });
       addLayerToSlot(
         map,
         {
           id: TINT_LAYER,
           type: "fill-extrusion",
           source: TINT_SRC,
-          filter: [">", ["get", "level"], 1],
           paint: {
             "fill-extrusion-base": 0,
             // a hair taller than the building, so the roof wins the depth test too
             "fill-extrusion-height": ["+", ["get", "heightM"], 0.15],
-            "fill-extrusion-color": TINT_COLOR,
-            "fill-extrusion-opacity": 0.93,
+            "fill-extrusion-color": ["get", "color"],
+            "fill-extrusion-opacity": 0.95,
           },
         },
         "slot-buildings",
@@ -177,20 +178,47 @@ export function DensityLayer() {
   useMapEffect(
     (map) => {
       (map.getSource(HEAT_SRC) as { setData?: (d: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(heat);
-      (map.getSource(TINT_SRC) as { setData?: (d: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(caps);
+      (map.getSource(TINT_SRC) as { setData?: (d: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(tint);
     },
-    [heat, caps],
+    [heat, tint],
+  );
+
+  // On or off. Campus adds its ground layers when its own data arrives, maybe after this layer
+  // does, so everything is re-applied whenever the style changes; each step is a no-op when
+  // already in place, so this settles at once.
+  useMapEffect(
+    (map) => {
+      let original: FilterSpecification | null | undefined;
+      const apply = () => {
+        const visibility = heatOn ? "visible" : "none";
+        for (const id of [HEAT_LAYER, TINT_LAYER]) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visibility);
+        if (!map.getLayer(GROUND_FILL)) return;
+        if (heatOn) {
+          original ??= map.getFilter(GROUND_FILL) ?? null;
+          if (JSON.stringify(map.getFilter(GROUND_FILL)) !== JSON.stringify(WATER_ONLY)) map.setFilter(GROUND_FILL, WATER_ONLY);
+          // the field goes under the water, roads and paths, which campus drew first
+          const order = map.getStyle().layers.map((l) => l.id);
+          if (map.getLayer(HEAT_LAYER) && order.indexOf(HEAT_LAYER) > order.indexOf(GROUND_FILL)) map.moveLayer(HEAT_LAYER, GROUND_FILL);
+        } else if (original !== undefined) {
+          map.setFilter(GROUND_FILL, original);
+        }
+      };
+      apply();
+      map.on("styledata", apply);
+      return () => {
+        map.off("styledata", apply);
+        // leave the campus layer as we found it (also when the layer unmounts)
+        if (original !== undefined && map.getLayer(GROUND_FILL)) map.setFilter(GROUND_FILL, original);
+      };
+    },
+    [heatOn],
   );
 
   // leave the selected building to the campus layer's maroon highlight
   useMapEffect(
     (map) => {
       if (!map.getLayer(TINT_LAYER)) return;
-      map.setFilter(TINT_LAYER, [
-        "all",
-        [">", ["get", "level"], 1],
-        ["!=", ["get", "placeId"], selectedPlaceId ?? ""],
-      ]);
+      map.setFilter(TINT_LAYER, ["!=", ["get", "placeId"], selectedPlaceId ?? ""]);
     },
     [selectedPlaceId, Boolean(buildings.data)],
   );
@@ -203,19 +231,27 @@ function heatData(snapshot: DensityResponse | null): GeoJSON.FeatureCollection {
     type: "FeatureCollection",
     features: (snapshot?.points ?? []).map((p) => ({
       type: "Feature" as const,
-      properties: { weight: p.weight, source: p.source },
+      properties: { w: pointWeight(p.weight), source: p.source },
       geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
     })),
   };
 }
 
-function tintData(grown: GeoJSON.Feature[], snapshot: DensityResponse | null): GeoJSON.FeatureCollection {
-  const level = new Map((snapshot?.places ?? []).map((p) => [p.placeId, p.level]));
+/** Every building, coloured by the field at its centre: the same number the heat layer draws under it. */
+function tintData(
+  grown: { feature: GeoJSON.Feature; center: { lat: number; lng: number } }[],
+  snapshot: DensityResponse | null,
+): GeoJSON.FeatureCollection {
+  const points = snapshot?.points ?? [];
   return {
     type: "FeatureCollection",
-    features: grown.map((f) => {
-      const placeId = (f.properties?.placeId as string | undefined) ?? "";
-      return { ...f, properties: { heightM: f.properties?.heightM, placeId, level: level.get(placeId) ?? 0 } };
-    }),
+    features: grown.map(({ feature, center }) => ({
+      ...feature,
+      properties: {
+        heightM: feature.properties?.heightM,
+        placeId: (feature.properties?.placeId as string | undefined) ?? "",
+        color: rampColor(densityAt(points, center)),
+      },
+    })),
   };
 }

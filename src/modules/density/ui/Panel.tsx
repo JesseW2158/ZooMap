@@ -6,7 +6,7 @@ import { useStore } from "@/shared/ui/store";
 import { startLocation } from "@/shared/platform";
 import { Legend } from "./Legend";
 import { LEVEL_COLORS, LEVEL_LABELS } from "./levels";
-import { densityStore, introSeen, loadSharing, markIntroSeen, updateSharing } from "./state";
+import { densityStore, introSeen, loadSharing, markIntroSeen, setHeatOn, updateSharing } from "./state";
 
 /** Crowd panel: what is shared, the sharing switch, and the busiest places right now. */
 export function DensityPanel() {
@@ -14,6 +14,7 @@ export function DensityPanel() {
   const sharing = useStore(densityStore, (s) => s.sharing);
   const names = useStore(densityStore, (s) => s.names);
   const error = useStore(densityStore, (s) => s.error);
+  const heatOn = useStore(densityStore, (s) => s.heatOn);
   const { selectPlace } = useMapStore();
   const [introDismissed, setIntroDismissed] = useState(introSeen);
   // first run: explain before asking, but only to people who have not opted in
@@ -83,6 +84,20 @@ export function DensityPanel() {
           />
         </label>
       </div>
+
+      <label className="flex items-center justify-between gap-3 text-xs text-neutral-700">
+        <span>
+          Heatmap
+          <span className="block text-neutral-500">Colours the whole campus green (quiet) to red (crowded).</span>
+        </span>
+        <input
+          type="checkbox"
+          role="switch"
+          className="size-5 shrink-0 accent-[#881c1c]"
+          checked={heatOn}
+          onChange={(e) => setHeatOn(e.target.checked)}
+        />
+      </label>
 
       <Legend snapshot={snapshot} />
       {error && !snapshot ? <p className="text-xs text-red-700">{error}</p> : null}

@@ -69,3 +69,17 @@ export function growBuildings(buildings: BuildingCollection, metres: number): Ge
     return { type: "Feature" as const, properties: f.properties, geometry };
   });
 }
+
+/** Centre of a feature's bounding box: where the crowd field is sampled to colour a building. */
+export function featureCenter(f: GeoJSON.Feature): { lat: number; lng: number } {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const visit = (c: unknown): void => {
+    if (Array.isArray(c) && typeof c[0] === "number") {
+      const [x, y] = c as number[];
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    } else if (Array.isArray(c)) c.forEach(visit);
+  };
+  visit((f.geometry as { coordinates?: unknown }).coordinates);
+  return { lat: (minY + maxY) / 2, lng: (minX + maxX) / 2 };
+}

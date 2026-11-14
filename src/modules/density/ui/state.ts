@@ -14,9 +14,11 @@ export interface DensityUiState {
   /** placeId to building name, filled by the layer from the campus buildings */
   names: Record<string, string>;
   error: string | null;
+  /** the heatmap and coloured buildings; on by default */
+  heatOn: boolean;
 }
 
-export const densityStore = createStore<DensityUiState>({ snapshot: null, sharing: null, names: {}, error: null });
+export const densityStore = createStore<DensityUiState>({ snapshot: null, sharing: null, names: {}, error: null, heatOn: true });
 
 export const POLL_MS = 10_000;
 export const PING_MS = 60_000;
@@ -64,3 +66,24 @@ export const markIntroSeen = (): void => {
     // private mode: the sheet just shows again next time
   }
 };
+
+const HEAT_KEY = "zoomap.density.heat";
+
+/** Show or hide the heatmap (and with it the green-to-red campus and its coloured buildings). Remembered on this device. */
+export function setHeatOn(on: boolean): void {
+  densityStore.set({ heatOn: on });
+  try {
+    localStorage.setItem(HEAT_KEY, on ? "1" : "0");
+  } catch {
+    // private mode: it just resets next visit
+  }
+}
+
+/** Read the remembered choice. Called after mount so server and client first render agree. */
+export function restoreHeatPref(): void {
+  try {
+    if (localStorage.getItem(HEAT_KEY) === "0") densityStore.set({ heatOn: false });
+  } catch {
+    // keep the default
+  }
+}
