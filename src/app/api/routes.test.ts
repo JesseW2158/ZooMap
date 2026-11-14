@@ -31,6 +31,23 @@ vi.mock("@/modules/auth", () => ({
   seedUsers: () => [],
 }));
 
+// Route handlers that own a database are swapped for their module's fixtures here; their own
+// `*.db.test.ts` files cover the real behaviour. Same signatures, so the contract still holds.
+vi.mock("@/modules/activities", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/activities")>();
+  const f = actual.fixtures;
+  return {
+    ...actual,
+    listActiveActivities: async () => f.activitiesFixture(new Date()),
+    getActiveParticipation: async () => f.noParticipationFixture,
+    createActivity: async (user: AuthUser, body: Parameters<typeof f.createdActivityFixture>[0]) =>
+      f.createdActivityFixture(body, { id: user.id, name: user.name ?? user.email }, new Date()),
+    joinActivity: async (user: AuthUser, id: string) => f.participationResultFixture(id, user.id, new Date()),
+    leaveActivity: async (user: AuthUser, id: string) => f.leftResultFixture(id, user.id, new Date()),
+    endActivityAsHost: async (user: AuthUser, id: string) => f.endedActivityFixture(id, user.id, new Date()),
+  };
+});
+
 const loaders = import.meta.glob<Record<string, (req: NextRequest, ctx?: unknown) => Promise<Response>>>("./**/route.ts");
 
 /** A valid request for each route. Keyed like `API_ROUTES`. */
