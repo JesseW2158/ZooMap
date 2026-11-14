@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { withTestDb } from "@/shared/db/testing";
 import { bus, emit } from "@/shared/events";
 import { applyEntry } from "@/modules/rewards";
@@ -9,6 +9,12 @@ import { drainOutbox, enqueue } from "./outbox";
 
 const t = withTestDb();
 const USER = "seed-chain-user";
+
+// .env.local may hold real CHAIN_* keys; these tests must never reach devnet.
+const CHAIN_VARS = ["CHAIN_MINT_ADDRESS", "CHAIN_AUTHORITY_SECRET", "CHAIN_USER_SEED", "SOLANA_RPC_URL"] as const;
+const savedEnv = Object.fromEntries(CHAIN_VARS.map((v) => [v, process.env[v]]));
+beforeAll(() => CHAIN_VARS.forEach((v) => delete process.env[v]));
+afterAll(() => CHAIN_VARS.forEach((v) => (savedEnv[v] === undefined ? delete process.env[v] : (process.env[v] = savedEnv[v]))));
 
 class FakeChain implements ChainClient {
   prepared: { userId: string; delta: number; signature: string }[] = [];
@@ -53,11 +59,7 @@ beforeEach(async () => {
   bus.clear();
 });
 
-afterEach(() => {
-  delete process.env.CHAIN_MINT_ADDRESS;
-  delete process.env.CHAIN_AUTHORITY_SECRET;
-  delete process.env.CHAIN_USER_SEED;
-});
+afterEach(() => CHAIN_VARS.forEach((v) => delete process.env[v]));
 
 function grant(delta: number, key: string) {
   return { userId: USER, delta, ruleId: "test", reason: "Test", source: { type: "test", id: key }, idempotencyKey: `chain-test:${key}` };

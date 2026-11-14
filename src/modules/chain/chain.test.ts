@@ -1,9 +1,13 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { chainConfig, DEFAULT_RPC_URL, explorerAddressUrl } from "./config";
 import { decodeSecret, userPrivateKeyBytes, userSigner } from "./keys";
 
-const VARS = ["CHAIN_MINT_ADDRESS", "CHAIN_AUTHORITY_SECRET", "CHAIN_USER_SEED", "SOLANA_RPC_URL"];
-afterEach(() => VARS.forEach((v) => delete process.env[v]));
+// .env.local may hold real CHAIN_* keys; these tests must never reach devnet.
+const CHAIN_VARS = ["CHAIN_MINT_ADDRESS", "CHAIN_AUTHORITY_SECRET", "CHAIN_USER_SEED", "SOLANA_RPC_URL"] as const;
+const savedEnv = Object.fromEntries(CHAIN_VARS.map((v) => [v, process.env[v]]));
+beforeAll(() => CHAIN_VARS.forEach((v) => delete process.env[v]));
+afterAll(() => CHAIN_VARS.forEach((v) => (savedEnv[v] === undefined ? delete process.env[v] : (process.env[v] = savedEnv[v]))));
+afterEach(() => CHAIN_VARS.forEach((v) => delete process.env[v]));
 
 describe("chainConfig", () => {
   it("is off unless mint, authority and seed are all set", () => {

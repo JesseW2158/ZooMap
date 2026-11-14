@@ -42,3 +42,11 @@ npx tsx src/modules/chain/scripts/setup-devnet.ts
 - Restart the dev server afterwards.
 
 **Deploying:** the three `CHAIN_*` variables (and optionally `SOLANA_RPC_URL`) must be added to Vercel by the owner. Without them, production simply runs with the chain off.
+
+## Caveats for the owner and integration
+
+- **Tests and real keys:** `vitest.config.mts` loads `.env.local`, so the chain tests remove every `CHAIN_*` variable in `beforeAll` and restore it in `afterAll`. Without that, a test could get the real client and mint on devnet. Keep this if the team env ever carries `CHAIN_*`.
+- **Back up the keys:** the only copy of `CHAIN_AUTHORITY_SECRET`, `CHAIN_USER_SEED` and `CHAIN_MINT_ADDRESS` is this worktree's untracked `.env.local`. If the authority key is lost, the mint can never issue tokens again.
+- **Seed users share on-chain addresses across databases:** an address depends only on the seed and the user id. `seed-alex` already holds 30 tokens from the devnet check. A demo database that shares this seed starts with seed users' chain balances out of step with their points. Use a fresh `CHAIN_USER_SEED` there, or accept the mismatch.
+- **`/api/chain/me` drains synchronously** on every 20 s panel poll. A slow confirm can hold the request for up to 30 s per row. That is fine locally, but it may hit Vercel's function timeout; rows left pending finish on a later poll.
+- **After the response:** the `try/catch` around `after()` is silent. If it ever failed inside a real request, syncing would still happen on the next panel poll.
