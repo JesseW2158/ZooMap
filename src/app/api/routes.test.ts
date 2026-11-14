@@ -61,6 +61,22 @@ vi.mock("@/modules/schedule", async (importOriginal) => {
   };
 });
 
+// Rewards routes are backed by the database. This test checks wiring and contract shape only,
+// so the module's data functions return its fixtures; src/modules/rewards/rewards.db.test.ts
+// covers real behaviour. (Other database-backed modules can follow the same pattern.)
+vi.mock("@/modules/rewards", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/modules/rewards")>();
+  return {
+    ...real,
+    getRewardsMe: async () => real.fixtures.rewardsMeFixture(120, new Date()),
+    listStoreItems: async () => real.fixtures.storeItemsFixture,
+    redeem: async (_userId: string, itemId: string) => ({
+      redemption: real.fixtures.redemptionFixture(itemId, new Date()),
+      created: true,
+    }),
+  };
+});
+
 const loaders = import.meta.glob<Record<string, (req: NextRequest, ctx?: unknown) => Promise<Response>>>("./**/route.ts");
 
 /** A valid request for each route. Keyed like `API_ROUTES`. */
