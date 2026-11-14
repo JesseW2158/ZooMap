@@ -13,6 +13,8 @@ import { ActivitiesPanel } from "@/modules/activities/ui/Panel";
 import { CampusLayer } from "@/modules/campus/ui/Layer";
 import { DensityLayer } from "@/modules/density/ui/Layer";
 import { DensityPanel } from "@/modules/density/ui/Panel";
+import { FriendsInviteBanner } from "@/modules/friends/ui/InviteBanner";
+import { FriendsPanel } from "@/modules/friends/ui/Panel";
 import { MobileBridge } from "@/modules/mobile/ui/Bridge";
 import { RecommendPanel } from "@/modules/recommend/ui/Panel";
 import { RewardsPanel } from "@/modules/rewards/ui/Panel";
@@ -33,7 +35,11 @@ export const registry: AppRegistry = {
     { id: "schedule", title: "Schedule", Component: SchedulePanel },
     { id: "recommend", title: "Study", Component: RecommendPanel },
     { id: "rewards", title: "Points", Component: RewardsPanel },
+    { id: "friends", title: "Friends", Component: FriendsPanel },
   ],
   topSlot: [{ id: "routing-search", Component: RoutingSearch }],
-  headless: [{ id: "mobile-bridge", Component: MobileBridge }],
+  headless: [
+    { id: "mobile-bridge", Component: MobileBridge },
+    { id: "friends-invite-banner", Component: FriendsInviteBanner },
+  ],
 };

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ActivityCategory, ActivityStatus, ParticipationRole } from "./activities";
 import { PresenceSource } from "./density";
 import { ScheduleSource } from "./schedule";
+import { InviteStatus, SocialKind } from "./friends";
 
 /**
  * MongoDB document shapes, one per collection (see `@/shared/db/indexes.ts` for indexes).
@@ -160,3 +161,46 @@ export const ChainOutboxDoc = z.object({
   updatedAt: z.date(),
 });
 export type ChainOutboxDoc = z.infer<typeof ChainOutboxDoc>;
+
+/** Friends: one per user, `_id` = userId. Name and photo stay on `users`. */
+export const ProfileDoc = z.object({
+  _id: id,
+  pronouns: z.string().optional(),
+  /** E.164. */
+  phone: z.string().optional(),
+  contactEmail: z.string().optional(),
+  socials: z.array(z.object({ kind: SocialKind, handle: z.string() })),
+  /** SHA-256 hex of the current friend code; the code itself is never stored. */
+  friendCodeHash: z.string().optional(),
+  friendCodeIssuedAt: z.date().optional(),
+  updatedAt: z.date(),
+});
+export type ProfileDoc = z.infer<typeof ProfileDoc>;
+
+/** Friends: `_id` = the two user ids sorted and joined with ":", so a pair is unique and adding is idempotent. */
+export const FriendshipDoc = z.object({
+  _id: id,
+  userIds: z.tuple([id, id]),
+  createdAt: z.date(),
+  via: z.literal("qr"),
+});
+export type FriendshipDoc = z.infer<typeof FriendshipDoc>;
+
+export const ActivityInviteDoc = z.object({
+  _id: id,
+  activityId: id,
+  fromUserId: id,
+  toUserId: id,
+  status: InviteStatus,
+  createdAt: z.date(),
+  respondedAt: z.date().optional(),
+});
+export type ActivityInviteDoc = z.infer<typeof ActivityInviteDoc>;
+
+/** Fixed-window request counter, `_id` = "<bucket>:<userId>:<window start ms>". Removed by a TTL index. */
+export const RateLimitDoc = z.object({
+  _id: id,
+  count: z.number().int().nonnegative(),
+  expiresAt: z.date(),
+});
+export type RateLimitDoc = z.infer<typeof RateLimitDoc>;

@@ -10,9 +10,20 @@ const ERRORS: Record<string, string> = {
   Configuration: "Sign-in failed on the server. The server log has the cause.",
 };
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  if (await getSessionUser()) redirect("/");
-  const { error } = await searchParams;
+/**
+ * Where to go after signing in: `?next=` when it is a path on this site (for example a scanned
+ * friend code's /add/<code>), otherwise the map. Anything that could leave the site ("//evil",
+ * "https://...", "/\\evil") falls back to "/".
+ */
+function safeNext(next: string | undefined): string {
+  if (!next || next.length > 200 || !next.startsWith("/") || next.startsWith("//") || next.includes("\\")) return "/";
+  return next;
+}
+
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
+  const { error, next: rawNext } = await searchParams;
+  const next = safeNext(rawNext);
+  if (await getSessionUser()) redirect(next);
   const domains = env().allowedEmailDomains;
   const devAuth = env().devAuth;
 
@@ -32,7 +43,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <form
         action={async () => {
           "use server";
-          await signIn("google", { redirectTo: "/" });
+          await signIn("google", { redirectTo: next });
         }}
       >
         <button type="submit" className="w-full rounded-xl bg-neutral-900 px-4 py-3 font-medium text-white">
@@ -48,7 +59,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
               key={u.id}
               action={async () => {
                 "use server";
-                await signIn("dev", { email: u.email, redirectTo: "/" });
+                await signIn("dev", { email: u.email, redirectTo: next });
               }}
             >
               <button type="submit" className="w-full rounded-lg bg-amber-200 px-3 py-2 text-left text-sm">
