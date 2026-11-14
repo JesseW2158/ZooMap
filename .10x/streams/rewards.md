@@ -25,6 +25,10 @@
 
 Foundation's contract test calls the real handlers. Once the rewards routes used the database, `storeRedeem`'s sample (`fixture-item-1`) returned 404, and the test was also writing to the dev database. With the user's OK, a separate commit adds `vi.mock("@/modules/rewards", ...)` to that test, backed by the module's `fixtures`. The test checks wiring and response shape, and `rewards.db.test.ts` covers behaviour. **Every other database-backed stream will hit the same problem.** The same small mock pattern works for them, or the owner may prefer one project-wide fix.
 
+## Shell bug for the owner: white text on the white sheet in dark mode
+
+`globals.css` sets `body { color: var(--foreground) }`, and `--foreground` turns near-white under `prefers-color-scheme: dark`. The bottom sheet in `AppShell.tsx` is `bg-white` with no text colour, so any panel text without its own colour is white on white. The comment "The sheet and panels are light surfaces on top of the map in either colour scheme" in `globals.css` has no rule under it. The rewards panel works around this with `text-neutral-900` on its root. The real fix is one class (`text-neutral-900`) on the sheet in `AppShell.tsx`, which is frozen, so it is the owner's call. Every panel is affected.
+
 ## Dev check: emit a fixture event
 
 With `npm run dev` running and signed in as `seed-alex`, the in-process bus is in the server, so emit through a route or a one-off script against the same database:

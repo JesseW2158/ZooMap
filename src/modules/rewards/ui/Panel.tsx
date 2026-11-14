@@ -65,7 +65,8 @@ export function RewardsPanel() {
   }
 
   return (
-    <div className="space-y-4 text-sm">
+    // The sheet is always white, but body text turns light in dark mode, so set the colour here.
+    <div className="space-y-4 text-sm text-neutral-900">
       <section className="flex items-baseline justify-between">
         <div>
           <p className="text-neutral-500">Your points</p>
