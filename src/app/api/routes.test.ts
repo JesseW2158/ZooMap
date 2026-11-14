@@ -31,6 +31,20 @@ vi.mock("@/modules/auth", () => ({
   seedUsers: () => [],
 }));
 
+// Route handlers that own a database are swapped for their module's fixtures here; their own
+// `*.db.test.ts` files cover the real behaviour. Same signatures, so the contract still holds.
+vi.mock("@/modules/schedule", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/schedule")>();
+  const f = actual.fixtures;
+  return {
+    ...actual,
+    getUpcomingEvents: async (_userId: string, range: { from: Date }) => f.eventsFixture(range.from),
+    listConnections: async () => f.connectionsFixture,
+    createConnection: async (_userId: string, body: { provider: "ics" | "manual"; label: string }) => f.createdConnectionFixture(body),
+    deleteConnection: async () => undefined,
+  };
+});
+
 const loaders = import.meta.glob<Record<string, (req: NextRequest, ctx?: unknown) => Promise<Response>>>("./**/route.ts");
 
 /** A valid request for each route. Keyed like `API_ROUTES`. */
