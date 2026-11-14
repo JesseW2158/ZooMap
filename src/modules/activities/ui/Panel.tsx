@@ -31,7 +31,7 @@ export function ActivitiesPanel() {
   }, [activities, position]);
 
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-4 text-sm text-neutral-900">
       {inActivity && me?.activity ? <CurrentActivity me={me} sharing={sharing} /> : null}
 
       {!inActivity ? (
@@ -237,7 +237,7 @@ function CurrentActivity({ me, sharing }: { me: ActivityMe; sharing: boolean | n
           <p className="text-2xl font-bold tabular-nums">
             {minutes}:{String(seconds).padStart(2, "0")}
           </p>
-          <p className="text-xs text-neutral-500">verified minutes</p>
+          <p className="text-xs text-neutral-500">verified time</p>
         </div>
         <div className="rounded-xl bg-neutral-50 p-2">
           <p className="text-2xl font-bold tabular-nums">+{participation.pendingPoints}</p>
@@ -376,7 +376,7 @@ function HostForm({ onDone }: { onDone: () => void }) {
     }
   };
 
-  const input = "w-full rounded-lg border border-neutral-300 px-3 py-2";
+  const input = "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-neutral-900";
   return (
     <form onSubmit={submit} className="space-y-3 rounded-2xl border border-neutral-200 p-3">
       <div className="flex items-center justify-between">
