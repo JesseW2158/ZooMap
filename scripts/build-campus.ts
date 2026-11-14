@@ -64,7 +64,22 @@ type LngLat = [number, number];
 type XY = [number, number];
 
 interface Overrides {
-  [placeId: string]: { name?: string; aliases?: string[]; category?: PlaceCategory; studyFriendly?: boolean; exclude?: boolean };
+  [placeId: string]: {
+    name?: string;
+    aliases?: string[];
+    category?: PlaceCategory;
+    studyFriendly?: boolean;
+    exclude?: boolean;
+    /**
+     * The building is a tall tower on a low base, and OSM gives only the base (with an inner
+     * ring), so extruding it whole draws one tall block. Draw the outer ring (with its holes) at
+     * `baseHeightM` and a solid tower at full height with each inner ring's footprint.
+     * `mirror`: the inner ring is a courtyard at the far end of the plot from the tower, so the
+     * tower takes its footprint moved along the plot's long axis to the same distance on the other
+     * side of the centre (in line with the courtyard), and the hole stays.
+     */
+    towerFromInner?: { baseHeightM: number; mirror?: boolean };
+  };
 }
 
 // ---------------------------------------------------------------- fetch
@@ -154,6 +169,31 @@ function segmentCross(p: XY, q: XY, a: XY, b: XY): number | null {
   const t = ((a[0] - p[0]) * sy - (a[1] - p[1]) * sx) / den;
   const u = ((a[0] - p[0]) * ry - (a[1] - p[1]) * rx) / den;
   return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null;
+}
+
+/** Area centroid of a simple ring and the direction of its long (major principal) axis. */
+function ringAxis(ring: XY[]): { centroid: XY; axis: XY } {
+  let a = 0, cx = 0, cy = 0, xx = 0, yy = 0, xy = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [x0, y0] = ring[j];
+    const [x1, y1] = ring[i];
+    const cross = x0 * y1 - x1 * y0;
+    a += cross;
+    cx += (x0 + x1) * cross;
+    cy += (y0 + y1) * cross;
+    xx += (x0 * x0 + x0 * x1 + x1 * x1) * cross;
+    yy += (y0 * y0 + y0 * y1 + y1 * y1) * cross;
+    xy += (x0 * y1 + 2 * x0 * y0 + 2 * x1 * y1 + x1 * y0) * cross;
+  }
+  a /= 2;
+  cx /= 6 * a;
+  cy /= 6 * a;
+  // central second moments per unit area; dividing by the signed area makes winding irrelevant
+  const sxx = xx / (12 * a) - cx * cx;
+  const syy = yy / (12 * a) - cy * cy;
+  const sxy = xy / (24 * a) - cx * cy;
+  const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  return { centroid: [cx, cy], axis: [Math.cos(theta), Math.sin(theta)] };
 }
 
 function ringArea(ring: XY[]): number {
@@ -689,16 +729,37 @@ export function buildCampus(raw: OsmResponse, overrides: Overrides): BuildResult
   }
   places.sort((a, b) => a.name.localeCompare(b.name, "en") || (a.id < b.id ? -1 : 1));
   for (const id of Object.keys(overrides)) if (!seen.has(id)) report.push(`WARNING: override ${id} matches no place`);
+  for (const b of buildings) {
+    if (overrides[b.osmId]?.towerFromInner && !b.rings.some((poly) => poly.length > 1)) {
+      report.push(`WARNING: override ${b.osmId} sets towerFromInner but the building has no inner ring`);
+    }
+  }
 
   // ------------------------------------------------ buildings output
   const buildingsOut: BuildingCollection = {
     type: "FeatureCollection",
-    features: buildings.map((b, bi) => {
+    features: buildings.flatMap((b, bi) => {
       const placeId = placeOfBuilding.get(bi);
       const place = placeId && !overrides[placeId]?.exclude ? places.find((p) => p.id === placeId) : undefined;
-      const props: BuildingCollection["features"][number]["properties"] = { heightM: b.heightM };
-      if (place) { props.placeId = place.id; props.name = place.name; }
-      return { type: "Feature", properties: props, geometry: toGeometry(b.rings) };
+      const feature = (heightM: number, rings: XY[][][]): BuildingCollection["features"][number] => {
+        const props: BuildingCollection["features"][number]["properties"] = { heightM };
+        if (place) { props.placeId = place.id; props.name = place.name; }
+        return { type: "Feature", properties: props, geometry: toGeometry(rings) };
+      };
+      const tower = overrides[b.osmId]?.towerFromInner;
+      if (!tower || !b.rings.some((poly) => poly.length > 1)) return [feature(b.heightM, b.rings)];
+      const towers = b.rings.flatMap(([outer, ...inners]) => {
+        if (!tower.mirror) return inners;
+        // Slide each inner ring along the plot's long axis to the same distance on the other side
+        // of the centre, so the tower lines up with the courtyard instead of being offset sideways.
+        const { centroid: [cx, cy], axis: [ux, uy] } = ringAxis(outer);
+        return inners.map((ring) => {
+          const [ix, iy] = ringAxis(ring).centroid;
+          const shift = 2 * ((cx - ix) * ux + (cy - iy) * uy);
+          return ring.map(([x, y]): XY => [x + shift * ux, y + shift * uy]);
+        });
+      });
+      return [feature(tower.baseHeightM, b.rings), ...towers.map((ring) => feature(b.heightM, [[ring]]))];
     }),
   };
 
