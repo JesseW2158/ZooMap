@@ -48,6 +48,18 @@ vi.mock("@/modules/activities", async (importOriginal) => {
   };
 });
 
+vi.mock("@/modules/density", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/density")>();
+  const { getPlaces } = await import("@/modules/campus");
+  return {
+    ...actual,
+    getDensitySnapshot: async () => actual.fixtures.densitySnapshotFixture(await getPlaces(), new Date()),
+    getSharing: async () => false,
+    setSharing: async (_userId: string, enabled: boolean) => enabled,
+    recordPing: async () => ({ placeId: null, expiresAt: new Date(Date.now() + 10 * 60_000) }),
+  };
+});
+
 vi.mock("@/modules/schedule", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/schedule")>();
   const f = actual.fixtures;
