@@ -2,7 +2,7 @@
 
 **Branch:** `ws/rewards`
 **Database:** `MONGODB_DB=zoomap_rewards` (tests: `zoomap_rewards_test`)
-**Status:** built and committed. The database tests and the dev check are not run yet (waiting for the Atlas URI). Not merged.
+**Status:** built. `npm run check` is green against Atlas: 134 tests, including 16 rewards database tests. Not merged.
 
 ## Built
 
@@ -21,9 +21,9 @@
 - **Reason text** ("42 min at Study group, Du Bois Library") reads `title` and `placeId` from the `activities` **collection** directly and the place name via `@/modules/campus`. It never imports the activities module. If the activity is missing, the text falls back to "an activity".
 - **The activities stream** must emit `participation.ended` with the user's real id. An unknown user is NOT_FOUND inside `applyEntry`, and the engine logs and skips it.
 
-## Open: `src/app/api/routes.test.ts` (not owned by this stream)
+## Shared file touched: `src/app/api/routes.test.ts` (owner, please review)
 
-Foundation's contract test calls the real handlers. Now that the rewards routes use the database, its three rewards cases fail without a database. With `MONGODB_URI` set, they would hit the real dev database, not `_test`, and `storeRedeem`'s sample `fixture-item-1` is not seeded. Every database-backed stream will hit this. Proposed fix (needs the owner's OK): `vi.mock("@/modules/rewards", ...)` in that test, backed by the module's `fixtures`, so it checks wiring and shape while `rewards.db.test.ts` covers behaviour.
+Foundation's contract test calls the real handlers. Once the rewards routes used the database, `storeRedeem`'s sample (`fixture-item-1`) returned 404, and the test was also writing to the dev database. With the user's OK, a separate commit adds `vi.mock("@/modules/rewards", ...)` to that test, backed by the module's `fixtures`. The test checks wiring and response shape, and `rewards.db.test.ts` covers behaviour. **Every other database-backed stream will hit the same problem.** The same small mock pattern works for them, or the owner may prefer one project-wide fix.
 
 ## Dev check: emit a fixture event
 
