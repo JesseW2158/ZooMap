@@ -2,7 +2,11 @@
 
 **Branch:** `ws/chain`, built on `ws/rewards` (merge rewards first)
 **Worktree:** `../ZooMap-chain`, `MONGODB_DB=zoomap_chain`
-**Status:** built and tested with a fake chain (`npm run check` green, 159 tests). Not yet seen against devnet: the mint authority needs devnet SOL first (see Setup). Not merged.
+**Status:** working on devnet. `npm run check` is green (159 tests). Verified 2026-11-14: seed-alex earned 90 and redeemed 60, and the devnet token balance read 30 (one mint, one burn, each done in one attempt, synced in about 3 s). Not merged.
+
+- Mint: `5QByiYyFg7z6jvtgC5kk2joCjMuH9tFhEx4czsGjjd1A` ([explorer](https://explorer.solana.com/address/5QByiYyFg7z6jvtgC5kk2joCjMuH9tFhEx4czsGjjd1A?cluster=devnet))
+- Mint authority (fee payer): `DCBQotNCSvdzc6PrAk5krWfinGuRWUYsMccMKs573GaK`, funded with 0.5 devnet SOL from the faucet
+- The keys live only in this worktree's `.env.local`. Copy `CHAIN_*` from there to Vercel and to any other environment that should mirror to the same token.
 
 ## What it does
 
