@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   NotificationsResponse,
   type ActivityCategory,
@@ -147,7 +147,7 @@ export function AlertsCenter() {
                   mapActions.requestRoute(t.placeId!);
                   store.set((s) => ({ toasts: s.toasts.filter((x) => x.id !== t.id) }));
                 }}
-                className="mt-1 text-xs font-semibold text-[#881c1c] hover:underline"
+                className="mt-1 text-xs font-semibold text-[#881c1c] hover:underline max-md:flex max-md:min-h-11 max-md:items-center"
               >
                 Show route →
               </button>
@@ -157,7 +157,7 @@ export function AlertsCenter() {
             type="button"
             aria-label="Dismiss"
             onClick={() => store.set((s) => ({ toasts: s.toasts.filter((x) => x.id !== t.id) }))}
-            className="px-1 text-neutral-400 hover:text-neutral-700"
+            className="inline-flex items-center justify-center px-1 text-neutral-400 hover:text-neutral-700 max-md:min-h-11 max-md:min-w-11"
           >
             ✕
           </button>
@@ -179,17 +179,37 @@ export function AlertsBell() {
   const bellRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Close the inbox; `refocus` hands focus back to the bell (keyboard and Close button), but not
+  // after a tap elsewhere or after following an alert, where focus belongs to what was chosen.
+  const closeInbox = useCallback((refocus: boolean) => {
+    setOpen(false);
+    if (refocus) bellRef.current?.focus();
+  }, []);
+
   // The inbox drops over the same corner as the account menu, so a tap anywhere else closes it
   // (opening the account menu therefore closes the inbox, and the two are never open together).
+  // Escape closes it too. Capture phase, so a map or panel that stops propagation cannot swallow the tap.
   useEffect(() => {
     if (!open) return;
-    const close = (e: PointerEvent) => {
+    const onDown = (e: PointerEvent) => {
       const t = e.target as Node | null;
       if (t && (bellRef.current?.contains(t) || panelRef.current?.contains(t))) return;
-      setOpen(false);
+      closeInbox(false);
     };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeInbox(true);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, closeInbox]);
+
+  // keyboard users land inside the inbox when it opens
+  useEffect(() => {
+    if (open) panelRef.current?.focus({ preventScroll: true });
   }, [open]);
 
   const unread = data?.unread ?? 0;
@@ -214,7 +234,7 @@ export function AlertsBell() {
         aria-label={unread ? `Alerts, ${unread} new` : "Alerts"}
         aria-expanded={open}
         title="Alerts"
-        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-md ring-2 ring-ivory/80 hover:bg-ivory"
+        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-md ring-2 ring-ivory/80 before:absolute before:-inset-0.5 before:content-[''] hover:bg-ivory"
       >
         <BellIcon />
         {unread > 0 ? (
@@ -228,24 +248,27 @@ export function AlertsBell() {
         // right edge lines up with the account button (one button and a gap to the right)
         <div
           ref={panelRef}
-          className="absolute -right-12 top-[calc(100%+0.5rem)] z-50 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left text-neutral-900 shadow-xl"
+          role="dialog"
+          aria-label="Alerts"
+          tabIndex={-1}
+          className="absolute -right-12 top-[calc(100%+0.5rem)] z-50 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left text-neutral-900 shadow-xl outline-none"
         >
           <div className="flex items-center gap-1 border-b border-neutral-100 px-3 py-2">
             <h2 className="flex-1 text-sm font-semibold">{view === "inbox" ? "Alerts" : "Alert settings"}</h2>
             <button
               type="button"
               onClick={() => setView(view === "inbox" ? "settings" : "inbox")}
-              className="rounded-lg px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100"
+              className="rounded-lg px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 max-md:min-h-11"
             >
               {view === "inbox" ? "⚙ Settings" : "← Alerts"}
             </button>
-            <button type="button" aria-label="Close alerts" onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-neutral-400 hover:bg-neutral-100">
+            <button type="button" aria-label="Close alerts" onClick={() => closeInbox(true)} className="inline-flex items-center justify-center rounded-lg px-2 py-1 text-neutral-400 hover:bg-neutral-100 max-md:min-h-11 max-md:min-w-11">
               ✕
             </button>
           </div>
           <div className="overflow-y-auto">
             {view === "inbox" ? (
-              <Inbox data={data} onPick={() => setOpen(false)} />
+              <Inbox data={data} onPick={() => closeInbox(false)} />
             ) : data ? (
               <Settings settings={data.settings} />
             ) : (
@@ -326,7 +349,7 @@ function Row({ alert, onPick }: { alert: Alert; onPick: (placeId?: string) => vo
 function Upcoming({ item, onPick }: { item: UpcomingAlert; onPick: (placeId?: string) => void }) {
   return (
     <li>
-      <button type="button" onClick={() => onPick(item.placeId)} className="flex w-full items-start gap-2 rounded-lg p-1 text-left text-xs hover:bg-white">
+      <button type="button" onClick={() => onPick(item.placeId)} className="flex w-full items-start gap-2 rounded-lg p-1 text-left text-xs hover:bg-white max-md:min-h-11 max-md:items-center">
         <span className="w-14 shrink-0 font-semibold text-neutral-700">{at(item.fireAt)}</span>
         <span className="min-w-0 flex-1 text-neutral-700">
           {KIND[item.kind].icon} {item.title}
@@ -391,7 +414,7 @@ function Settings({ settings }: { settings: AlertSettings }) {
       </Group>
 
       <Group title="Around you">
-        <Toggle label="Activities near me" hint="Needs location sharing, in the Crowds tab." on={settings.nearby} onChange={(v) => save({ nearby: v })} />
+        <Toggle label="Activities near me" hint="Needs location sharing, in the Map tab." on={settings.nearby} onChange={(v) => save({ nearby: v })} />
         {settings.nearby ? (
           <div className="ml-1 space-y-2 border-l-2 border-neutral-100 pl-3">
             <div className="flex flex-wrap items-center gap-1">
@@ -473,7 +496,7 @@ function Settings({ settings }: { settings: AlertSettings }) {
             <button
               type="button"
               onClick={async () => setPermission(await Notification.requestPermission())}
-              className="w-full rounded-lg bg-neutral-900 px-3 py-2 text-xs font-medium text-white"
+              className="w-full rounded-lg bg-neutral-900 px-3 py-2 text-xs font-medium text-white max-md:min-h-11"
             >
               Allow pop-up notifications
             </button>
@@ -495,7 +518,7 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 
 function Toggle({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3">
+    <label className="flex cursor-pointer items-start gap-3 max-md:min-h-11 max-md:items-center">
       <span className="min-w-0 flex-1">
         <span className="block font-medium">{label}</span>
         {hint ? <span className="block text-xs text-neutral-500">{hint}</span> : null}
@@ -516,7 +539,7 @@ function Chip({ active, onClick, children }: { active?: boolean; onClick: () => 
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-2.5 py-1 text-xs capitalize ${active ? "border-[#881c1c] bg-[#881c1c] text-white" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"}`}
+      className={`rounded-full border px-2.5 py-1 text-xs capitalize max-md:min-h-11 max-md:min-w-11 ${active ? "border-[#881c1c] bg-[#881c1c] text-white" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"}`}
     >
       {children}
     </button>
