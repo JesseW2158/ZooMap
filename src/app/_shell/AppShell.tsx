@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { MapProvider, mapStore } from "@/shared/ui";
 import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
@@ -164,11 +164,12 @@ export function AppShell({ user }: { user: ShellUser }) {
           <Component key={id} />
         ))}
 
-        {/* map chrome: account in the corner. The registry's top slot (building search) is
-            left out on purpose: the map is kept clear. */}
+        {/* map chrome: account in the corner (the alerts bell sits just left of it, right-16,
+            from the notifications module; keep the two in step). The registry's top slot
+            (building search) is left out on purpose: the map is kept clear. */}
         <div
           hidden={!onMap}
-          className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-end p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[25] flex items-start justify-end p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
         >
           <div className="pointer-events-auto">
             <AccountButton user={user} />
@@ -217,15 +218,14 @@ function Page({
       className="absolute inset-0 z-20 flex flex-col overflow-y-auto bg-linen text-ink"
     >
       {/* navy hero band with the section's colour; the cards overlap its bottom edge */}
-      <header className="relative shrink-0 overflow-hidden bg-ink pb-12 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
-        <div
-          aria-hidden
-          className="absolute -bottom-24 right-6 h-40 w-40 rounded-full bg-yale/45"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70"
-        />
+      <header className="relative shrink-0 bg-ink pb-12 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
+        {/* clip only the decorative circles: the header itself must not clip the account menu.
+            The header has no z-index on purpose: the cards after it paint over its bottom edge,
+            while the menu's own z-40 lifts it above those cards. */}
+        <div aria-hidden className="absolute inset-0 overflow-hidden">
+          <div className="absolute -bottom-24 right-6 h-40 w-40 rounded-full bg-yale/45" />
+          <div className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70" />
+        </div>
         <div className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
           <span
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-ink ${accent.bg}`}
@@ -305,9 +305,22 @@ function TabBar({
 
 function AccountButton({ user }: { user: ShellUser }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const label = user.name ?? user.email;
+
+  // a tap anywhere else closes the menu, so it never sits under the alerts inbox, which opens
+  // over the same corner
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <button
         type="button"
         aria-label="Account"
