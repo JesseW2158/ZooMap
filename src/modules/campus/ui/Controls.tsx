@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
-import type { Map as MapLibreMap } from "maplibre-gl";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import { useUserLocation } from "@/shared/platform";
 
 /**
@@ -11,6 +11,24 @@ import { useUserLocation } from "@/shared/platform";
  */
 
 const TIP_KEY = "zoomap:map-tips-seen";
+/** How long "Find me" keeps the spotlight on your position. */
+const SPOTLIGHT_MS = 6000;
+
+/** Rings that ripple out from your dot and a "You are here" tag above it. Drawn above buildings. */
+function spotlightElement(): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "pointer-events-none relative h-0 w-0";
+  el.setAttribute("aria-hidden", "true");
+  el.innerHTML = `
+    <span class="absolute -left-10 -top-10 h-20 w-20 rounded-full border-4 border-blue-600/70 bg-blue-500/15 animate-ping"></span>
+    <span class="absolute -left-6 -top-6 h-12 w-12 rounded-full border-2 border-white bg-blue-600/25 shadow-[0_0_24px_6px_rgba(37,99,235,0.55)]"></span>
+    <span class="absolute -left-2.5 -top-2.5 h-5 w-5 rounded-full border-[3px] border-white bg-blue-600 shadow-md"></span>
+    <span class="absolute bottom-7 left-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-lg">
+      You are here
+      <span class="absolute left-1/2 top-full -translate-x-1/2 border-x-[6px] border-t-[6px] border-x-transparent border-t-blue-600"></span>
+    </span>`;
+  return el;
+}
 export const CAMPUS_VIEW = { center: [-72.5275, 42.389] as [number, number], zoom: 16, pitch: 55, bearing: -20 };
 
 function Btn(props: { label: string; onClick: () => void; children: ReactNode; active?: boolean; wide?: boolean }) {
@@ -38,6 +56,7 @@ export function MapControls({ map }: { map: MapLibreMap }) {
   const [pitch, setPitch] = useState(() => map.getPitch());
   const [help, setHelp] = useState(false);
   const [wantLocate, setWantLocate] = useState(false);
+  const [spotlight, setSpotlight] = useState<number | null>(null);
   const { position, start, status } = useUserLocation();
 
   useEffect(() => {
@@ -70,9 +89,32 @@ export function MapControls({ map }: { map: MapLibreMap }) {
   useEffect(() => {
     if (!wantLocate || !position) return;
     map.flyTo({ center: [position.lng, position.lat], zoom: Math.max(map.getZoom(), 17.5), essential: true });
-    const done = setTimeout(() => setWantLocate(false), 0);
+    const done = setTimeout(() => { setWantLocate(false); setSpotlight(Date.now()); }, 0);
     return () => clearTimeout(done);
   }, [wantLocate, position, map]);
+
+  // "Find me" spotlight: shown for a few seconds, following the position while it is up
+  const marker = useRef<Marker | null>(null);
+  const spot = useRef<[number, number] | null>(null);
+  useEffect(() => {
+    spot.current = position ? [position.lng, position.lat] : null;
+    if (position) marker.current?.setLngLat([position.lng, position.lat]);
+  }, [position]);
+  useEffect(() => {
+    if (spotlight === null) return;
+    let cancelled = false;
+    void import("maplibre-gl").then(({ Marker }) => {
+      if (cancelled || !spot.current) return;
+      marker.current = new Marker({ element: spotlightElement(), anchor: "center" }).setLngLat(spot.current).addTo(map);
+    });
+    const hide = setTimeout(() => setSpotlight(null), SPOTLIGHT_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(hide);
+      marker.current?.remove();
+      marker.current = null;
+    };
+  }, [spotlight, map]);
 
   const is3d = pitch > 10;
   const ease = (opts: Parameters<MapLibreMap["easeTo"]>[0]) => map.easeTo({ duration: 450, ...opts });
@@ -108,8 +150,10 @@ export function MapControls({ map }: { map: MapLibreMap }) {
             label="Find me"
             active={wantLocate && !position}
             onClick={() => {
-              if (position) map.flyTo({ center: [position.lng, position.lat], zoom: Math.max(map.getZoom(), 17.5), essential: true });
-              else { setWantLocate(true); start(); }
+              if (position) {
+                map.flyTo({ center: [position.lng, position.lat], zoom: Math.max(map.getZoom(), 17.5), essential: true });
+                setSpotlight(Date.now());
+              } else { setWantLocate(true); start(); }
             }}
           >
             ◎
