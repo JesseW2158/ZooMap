@@ -4,6 +4,7 @@ export * as fixtures from "./fixtures";
 export { applyEntry } from "./ledger";
 export type { AppliedEntry } from "./ledger";
 export { getRewardsMe } from "./me";
+export { settleUnpaid } from "./settle";
 export { listStoreItems, redeem } from "./store";
 export type { RedeemResult } from "./store";
 export { REWARD_RULES } from "./rules";

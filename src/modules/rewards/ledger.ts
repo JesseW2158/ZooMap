@@ -115,6 +115,11 @@ async function readExisting(idempotencyKey: string): Promise<AppliedEntry> {
   return { entry: toLedgerEntry(existing), created: false, balanceAfter: user?.pointsBalance ?? 0 };
 }
 
+export async function ledgerKeyExists(idempotencyKey: string): Promise<boolean> {
+  const { ledger } = await getCollections();
+  return (await ledger.countDocuments({ idempotencyKey }, { limit: 1 })) > 0;
+}
+
 /** Oldest first. `since` is inclusive. */
 export async function ledgerForUser(userId: string, opts: { since?: Date; ruleId?: string } = {}): Promise<LedgerEntry[]> {
   const { ledger } = await getCollections();
