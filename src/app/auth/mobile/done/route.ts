@@ -20,8 +20,8 @@ export async function GET(req: Request): Promise<Response> {
 
   return html(
     200,
-    "Open MinuteMap",
-    `<p>Open the MinuteMap app signed in as <strong>${escapeHtml(user.email)}</strong>?</p>
+    "Open Minute Map",
+    `<p>Open the Minute Map app signed in as <strong>${escapeHtml(user.email)}</strong>?</p>
 <form method="post" action="/auth/mobile/done?challenge=${challenge}"><button type="submit">Continue</button></form>`,
   );
 }
@@ -30,7 +30,7 @@ export async function POST(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const challenge = url.searchParams.get("challenge");
   if (!isValidChallenge(challenge)) return invalidLink();
-  if (!sameOrigin(req)) return html(403, "Not allowed", `<p>This request did not come from the MinuteMap sign-in page.</p>`);
+  if (!sameOrigin(req)) return html(403, "Not allowed", `<p>This request did not come from the Minute Map sign-in page.</p>`);
 
   const user = await getSessionUser();
   if (!user) return redirectToStart(url, challenge, 303);
@@ -39,9 +39,9 @@ export async function POST(req: Request): Promise<Response> {
   const link = `zoomap://auth?code=${code}`; // base64url: nothing to escape
   return html(
     200,
-    "Return to MinuteMap",
-    `<p>You are signed in. Opening MinuteMap&hellip;</p>
-<p><a href="${link}">Return to MinuteMap</a></p>
+    "Return to Minute Map",
+    `<p>You are signed in. Opening Minute Map&hellip;</p>
+<p><a href="${link}">Return to Minute Map</a></p>
 <script>location.replace(${JSON.stringify(link)});</script>`,
   );
 }
@@ -72,7 +72,7 @@ function redirectToStart(url: URL, challenge: string, status = 307): Response {
 }
 
 function invalidLink(): Response {
-  return html(400, "Invalid sign-in link", `<p>This sign-in link is not valid. Go back to the MinuteMap app and try again.</p>`);
+  return html(400, "Invalid sign-in link", `<p>This sign-in link is not valid. Go back to the Minute Map app and try again.</p>`);
 }
 
 function escapeHtml(value: string): string {
@@ -82,10 +82,10 @@ function escapeHtml(value: string): string {
 function html(status: number, title: string, body: string): Response {
   const page = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="referrer" content="same-origin"><title>${title} · MinuteMap</title>
+<meta name="referrer" content="same-origin"><title>${title} · Minute Map</title>
 <style>body{font-family:system-ui,sans-serif;margin:0;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:1rem;padding:1.5rem;max-width:24rem;margin-inline:auto}
 a,button{display:block;width:100%;box-sizing:border-box;text-align:center;background:#171717;color:#fff;padding:.9rem 1rem;border:0;border-radius:.75rem;text-decoration:none;font:inherit;font-weight:600}</style>
-</head><body><h1 style="display:flex;align-items:center;gap:.75rem;margin:0"><img src="/logo/minute-map-circle-512.png" alt="" width="40" height="40">MinuteMap</h1>${body}</body></html>`;
+</head><body><h1 style="display:flex;align-items:center;gap:.75rem;margin:0"><img src="/logo/minute-map-circle-512.png" alt="" width="40" height="40">Minute Map</h1>${body}</body></html>`;
   return new Response(page, {
     status,
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "same-origin" },

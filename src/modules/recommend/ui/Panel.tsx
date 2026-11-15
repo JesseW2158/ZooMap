@@ -214,7 +214,7 @@ function SourceBadge({ source }: { source: RecommendResponse["source"] }) {
   return source === "gemini" ? (
     <span className="rounded-full bg-lavender/40 px-2 py-0.5 text-[11px] text-ink">Picked by Gemini</span>
   ) : (
-    <span className="rounded-full bg-sand/50 px-2 py-0.5 text-[11px] text-ink" title="Gemini was unavailable, so MinuteMap's own scoring picked this.">
+    <span className="rounded-full bg-sand/50 px-2 py-0.5 text-[11px] text-ink" title="Gemini was unavailable, so Minute Map's own scoring picked this.">
       Fallback pick (no AI)
     </span>
   );

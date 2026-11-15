@@ -44,7 +44,7 @@ export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () 
 
         <Group title="Privacy and location">
           <LocationSharingRow />
-          <Row title="Background location" hint="Android app only: set MinuteMap's location permission to Allow all the time to keep sharing with the screen off" />
+          <Row title="Background location" hint="Android app only: set Minute Map's location permission to Allow all the time to keep sharing with the screen off" />
           <Row title="Who sees where you are" hint="Nobody. Others see only how busy each building is" />
         </Group>
 

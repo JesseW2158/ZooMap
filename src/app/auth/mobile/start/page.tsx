@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { env } from "@/shared/config/env";
 import { getSessionUser, isValidChallenge, seedUsers, signIn } from "@/modules/auth";
 
-export const metadata = { title: "Sign in · MinuteMap" };
+export const metadata = { title: "Sign in · Minute Map" };
 
 /**
  * Opened by the Android app in a Chrome Custom Tab. Signs the person in with the browser's own
@@ -18,10 +18,10 @@ export default async function MobileStartPage({ searchParams }: { searchParams: 
       <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-4 p-6">
         <h1 className="flex items-center gap-3 text-3xl font-bold">
           <Image src="/logo/minute-map-circle-512.png" alt="" width={40} height={40} priority className="h-10 w-10 rounded-full" />
-          MinuteMap
+          Minute Map
         </h1>
         <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          This sign-in link is not valid. Go back to the MinuteMap app and try again.
+          This sign-in link is not valid. Go back to the Minute Map app and try again.
         </p>
       </main>
     );
@@ -38,7 +38,7 @@ export default async function MobileStartPage({ searchParams }: { searchParams: 
       <header>
         <h1 className="flex items-center gap-3 text-3xl font-bold">
           <Image src="/logo/minute-map-circle-512.png" alt="" width={40} height={40} priority className="h-10 w-10 rounded-full" />
-          MinuteMap
+          Minute Map
         </h1>
         <p className="text-neutral-500">Your campus, live. Sign in with your {domains.map((d) => `@${d}`).join(" or ")} Google account.</p>
       </header>

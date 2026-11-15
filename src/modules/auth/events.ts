@@ -2,7 +2,7 @@ import { getCollections } from "@/shared/db";
 
 /**
  * Auth.js `events.signOut` for the JWT strategy: the event carries the decoded token, whose `uid`
- * is the MinuteMap user id. Signing out revokes that user's device tokens, so a phone that signed
+ * is the Minute Map user id. Signing out revokes that user's device tokens, so a phone that signed
  * out stops reporting location. Auth.js logs and swallows an error thrown here, but the cookie
  * is cleared either way.
  */

@@ -83,7 +83,7 @@ export function AssistantPanel() {
             </svg>
           </span>
           <div>
-            <h2 className="text-base font-bold tracking-tight">Ask MinuteMap</h2>
+            <h2 className="text-base font-bold tracking-tight">Ask Minute Map</h2>
             <p className="text-xs text-yale">Activities happening now, study spots, and how busy a building is.</p>
           </div>
         </div>

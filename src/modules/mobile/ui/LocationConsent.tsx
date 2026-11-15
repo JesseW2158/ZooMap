@@ -27,7 +27,7 @@ export function LocationConsent() {
         <div className={sheet} role="dialog" aria-modal="true" aria-labelledby="loc-title">
           <div className={card}>
             <h2 id="loc-title" className="text-lg font-semibold">
-              Share your location with MinuteMap?
+              Share your location with Minute Map?
             </h2>
             <ul className="list-disc space-y-2 pl-5 text-sm text-neutral-700">
               <li>
@@ -66,7 +66,7 @@ export function LocationConsent() {
               Keep sharing with the screen off
             </h2>
             <p className="text-sm text-neutral-700">
-              So your time at an activity keeps counting when your phone is in your pocket, open MinuteMap&apos;s settings
+              So your time at an activity keeps counting when your phone is in your pocket, open Minute Map&apos;s settings
               and set <strong>Permissions &gt; Location</strong> to <strong>Allow all the time</strong>. Also allow{" "}
               <strong>Notifications</strong> so you can see when sharing is on.
             </p>

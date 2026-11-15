@@ -82,7 +82,7 @@ export function MyCodeOverlay({ me, onClose }: { me: Profile | null; onClose: ()
       ) : null}
       {code ? <p className="font-mono text-sm tracking-wider text-neutral-500">{code.code}</p> : null}
       <p className="max-w-xs text-center text-sm text-neutral-600">
-        Let a friend scan this with their camera or the Scan button in MinuteMap. Opening your code again makes a new one, and
+        Let a friend scan this with their camera or the Scan button in Minute Map. Opening your code again makes a new one, and
         this one stops working.
       </p>
     </Overlay>
@@ -130,7 +130,7 @@ export function ScanOverlay({ onClose }: { onClose: () => void }) {
         if (stopped || !video.current) return;
         video.current.srcObject = stream;
         await video.current.play();
-        setStatus("Point the camera at a friend's MinuteMap code.");
+        setStatus("Point the camera at a friend's Minute Map code.");
         const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorCtor }).BarcodeDetector;
         const detector = new Detector({ formats: ["qr_code"] });
         timer = setInterval(async () => {
@@ -145,7 +145,7 @@ export function ScanOverlay({ onClose }: { onClose: () => void }) {
               return;
             }
           }
-          if (found.length) setStatus("That QR isn't a MinuteMap friend code.");
+          if (found.length) setStatus("That QR isn't a Minute Map friend code.");
         }, 300);
       } catch {
         setStatus("Camera access was blocked. Allow it in the browser, or scan with your camera app.");
@@ -169,8 +169,8 @@ export function ScanOverlay({ onClose }: { onClose: () => void }) {
         <div className="max-w-xs space-y-3 text-center">
           <p className="text-lg font-semibold">Use your camera app</p>
           <p className="text-neutral-700">
-            This browser can&apos;t scan inside MinuteMap. Open your phone&apos;s camera, point it at your friend&apos;s code and tap
-            the link that appears. It opens MinuteMap to add them.
+            This browser can&apos;t scan inside Minute Map. Open your phone&apos;s camera, point it at your friend&apos;s code and tap
+            the link that appears. It opens Minute Map to add them.
           </p>
         </div>
       )}

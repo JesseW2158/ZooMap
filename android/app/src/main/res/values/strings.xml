@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">MinuteMap</string>
-    <string name="title_activity_main">MinuteMap</string>
+    <string name="app_name">Minute Map</string>
+    <string name="title_activity_main">Minute Map</string>
     <string name="package_name">app.zoomap</string>
     <string name="custom_url_scheme">app.zoomap</string>
 
