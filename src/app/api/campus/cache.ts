@@ -6,11 +6,13 @@ import { createHash } from "node:crypto";
  * later request reuses it.
  *
  * `private`, not `public`: the routes require a signed-in user, and a shared cache (the CDN)
- * must not hand an authenticated response to someone who never authenticated. The browser
- * still caches it for an hour and then revalidates with the ETag, so a repeat visit costs a
- * 304 instead of 0.5 to 1.3 MB.
+ * must not hand an authenticated response to someone who never authenticated.
+ *
+ * `no-cache`, not a max-age: the browser keeps its copy but asks every time, so a repeat visit
+ * costs a 304 instead of 0.5 to 1.3 MB, and a deploy that changes the data (new buildings, a
+ * new property) shows at once instead of up to an hour later.
  */
-export const CAMPUS_CACHE_CONTROL = "private, max-age=3600, stale-while-revalidate=86400";
+export const CAMPUS_CACHE_CONTROL = "private, no-cache";
 
 interface Cached {
   body: string;

@@ -105,8 +105,21 @@ export async function getWalkEdgeInfo(): Promise<WalkEdgeInfo> {
  * Added by Foundation beyond the contract table, so the map layer can load geometry over
  * `GET /api/campus/buildings` and `/ground` instead of bundling it into the client.
  */
+let buildingsWithCategories: BuildingCollection | undefined;
+
+/** The building footprints, each tagged with its place's category (for colouring by type). */
 export async function getBuildings(): Promise<BuildingCollection> {
-  return loadBuildings();
+  if (buildingsWithCategories) return buildingsWithCategories;
+  const placeById = loadPlaceById();
+  const fc = loadBuildings();
+  buildingsWithCategories = {
+    ...fc,
+    features: fc.features.map((f) => {
+      const category = f.properties.placeId ? placeById.get(f.properties.placeId)?.category : undefined;
+      return category ? { ...f, properties: { ...f.properties, category } } : f;
+    }),
+  };
+  return buildingsWithCategories;
 }
 
 export async function getGround(): Promise<GroundCollection> {

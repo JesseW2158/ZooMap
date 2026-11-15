@@ -48,6 +48,8 @@ export const BuildingProps = z.object({
   placeId: Id.optional(),
   name: z.string().optional(),
   heightM: z.number().positive(),
+  /** The category of the place this building belongs to, added by the server; for colouring. */
+  category: PlaceCategory.optional(),
 });
 export type BuildingProps = z.infer<typeof BuildingProps>;
 
