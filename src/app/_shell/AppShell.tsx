@@ -49,7 +49,7 @@ const TABS: Tab[] = [
     id: "activities",
     label: "Activities",
     Icon: ActivitiesIcon,
-    // the assistant ("Ask ZooMap") leads the page, above the activities and events lists
+    // the assistant ("Ask ZooKeeper") leads the page, above the activities and events lists
     panelIds: ["assistant", "activities", "events"],
     accent: {
       bg: "bg-coral",

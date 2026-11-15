@@ -247,8 +247,9 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
           aria-label={`Open ${title}`}
           title={title}
           onClick={() => setExpanded(true)}
-          // Bottom-right, level with the crowd legend's "Map: …" button (the legend's bottom offset).
-          className={`fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-[5] flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-md`}
+          // Bottom-right of the map area, 0.75rem in from both edges; the OpenStreetMap (i) mirrors
+          // it in the bottom-left corner (globals.css), centred on the same line.
+          className={`absolute bottom-3 right-3 z-[5] flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-md`}
         >
           {/* white frame with the small accent badge, like the icon in the sheet's header */}
           <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-ink ${accentBg}`}>

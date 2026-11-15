@@ -102,6 +102,12 @@ export function MapProvider({ children }: { children?: ReactNode }) {
       instance.on("load", () => {
         started = true;
         if (!cancelled && instance) setMap(instance);
+        // OpenStreetMap's attribution guidelines allow the credit to collapse into the (i)
+        // button as long as it is shown when the map first loads; MapLibre otherwise keeps it
+        // open until the first drag.
+        window.setTimeout(() => {
+          container.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
+        }, 5000);
       });
       // Errors before `load` (worker, WebGL) mean the map never starts; later ones are a
       // layer's source problem and are only logged by MapLibre.

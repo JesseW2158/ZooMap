@@ -87,7 +87,7 @@ export function PointsIcon({ className }: IconProps) {
   );
 }
 
-/** A robot head with an antenna: the campus assistant ("Ask ZooMap"). */
+/** A robot head with an antenna: the campus assistant ("Ask ZooKeeper"). */
 export function AskIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>

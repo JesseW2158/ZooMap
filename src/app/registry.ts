@@ -45,7 +45,7 @@ export const registry: AppRegistry = {
     { id: "recommend", title: "Study", Component: RecommendPanel },
     { id: "rewards", title: "Points", Component: RewardsPanel },
     { id: "friends", title: "Chat", Component: FriendsPanel },
-    { id: "assistant", title: "Ask ZooMap", Component: AssistantPanel },
+    { id: "assistant", title: "Ask ZooKeeper", Component: AssistantPanel },
   ],
   topSlot: [{ id: "routing-search", Component: RoutingSearch }],
   headless: [

@@ -8,7 +8,7 @@ import { createStore, useMapStore, useStore } from "@/shared/ui";
 import { examplesFor } from "./examples";
 
 /**
- * "Ask ZooMap": a campus chatbot at the top of the Activities page. The shell's section heading
+ * "Ask ZooKeeper": a campus chatbot at the top of the Activities page. The shell's section heading
  * gives it its title and the Activities icon. The conversation lives in this tab's memory only (it survives
  * switching tabs, not a reload) and the last messages go to the server with each question.
  */
@@ -140,13 +140,13 @@ export function AssistantPanel() {
               value={draft}
               maxLength={1000}
               onChange={(e) => setDraft(e.target.value)}
-              aria-label="Ask ZooMap"
+              aria-label="Ask ZooKeeper"
               className="w-full bg-transparent py-1.5 outline-none"
             />
             {/* the placeholder, drawn by hand so each example can fade in */}
             {draft ? null : (
               <span key={example} aria-hidden className="animate-fade pointer-events-none absolute inset-0 truncate py-1.5 text-yale/50">
-                Ask ZooMap: {example}
+                {example}
               </span>
             )}
           </span>

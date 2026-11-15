@@ -1,5 +1,5 @@
 /**
- * Example questions cycled in the empty "Ask ZooMap" search bar, chosen by the time of day on
+ * Example questions cycled in the empty "Ask ZooKeeper" search bar, chosen by the time of day on
  * campus (Amherst time, whatever the device's zone). Each one is something the assistant can
  * answer: activities, events, study spots, or how busy a place is (not opening hours).
  */

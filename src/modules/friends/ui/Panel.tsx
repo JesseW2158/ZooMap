@@ -35,15 +35,13 @@ export function FriendsPanel() {
       ) : (
         <section className="flex items-center gap-3">
           {me ? (
-            <span className="rounded-full p-0.5 ring-2 ring-rose">
-              <Avatar person={me} size={52} />
-            </span>
+            <Avatar person={me} size={56} />
           ) : (
             <span className="h-14 w-14 animate-pulse rounded-full bg-linen" />
           )}
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-bold">{me?.name ?? " "}</p>
-            <p className="truncate text-yale">{me?.pronouns ?? (me ? "Add pronouns" : "")}</p>
+            {me?.pronouns ? <p className="truncate text-yale">{me.pronouns}</p> : null}
           </div>
           <RoundButton label="Friend code: show yours or scan a friend's" onClick={() => setOverlay("code")} primary>
             <QrAddIcon className="h-5 w-5" />
