@@ -90,8 +90,8 @@ const TABS: Tab[] = [
     id: "calendar",
     label: "Calendar",
     Icon: CalendarIcon,
-    // "recommend" (Study) joins this page once it is built; until then its stub is hidden
-    panelIds: ["schedule"],
+    // "recommend" (Study) is built and sits under the schedule: it picks a spot near your next class
+    panelIds: ["schedule", "recommend"],
     accent: {
       bg: "bg-sky",
       text: "text-sky",
@@ -137,8 +137,7 @@ const panelsById = new Map(registry.panels.map((p) => [p.id, p]));
 
 // A registered panel that no tab names still gets shown, on the calendar page, so a new
 // registry line never silently disappears.
-const HIDDEN_UNTIL_BUILT = new Set(["recommend"]);
-const claimed = new Set([...TABS.flatMap((t) => t.panelIds), ...HIDDEN_UNTIL_BUILT]);
+const claimed = new Set(TABS.flatMap((t) => t.panelIds));
 const unclaimed = registry.panels
   .filter((p) => !claimed.has(p.id))
   .map((p) => p.id);
