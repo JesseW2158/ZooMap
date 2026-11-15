@@ -10,6 +10,7 @@ describe("cachedJson", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe(CAMPUS_CACHE_CONTROL);
     expect(res.headers.get("Cache-Control")).toContain("private");
+    expect(res.headers.get("Cache-Control")).toContain("no-cache"); // a deploy shows at once, never an hour late
     expect(res.headers.get("ETag")).toMatch(/^"[\w-]+"$/);
     expect(await res.json()).toEqual(data);
   });
