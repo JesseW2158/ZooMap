@@ -1,7 +1,9 @@
-import type { DensityLevel, DensityPlace, DensityPoint, DensityResponse, Place } from "@/shared/contracts";
+import type { DensityPlace, DensityPoint, DensityResponse, Place } from "@/shared/contracts";
 import { getPlaces } from "@/modules/campus";
+import { heatWeight, levelFor } from "./capacity";
 import { densitySources } from "./sources";
 
+export { levelFor } from "./capacity";
 export { getSharing, recordPing, setSharing } from "./presence";
 export * as fixtures from "./fixtures";
 
@@ -9,11 +11,6 @@ export * as fixtures from "./fixtures";
  * Density module (owner: density). Sums the registered sources per place, keeping live and
  * simulated apart so the UI can label simulated data.
  */
-
-export const levelFor = (count: number): DensityLevel => (count <= 0 ? 0 : count < 10 ? 1 : count < 25 ? 2 : count < 40 ? 3 : 4);
-
-/** 50 people fills the heat scale. */
-const weightFor = (count: number) => Math.min(1, count / 50);
 
 const CACHE_MS = 5_000;
 let cache: { at: number; value: DensityResponse } | null = null;
@@ -38,9 +35,9 @@ export async function buildSnapshot(places: Place[], now: Date): Promise<Density
     const t = tally.get(place.id);
     if (!t) continue;
     const count = t.live + t.simulated;
-    rows.push({ placeId: place.id, count, live: t.live, simulated: t.simulated, level: levelFor(count) });
-    if (t.live > 0) points.push({ ...place.center, weight: weightFor(t.live), source: "live" });
-    if (t.simulated > 0) points.push({ ...place.center, weight: weightFor(t.simulated), source: "simulated" });
+    rows.push({ placeId: place.id, count, live: t.live, simulated: t.simulated, level: levelFor(count, place) });
+    if (t.live > 0) points.push({ ...place.center, weight: heatWeight(t.live, "live"), source: "live" });
+    if (t.simulated > 0) points.push({ ...place.center, weight: heatWeight(t.simulated, "simulated"), source: "simulated" });
   }
   return { generatedAt: now.toISOString(), hasSimulated, points, places: rows };
 }
