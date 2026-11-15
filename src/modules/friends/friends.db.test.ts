@@ -133,6 +133,16 @@ describe("friend codes", () => {
     expect(await codeOf(addFriend(blair, "not-a-code"))).toBe("NOT_FOUND");
   });
 
+  it("a code stops working 15 minutes after it was issued", async () => {
+    const issuedAt = new Date("2026-11-16T15:00:00Z");
+    const { code } = await issueFriendCode(alex, ORIGIN, issuedAt);
+    const later = (min: number) => new Date(issuedAt.getTime() + min * 60_000);
+    expect((await previewFriendCode(blair, code, later(14))).userId).toBe(alex.id);
+    expect(await codeOf(previewFriendCode(blair, code, later(15)))).toBe("NOT_FOUND");
+    expect(await codeOf(addFriend(blair, code, later(16)))).toBe("NOT_FOUND");
+    expect(await t.cols.friendships.countDocuments({})).toBe(0);
+  });
+
   it("rate limits code lookups to 20 a minute per user", async () => {
     for (let i = 0; i < 20; i++) expect(await codeOf(previewFriendCode(casey, "AAAAAAAAAAAAAAAAAAAA"))).toBe("NOT_FOUND");
     expect(await codeOf(previewFriendCode(casey, "AAAAAAAAAAAAAAAAAAAA"))).toBe("RATE_LIMITED");

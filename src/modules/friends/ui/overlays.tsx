@@ -93,7 +93,7 @@ export function FriendCodeOverlay({ me, onClose }: { me: Profile | null; onClose
 }
 
 export const FRIEND_CODE_HELP =
-  "Let a friend scan this with their camera or with Scan in Minute Map. Opening your code again makes a new one, and this one stops working.";
+  "Let a friend scan this with their camera or with Scan in Minute Map. A code works for 15 minutes, and opening your code again makes a new one.";
 
 /** The QR, the code under it and how to use it, from `useFriendCode()`. */
 function FriendCodeView({ code, svg, error }: ReturnType<typeof useFriendCode>) {
@@ -111,7 +111,13 @@ function FriendCodeView({ code, svg, error }: ReturnType<typeof useFriendCode>) 
   );
 }
 
-/** Issues a fresh friend code on mount (the previous one stops working) and renders it as a QR SVG. */
+/** A fresh code is fetched this often while the code is on screen: codes stop working after 15 minutes. */
+const CODE_REFRESH_MS = 14 * 60_000;
+
+/**
+ * Issues a fresh friend code on mount (the previous one stops working) and renders it as a QR SVG,
+ * then again every CODE_REFRESH_MS while mounted, so the QR on screen is never an expired one.
+ */
 export function useFriendCode(): { code: FriendCode | null; svg: string | null; error: string | null } {
   const [code, setCode] = useState<FriendCode | null>(null);
   const [svg, setSvg] = useState<string | null>(null);
@@ -119,20 +125,24 @@ export function useFriendCode(): { code: FriendCode | null; svg: string | null; 
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const issue = async () => {
       try {
         const issued = await apiFetch("/api/friends/code", { method: "POST", schema: FriendCode });
         const markup = await QRCode.toString(issued.url, { type: "svg", errorCorrectionLevel: "M", margin: 2 });
         if (!cancelled) {
           setCode(issued);
+          setError(null);
           setSvg(markup);
         }
       } catch (cause) {
         if (!cancelled) setError(errorText(cause));
       }
-    })();
+    };
+    void issue();
+    const timer = setInterval(() => void issue(), CODE_REFRESH_MS);
     return () => {
       cancelled = true;
+      clearInterval(timer);
     };
   }, []);
 

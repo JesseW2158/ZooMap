@@ -20,6 +20,7 @@ import { ApiError } from "@/shared/http";
 import { getActiveParticipation, joinActivity, leaveActivity, listActiveActivities } from "@/modules/activities";
 import { rateLimit } from "./rate-limit";
 import {
+  CODE_TTL_MS,
   formatCode,
   friendshipId,
   hashCode,
@@ -122,8 +123,9 @@ export async function updateProfile(user: User, body: ProfileUpdateBody, now = n
 // ------------------------------------------------------------------ friend codes
 
 /**
- * A fresh friend code. Only its hash is stored, so the previous code stops working: a code
- * is good while it is on someone's screen. `origin` is the site the QR link points at.
+ * A fresh friend code. Only its hash is stored, so the previous code stops working, and any code
+ * stops working CODE_TTL_MS (15 minutes) after it was issued. The code screen asks for a new one
+ * before then while it stays open. `origin` is the site the QR link points at.
  */
 export async function issueFriendCode(user: User, origin: string, now = new Date()): Promise<FriendCode> {
   const { profiles } = await getCollections();
@@ -143,19 +145,23 @@ export async function issueFriendCode(user: User, origin: string, now = new Date
   }
 }
 
-async function ownerOfCode(viewerId: string, code: string) {
+async function ownerOfCode(viewerId: string, code: string, now: Date) {
   await rateLimit("friend-code", viewerId, CODE_LOOKUPS_PER_MINUTE, 60_000);
   const normalized = normalizeCode(code);
   if (!/^[A-Z2-9]{20}$/.test(normalized)) throw notFound();
   const { profiles } = await getCollections();
-  const owner = await profiles.findOne({ friendCodeHash: hashCode(normalized) }, { projection: { _id: 1 } });
+  // an expired code reads exactly like an unknown one: NOT_FOUND
+  const owner = await profiles.findOne(
+    { friendCodeHash: hashCode(normalized), friendCodeIssuedAt: { $gt: new Date(now.getTime() - CODE_TTL_MS) } },
+    { projection: { _id: 1 } },
+  );
   if (!owner) throw notFound();
   return owner._id;
 }
 
 /** Who a code belongs to: the public part only (name, photo, pronouns). */
-export async function previewFriendCode(viewer: User, code: string): Promise<FriendPreview> {
-  const ownerId = await ownerOfCode(viewer.id, code);
+export async function previewFriendCode(viewer: User, code: string, now = new Date()): Promise<FriendPreview> {
+  const ownerId = await ownerOfCode(viewer.id, code, now);
   const p = await person(ownerId);
   if (!p) throw notFound();
   const self = ownerId === viewer.id;
@@ -168,7 +174,7 @@ export async function previewFriendCode(viewer: User, code: string): Promise<Fri
  * the insert that created it emits `friendship.created`.
  */
 export async function addFriend(viewer: User, code: string, now = new Date()): Promise<Friend> {
-  const ownerId = await ownerOfCode(viewer.id, code);
+  const ownerId = await ownerOfCode(viewer.id, code, now);
   if (ownerId === viewer.id) throw new ApiError("CONFLICT", "That's your own code");
   const { id, userIds } = friendshipId(viewer.id, ownerId);
   const { friendships } = await getCollections();
