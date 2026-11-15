@@ -12,7 +12,6 @@ import { MapSheet, SidebarOpenButton, mapInsetVars, useIsDesktop } from "./MapSh
 import { SettingsSheet } from "./Settings";
 import {
   ActivitiesIcon,
-  AskIcon,
   CalendarIcon,
   CrowdIcon,
   MapIcon,
@@ -42,13 +41,14 @@ interface Tab {
   };
 }
 
-/** Bottom navigation, left to right. The map sits near the middle. */
+/** Bottom navigation, left to right. The map sits in the middle: two tabs either side. */
 const TABS: Tab[] = [
   {
     id: "activities",
     label: "Activities",
     Icon: ActivitiesIcon,
-    panelIds: ["activities", "events"],
+    // the assistant ("Ask ZooMap") leads the page, above the activities and events lists
+    panelIds: ["assistant", "activities", "events"],
     accent: {
       bg: "bg-coral",
       text: "text-coral",
@@ -97,21 +97,12 @@ const TABS: Tab[] = [
       text: "text-sand",
     },
   },
-  {
-    id: "ask",
-    label: "Ask",
-    Icon: AskIcon,
-    panelIds: ["assistant"],
-    accent: {
-      bg: "bg-mint",
-      text: "text-mint",
-    },
-  },
 ];
 
 /** Symbols for panel sections on a page that shows more than one panel. */
 const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   activities: ActivitiesIcon,
+  assistant: ActivitiesIcon,
   friends: MessagesIcon,
   schedule: CalendarIcon,
   recommend: StudyIcon,

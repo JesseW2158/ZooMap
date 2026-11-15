@@ -7,7 +7,8 @@ import { useUserLocation } from "@/shared/platform";
 import { createStore, useMapStore, useStore } from "@/shared/ui";
 
 /**
- * "Ask": a campus chatbot. The conversation lives in this tab's memory only (it survives
+ * "Ask ZooMap": a campus chatbot at the top of the Activities page. The shell's section heading
+ * gives it its title and the Activities icon. The conversation lives in this tab's memory only (it survives
  * switching tabs, not a reload) and the last messages go to the server with each question.
  */
 
@@ -72,21 +73,9 @@ export function AssistantPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 text-sm text-ink">
+    <div className="flex flex-col gap-3 text-sm text-ink">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
-          {/* a small assistant badge with a sparkle */}
-          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-mint to-sky text-ink shadow-sm">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
-              <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
-            </svg>
-          </span>
-          <div>
-            <h2 className="text-base font-bold tracking-tight">Ask ZooMap</h2>
-            <p className="text-xs text-yale">Activities happening now, study spots, and how busy a building is.</p>
-          </div>
-        </div>
+        <p className="text-xs text-yale">Activities happening now, study spots, and how busy a building is.</p>
         {turns.length ? (
           <button type="button" className="zm-press shrink-0 rounded-full bg-linen px-3 py-1 text-xs font-medium text-yale hover:bg-ash/40 hover:text-ink" onClick={() => chatStore.set({ turns: [], error: null })}>
             New chat
