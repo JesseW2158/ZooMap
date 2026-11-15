@@ -14,7 +14,7 @@ import {
 } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { mapStore } from "@/shared/ui";
-import { CheckIcon, CloseIcon, GoIcon, PlusIcon } from "./icons";
+import { CheckIcon, GoIcon, PlusIcon } from "./icons";
 
 /** Same words as the crowd panel (density/ui/levels.ts), which this module cannot import. */
 const LEVEL_LABELS = ["Empty", "Quiet", "Moderate", "Busy", "Packed"] as const;
@@ -45,8 +45,8 @@ function timeLabel(iso: string): string {
  * spot, nicknames, Go) plus how busy it is and what is happening there. It opens compact and can
  * be pulled up taller. A pull down (on the header, or anywhere on the sheet while its list is at
  * the top) minimises it to a bar with just the name; a second pull down closes it, and a pull up
- * or a tap brings it back. Tapping the Map tab button minimises it too. Closes with × or a tap
- * on empty map.
+ * or a tap brings it back. Tapping the Map tab button minimises it too. A tap on empty map also
+ * closes it (no close button).
  */
 
 /** bar: minimised to its header. compact: opened size. tall: pulled up. */
@@ -274,15 +274,6 @@ export function PlaceSheet({
               {place.aliases.length ? ` · ${place.aliases.slice(0, 3).join(", ")}` : ""}
             </p>
           </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-yale hover:bg-linen"
-          >
-            <CloseIcon className="h-4 w-4" />
-          </button>
         </div>
       </div>
 
