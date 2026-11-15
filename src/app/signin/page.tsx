@@ -57,7 +57,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             className="mb-5 h-16 w-16 rounded-full shadow-lg shadow-black/30 ring-4 ring-ivory/10"
           />
           <h1 className="text-4xl font-extrabold tracking-tight">
-            Zoo<span className="text-jasmine">Map</span>
+            Minute <span className="text-jasmine">Map</span>
           </h1>
           <p className="mt-2 text-ivory/70">Your campus, live. Sign in with your {domains.map((d) => `@${d}`).join(" or ")} Google account.</p>
         </header>
