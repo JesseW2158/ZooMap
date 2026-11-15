@@ -90,6 +90,21 @@ export function AlertsCenter() {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"inbox" | "settings">("inbox");
   const seen = useRef<Set<string> | null>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // The inbox drops over the same corner as the account menu, so a tap anywhere else closes it
+  // (opening the account menu therefore closes the inbox, and the two are never open together).
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: PointerEvent) => {
+      const t = e.target as Node | null;
+      if (t && (bellRef.current?.contains(t) || panelRef.current?.contains(t))) return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
 
   usePolling((signal) => load(signal), { intervalMs: POLL_MS });
 
@@ -146,11 +161,12 @@ export function AlertsCenter() {
     <>
       <button
         type="button"
+        ref={bellRef}
         onClick={openInbox}
         aria-label={unread ? `Alerts, ${unread} new` : "Alerts"}
         aria-expanded={open}
         title="Alerts"
-        className="pointer-events-auto absolute right-2 top-[max(0.75rem,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white/95 text-neutral-800 shadow-md hover:bg-neutral-100"
+        className="pointer-events-auto absolute right-16 top-[max(0.75rem,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white/95 text-neutral-800 shadow-md hover:bg-neutral-100"
       >
         <BellIcon />
         {unread > 0 ? (
@@ -161,7 +177,7 @@ export function AlertsCenter() {
       </button>
 
       {open ? (
-        <div className="pointer-events-auto absolute right-2 top-[calc(max(0.75rem,env(safe-area-inset-top))+2.9rem)] z-30 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-xl">
+        <div ref={panelRef} className="pointer-events-auto absolute right-2 top-[calc(max(0.75rem,env(safe-area-inset-top))+2.9rem)] z-30 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-xl">
           <div className="flex items-center gap-1 border-b border-neutral-100 px-3 py-2">
             <h2 className="flex-1 text-sm font-semibold">{view === "inbox" ? "Alerts" : "Alert settings"}</h2>
             <button

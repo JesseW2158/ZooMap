@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { MapProvider, mapStore } from "@/shared/ui";
 import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
@@ -152,11 +152,12 @@ export function AppShell({ user }: { user: ShellUser }) {
           <Component key={id} />
         ))}
 
-        {/* map chrome: account in the corner. The registry's top slot (building search) is
-            left out on purpose: the map is kept clear. */}
+        {/* map chrome: account in the corner (the alerts bell sits just left of it, right-16,
+            from the notifications module; keep the two in step). The registry's top slot
+            (building search) is left out on purpose: the map is kept clear. */}
         <div
           hidden={!onMap}
-          className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-end p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[25] flex items-start justify-end p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
         >
           <div className="pointer-events-auto">
             <AccountButton user={user} />
@@ -293,9 +294,22 @@ function TabBar({
 
 function AccountButton({ user }: { user: ShellUser }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const label = user.name ?? user.email;
+
+  // a tap anywhere else closes the menu, so it never sits under the alerts inbox, which opens
+  // over the same corner
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <button
         type="button"
         aria-label="Account"
