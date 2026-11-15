@@ -27,7 +27,7 @@ export function Legend({ snapshot, overlay = false }: { snapshot: DensityRespons
   if (!overlay) return key ? <div className="rounded-lg bg-neutral-50 px-2 py-1.5">{key}</div> : null;
 
   return (
-    <div className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] left-3 z-[5] flex flex-col items-start gap-1.5">
+    <div className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+6rem+var(--map-inset-bottom,0px))] left-[calc(var(--map-inset-left,0px)+0.75rem)] z-[5] flex flex-col items-start gap-1.5">
       {key ? <div className="rounded-lg bg-white/90 px-2 py-1.5 shadow-sm">{key}</div> : null}
       {open ? (
         <div className="pointer-events-auto w-56 rounded-xl bg-white/95 p-2 shadow-lg">
