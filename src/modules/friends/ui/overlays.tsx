@@ -131,19 +131,28 @@ export function addPathFromScan(raw: string): string | null {
 }
 
 /** "Scan": the camera with the built-in barcode reader where it exists, otherwise how to use the camera app. */
-export function ScanOverlay({ onClose }: { onClose: () => void }) {
+/**
+ * The in-app QR reader: while `enabled`, runs the back camera into `video` and, on a ZooMap
+ * friend code, opens its /add page. `status` says what is happening (null when this browser
+ * can't scan in-app; see `canScanInApp`).
+ */
+export function useQrScanner(enabled: boolean) {
   const video = useRef<HTMLVideoElement>(null);
-  const [status, setStatus] = useState<string | null>(canScanInApp() ? "Starting the camera…" : null);
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!canScanInApp()) return;
+    if (!enabled || !canScanInApp()) return;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setInterval> | undefined;
     let stopped = false;
     (async () => {
       try {
+        setStatus("Starting the camera…");
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-        if (stopped || !video.current) return;
+        if (stopped || !video.current) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         video.current.srcObject = stream;
         await video.current.play();
         setStatus("Point the camera at a friend's ZooMap code.");
@@ -164,7 +173,7 @@ export function ScanOverlay({ onClose }: { onClose: () => void }) {
           if (found.length) setStatus("That QR isn't a ZooMap friend code.");
         }, 300);
       } catch {
-        setStatus("Camera access was blocked. Allow it in the browser, or scan with your camera app.");
+        if (!stopped) setStatus("Camera access was blocked. Allow it in the browser, or scan with your camera app.");
       }
     })();
     return () => {
@@ -172,7 +181,13 @@ export function ScanOverlay({ onClose }: { onClose: () => void }) {
       if (timer) clearInterval(timer);
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+  }, [enabled]);
+
+  return { video, status };
+}
+
+export function ScanOverlay({ onClose }: { onClose: () => void }) {
+  const { video, status } = useQrScanner(true);
 
   return (
     <Overlay title="Scan a friend code" onClose={onClose}>
