@@ -119,7 +119,8 @@ export function ActivitiesPanel() {
 
       <section className="space-y-2">
         {/* no "Live now" heading when nothing is live; the "Quiet right now" card says so */}
-        <div hidden={activities?.length === 0} className="flex items-center justify-between gap-2">
+        {(activities?.length ?? 0) < 1 ? null : (
+        <div className="flex items-center justify-between gap-2">
           <SectionLabel live text="Live now" count={activities?.length} />
           {filter ? (
             <button type="button" onClick={() => setFilter(null)} className="flex items-center gap-1 rounded-full bg-linen px-2.5 py-1 text-xs font-semibold">
@@ -142,6 +143,7 @@ export function ActivitiesPanel() {
             </div>
           ) : null}
         </div>
+        )}
         {error ? <p className="text-red-600">{error}</p> : null}
         {activities === null && !error ? (
           <ul className="space-y-2">

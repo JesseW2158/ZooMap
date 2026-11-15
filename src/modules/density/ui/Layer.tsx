@@ -10,7 +10,6 @@ import { addLayerToSlot, removeLayersAndSources, useApi, useMapEffect, useMapSto
 import { useStore } from "@/shared/ui/store";
 import { densityAt, pointWeight, rampColor, rampExpression, type RampId } from "./field";
 import { featureCenter, growBuildings } from "./geometry";
-import { Legend } from "./Legend";
 import { modeById } from "./modes";
 import { densityStore, loadSharing, loadSnapshot, PING_MS, POLL_MS, restoreHeatMode } from "./state";
 
@@ -242,7 +241,7 @@ export function DensityLayer() {
     [selectedPlaceId, Boolean(buildings.data)],
   );
 
-  return <Legend overlay snapshot={snapshot} />;
+  return null;
 }
 
 function heatData(snapshot: DensityResponse | null): GeoJSON.FeatureCollection {

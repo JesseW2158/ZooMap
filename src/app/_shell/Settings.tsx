@@ -2,15 +2,15 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { SharingState } from "@/shared/contracts";
+import { Profile, SharingState } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import type { ShellUser } from "./AppShell";
 
 /**
  * Settings, opened from the account menu. A full-screen sheet portalled to <body> so it covers
  * the tab bar and map controls. Rows marked "Soon" are the draft of what this page should grow
- * into; only location sharing is wired today. Profile details and calendar sources keep living
- * in their own tabs, and this page points there instead of duplicating them.
+ * into; your friend card (pronouns, phone, contact email) and location sharing are wired today.
+ * Calendar sources keep living in their own tab, and this page points there.
  */
 export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () => void }) {
   useEffect(() => {
@@ -38,7 +38,7 @@ export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () 
       <div className="zm-stagger mx-auto w-full max-w-2xl space-y-5 px-4 py-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
         <Group title="Account">
           <Row title={user.name ?? "Signed in"} hint={user.email} />
-          <Row title="Pronouns, phone and socials" hint="Edit your card in the Friends tab" />
+          <ProfileRows />
         </Group>
 
         <Group title="Privacy and location">
@@ -111,7 +111,92 @@ function Row({
   );
 }
 
-/** The one live setting: the same opt-in the Crowds panel toggles, via /api/presence/sharing. */
+/**
+ * Your card as friends see it: pronouns, phone and contact email, saved through
+ * PUT /api/profile/me. Save appears once something changed; the Chat tab reloads your profile
+ * when it next opens.
+ */
+function ProfileRows() {
+  const [saved, setSaved] = useState<{ pronouns: string; phone: string; email: string } | null>(null);
+  const [draft, setDraft] = useState({ pronouns: "", phone: "", email: "" });
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const load = (p: Profile) => {
+    const fields = { pronouns: p.pronouns ?? "", phone: p.phone ?? "", email: p.email ?? "" };
+    setSaved(fields);
+    setDraft(fields);
+  };
+
+  useEffect(() => {
+    apiFetch("/api/profile/me", { schema: Profile })
+      .then(load)
+      .catch(() => setStatus("Couldn't load your profile. Try again."));
+  }, []);
+
+  const dirty = !!saved && (draft.pronouns !== saved.pronouns || draft.phone !== saved.phone || draft.email !== saved.email);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setStatus(null);
+    try {
+      const p = await apiFetch("/api/profile/me", {
+        method: "PUT",
+        schema: Profile,
+        body: {
+          pronouns: draft.pronouns.trim() || null,
+          phone: draft.phone.trim() || null,
+          contactEmail: draft.email.trim() || null,
+        },
+      });
+      load(p);
+      setStatus("Saved");
+    } catch {
+      setStatus("Couldn't save. Check the phone and email and try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const field = (key: keyof typeof draft, label: string, props: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <label className="flex items-center gap-3 px-4 py-3">
+      <span className="w-28 shrink-0 text-sm font-semibold">{label}</span>
+      <input
+        {...props}
+        value={draft[key]}
+        disabled={!saved}
+        onChange={(e) => {
+          setStatus(null);
+          setDraft((d) => ({ ...d, [key]: e.target.value }));
+        }}
+        className="min-w-0 flex-1 bg-transparent text-right text-sm text-ink placeholder:text-yale/50 focus:outline-none disabled:opacity-50"
+      />
+    </label>
+  );
+
+  return (
+    <form onSubmit={save} className="divide-y divide-ash/30">
+      {field("pronouns", "Pronouns", { maxLength: 40, placeholder: "she/her, they/them…" })}
+      {field("phone", "Phone", { type: "tel", inputMode: "tel", maxLength: 30, placeholder: "(413) 555-0100" })}
+      {field("email", "Contact email", { type: "email", maxLength: 200, placeholder: "Shown to friends" })}
+      {dirty || status ? (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+          <p className={`text-xs ${status && status !== "Saved" ? "text-red-700" : "text-yale"}`}>
+            {status ?? "Friends see these on your card"}
+          </p>
+          {dirty ? (
+            <button type="submit" disabled={busy} className="zm-press shrink-0 rounded-full bg-ink px-4 py-1.5 text-xs font-semibold text-ivory disabled:opacity-50">
+              {busy ? "Saving…" : "Save"}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </form>
+  );
+}
+
+/** Location sharing: the same opt-in the Crowds panel toggles, via /api/presence/sharing. */
 function LocationSharingRow() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);

@@ -125,6 +125,17 @@ export const QrIcon = ({ className }: P) => (
   </svg>
 );
 
+/** A QR code with a plus: add a friend by code (show yours or scan theirs). */
+export const QrAddIcon = ({ className }: P) => (
+  <svg {...base} className={className}>
+    <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" />
+    <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
+    <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
+    <path d="M6.75 6.75h.01M17.25 6.75h.01M6.75 17.25h.01" strokeWidth={2.6} />
+    <path d="M17.25 13.5v7M13.75 17h7" />
+  </svg>
+);
+
 export const ScanIcon = ({ className }: P) => (
   <svg {...base} className={className}>
     <path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16" />

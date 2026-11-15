@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { FRIEND_CODE_HELP, canScanInApp, useFriendCode, useQrScanner } from "./overlays";
-import { ChevronDownIcon, CloseIcon, QrIcon, ScanIcon } from "./icons";
+import { ChevronDownIcon, CloseIcon, QrAddIcon, QrIcon, ScanIcon } from "./icons";
 
 /** Phones: below the shell's 768 px desktop breakpoint. */
 const PHONE_QUERY = "(max-width: 767px)";
@@ -30,9 +30,10 @@ const EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
  *  in a video until its first frame. */
 const BLANK_POSTER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 /** Extra navy (px) above the card on the Friends page, room for the pull cue... */
-const CUE_ROOM = 44;
-/** ...which is this tall (icon disc and arrow), sitting this far above the card. */
-const CUE_HEIGHT = 50;
+const CUE_ROOM = 52;
+/** ...which is this tall (icon disc, a gap the bouncing arrow stays below, and the arrow),
+ *  sitting this far above the card. */
+const CUE_HEIGHT = 60;
 const CUE_GAP = 6;
 
 /** The nearest ancestor that scrolls vertically: the shell's page for this tab. */
@@ -356,8 +357,9 @@ function CueDisc({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Right above your profile, in the navy band: a QR symbol with an arrow under it, saying your
- * code pulls down. Fades out as you pull (`hidden` 0 to 1).
+ * Right above your profile, in the navy band: the friend-code symbol (a QR with a plus) with an arrow under it, saying your
+ * code pulls down. The arrow bounces up by a quarter of its height, so the gap above it keeps it
+ * off the disc. Fades out as you pull (`hidden` 0 to 1).
  */
 function PullCue({ top, hidden, transition }: { top: number; hidden: number; transition: string }) {
   if (top <= 0) return null;
@@ -368,9 +370,9 @@ function PullCue({ top, hidden, transition }: { top: number; hidden: number; tra
       style={{ top, opacity: Math.max(0, 1 - hidden * 2), transition }}
     >
       <CueDisc>
-        <QrIcon className="h-[18px] w-[18px]" />
+        <QrAddIcon className="h-[18px] w-[18px]" />
       </CueDisc>
-      <ChevronDownIcon className="-mt-0.5 h-5 w-5 animate-bounce" />
+      <ChevronDownIcon className="mt-2 h-5 w-5 animate-bounce" />
     </div>
   );
 }

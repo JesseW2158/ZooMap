@@ -5,9 +5,11 @@ import { ChatResponse, PlannedEvent, type Activity, type ChatBody, type ChatCard
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { useUserLocation } from "@/shared/platform";
 import { createStore, useMapStore, useStore } from "@/shared/ui";
+import { examplesFor } from "./examples";
 
 /**
- * "Ask": a campus chatbot. The conversation lives in this tab's memory only (it survives
+ * "Ask ZooKeeper": a campus chatbot at the top of the Activities page. The shell's section heading
+ * gives it its title and the Activities icon. The conversation lives in this tab's memory only (it survives
  * switching tabs, not a reload) and the last messages go to the server with each question.
  */
 
@@ -31,7 +33,6 @@ const FALLBACK_REASONS: Record<NonNullable<ChatResponse["fallbackReason"]>, stri
 const HISTORY_SENT = 10;
 const chatStore = createStore<{ turns: Turn[]; pending: boolean; error: string | null }>({ turns: [], pending: false, error: null });
 
-const SUGGESTIONS = ["What can I do this weekend?", "Anyone playing soccer?", "Quiet study spot near me", "How busy is the Du Bois Library?"];
 const LEVEL_WORDS = ["Empty", "Quiet", "Moderate", "Busy", "Packed"];
 
 async function send(text: string, origin: ChatBody["origin"]) {
@@ -59,6 +60,7 @@ export function AssistantPanel() {
   const { position } = useUserLocation();
   const { selectedPlaceId } = useMapStore();
   const endRef = useRef<HTMLDivElement>(null);
+  const example = useCyclingExample(!draft);
 
   const origin: ChatBody["origin"] = position ? { lat: position.lat, lng: position.lng } : selectedPlaceId ? { placeId: selectedPlaceId } : undefined;
 
@@ -72,39 +74,18 @@ export function AssistantPanel() {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 text-sm text-ink">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
-          {/* a small assistant badge with a sparkle */}
-          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-mint to-sky text-ink shadow-sm">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
-              <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
-            </svg>
-          </span>
-          <div>
-            <h2 className="text-base font-bold tracking-tight">Ask ZooMap</h2>
-            <p className="text-xs text-yale">Activities happening now, study spots, and how busy a building is.</p>
-          </div>
-        </div>
-        {turns.length ? (
-          <button type="button" className="zm-press shrink-0 rounded-full bg-linen px-3 py-1 text-xs font-medium text-yale hover:bg-ash/40 hover:text-ink" onClick={() => chatStore.set({ turns: [], error: null })}>
-            New chat
-          </button>
-        ) : null}
-      </div>
-
-      {turns.length === 0 ? (
-        <div className="zm-stagger flex flex-wrap gap-2">
-          {SUGGESTIONS.map((s) => (
-            <button key={s} type="button" onClick={() => submit(s)} className="zm-press rounded-full border border-mint/70 bg-mint/15 px-3.5 py-1.5 text-xs font-medium text-ink hover:border-mint hover:bg-mint/35">
-              {s}
-            </button>
-          ))}
-        </div>
+    <div className="flex flex-col gap-3 text-sm text-ink">
+      {turns.length ? (
+        <button
+          type="button"
+          className="zm-press self-end rounded-full bg-linen px-3 py-1 text-xs font-medium text-yale hover:bg-ash/40 hover:text-ink"
+          onClick={() => chatStore.set({ turns: [], error: null })}
+        >
+          New chat
+        </button>
       ) : null}
 
-      <ol className="flex flex-col gap-2.5" aria-live="polite">
+      <ol className={`flex flex-col gap-2.5 ${turns.length || pending ? "" : "hidden"}`} aria-live="polite">
         {turns.map((t, i) => (
           <li key={i} className={`animate-rise ${t.role === "user" ? "self-end max-w-[85%]" : "self-start w-full"}`}>
             {t.role === "user" ? (
@@ -146,27 +127,61 @@ export function AssistantPanel() {
       <div ref={endRef} />
 
       <form
-        className="sticky bottom-0 flex gap-2 bg-white/90 py-1.5 backdrop-blur"
+        className="sticky bottom-0 bg-white/90 py-1 backdrop-blur"
         onSubmit={(e) => {
           e.preventDefault();
           submit(draft);
         }}
       >
-        <input
-          type="text"
-          value={draft}
-          maxLength={1000}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask about activities, events or study spots"
-          aria-label="Message"
-          className="min-w-0 flex-1 rounded-full border border-ash/70 bg-linen/50 px-4 py-2.5 outline-none transition-all placeholder:text-yale/50 focus:border-ink/30 focus:bg-white focus:ring-2 focus:ring-mint/50"
-        />
-        <button type="submit" disabled={pending || !draft.trim()} className="zm-press shrink-0 rounded-full bg-gradient-to-br from-yale to-ink px-5 py-2.5 font-semibold text-white shadow-md shadow-ink/25 disabled:from-ash disabled:to-ash disabled:shadow-none">
-          Send
-        </button>
+        <div className="flex items-center gap-1 rounded-full border border-ash/70 bg-linen/50 p-1 pl-4 transition-all focus-within:border-ink/30 focus-within:bg-white focus-within:ring-2 focus-within:ring-mint/50">
+          <span className="relative min-w-0 flex-1">
+            <input
+              type="text"
+              value={draft}
+              maxLength={1000}
+              onChange={(e) => setDraft(e.target.value)}
+              aria-label="Ask ZooKeeper"
+              className="w-full bg-transparent py-1.5 outline-none"
+            />
+            {/* the placeholder, drawn by hand so each example can fade in */}
+            {draft ? null : (
+              <span key={example} aria-hidden className="animate-fade pointer-events-none absolute inset-0 truncate py-1.5 text-yale/50">
+                {example}
+              </span>
+            )}
+          </span>
+          <button
+            type="submit"
+            disabled={pending || !draft.trim()}
+            aria-label="Send"
+            className="zm-press flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white disabled:bg-ash"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+          </button>
+        </div>
       </form>
     </div>
   );
+}
+
+const EXAMPLE_MS = 3_500;
+
+/** One example question for the time of day, changing every few seconds while `running`. */
+function useCyclingExample(running: boolean): string {
+  const [tick, setTick] = useState(0);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setTick((n) => n + 1);
+      setNow(new Date()); // so the list follows the clock past a boundary (morning → midday)
+    }, EXAMPLE_MS);
+    return () => clearInterval(id);
+  }, [running]);
+  const list = examplesFor(now);
+  return list[tick % list.length];
 }
 
 function Card({ card }: { card: ChatCard }) {
