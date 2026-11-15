@@ -141,17 +141,34 @@ body {
 }
 
 /*
- * Phones (below the shell's 768 px desktop breakpoint): the OpenStreetMap attribution sits in the
- * strip between the map sheet's square button (bottom-right, level with the legend) and the tab
- * bar: 4 px above the bar, right-aligned with the button (right-3 = 0.75rem).
+ * Phones (below the shell's 768 px desktop breakpoint): the map sheet's square button owns the
+ * bottom-right corner, so the OpenStreetMap attribution (collapsed to its (i) button) moves to the
+ * empty bottom-left corner, level with that button and inset like it (0.75rem).
+ * OSM's guidelines allow any corner as long as the credit stays reachable.
  */
 @media (max-width: 767px) {
-  .maplibregl-ctrl-bottom-right {
+  /* every rule here is one class more specific than MapLibre's own, whose stylesheet loads after
+     this one (with equal specificity its `right: 0` and `float: right` would win) */
+  .maplibregl-map .maplibregl-ctrl-bottom-right {
     margin-bottom: 0;
+    right: auto;
+    left: 0;
   }
-  /* one class more specific than MapLibre's own `.maplibregl-ctrl-bottom-right .maplibregl-ctrl`,
-     whose stylesheet loads after this one */
+  /* 0.75rem in from the left like the sheet button on the right, and centred on that 48 px
+     button's line: 0.75rem + (48 px - 24 px) / 2 = 1.5rem up */
   .maplibregl-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib {
-    margin: 0 0.75rem 4px 0;
+    margin: 0 0 1.5rem 0.75rem;
+    float: left;
+  }
+  /* mirror MapLibre's bottom-left rules so the (i) stays on the left and the credit opens rightwards */
+  .maplibregl-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib.maplibregl-compact {
+    padding: 2px 0 2px 24px;
+  }
+  .maplibregl-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib.maplibregl-compact-show {
+    padding: 2px 8px 2px 28px;
+  }
+  .maplibregl-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib-button {
+    right: auto;
+    left: 0;
   }
 }

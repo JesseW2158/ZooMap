@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { ActivityInvite, ActivityMe, Profile, PublicProfile, SocialKind } from "@/shared/contracts";
+import type { ActivityInvite, ActivityMe, Profile, PublicProfile } from "@/shared/contracts";
 import { ActivityMe as ActivityMeSchema, ParticipationResult } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { mapActions } from "@/shared/ui";
 import { errorText, refreshFriends, refreshInvites } from "./feed";
-import { ChatIcon, CheckIcon, CloseIcon, GlobeIcon, MailIcon, PhoneIcon, PinIcon } from "./icons";
+import { ChatIcon, CheckIcon, CloseIcon, MailIcon, PhoneIcon, PinIcon } from "./icons";
 
 /** Small pieces shared by the friends panel, the invite banner and the add page. */
 
@@ -39,31 +39,6 @@ export function Avatar({ person, size = 40 }: { person: Pick<PublicProfile, "nam
   );
 }
 
-export const SOCIAL_LABELS: Record<SocialKind, string> = {
-  instagram: "Instagram",
-  x: "X",
-  linkedin: "LinkedIn",
-  github: "GitHub",
-  snapchat: "Snapchat",
-  tiktok: "TikTok",
-  discord: "Discord",
-  website: "Website",
-};
-
-/** Short marks for each service, shown inside a round button (brand logos are not ours to draw). */
-const SOCIAL_MARKS: Record<Exclude<SocialKind, "website">, string> = {
-  instagram: "IG",
-  x: "X",
-  linkedin: "in",
-  github: "GH",
-  snapchat: "SC",
-  tiktok: "TT",
-  discord: "DC",
-};
-function SocialMark({ kind }: { kind: SocialKind }) {
-  return kind === "website" ? <GlobeIcon className="h-5 w-5" /> : <span className="text-xs font-extrabold">{SOCIAL_MARKS[kind]}</span>;
-}
-
 const round =
   "flex h-11 w-11 items-center justify-center rounded-full bg-linen text-ink transition-colors hover:bg-ash/50 focus-visible:outline-2 focus-visible:outline-ink";
 
@@ -76,10 +51,9 @@ function Action({ label, children, ...rest }: { label: string; children: React.R
   );
 }
 
-/** Call, text, email and social buttons as symbols. Every href comes from the server (tel:, mailto:, https). */
+/** Call, text and email buttons as symbols. Every href comes from the server (tel:, mailto:). */
 export function ContactButtons({ profile }: { profile: Profile }) {
-  const [copied, setCopied] = useState<string | null>(null);
-  const none = !profile.phone && !profile.email && profile.socials.length === 0;
+  const none = !profile.phone && !profile.email;
   if (none) return <p className="text-sm text-yale">No contact details shared yet.</p>;
   return (
     <div className="flex flex-wrap gap-2">
@@ -98,29 +72,6 @@ export function ContactButtons({ profile }: { profile: Profile }) {
           <MailIcon className="h-5 w-5" />
         </Action>
       ) : null}
-      {profile.socials.map((s) =>
-        s.url ? (
-          <Action key={`${s.kind}:${s.handle}`} label={SOCIAL_LABELS[s.kind]} href={s.url} target="_blank" rel="noopener noreferrer">
-            <SocialMark kind={s.kind} />
-          </Action>
-        ) : (
-          <button
-            key={`${s.kind}:${s.handle}`}
-            type="button"
-            title={`Copy ${s.handle}`}
-            onClick={() => {
-              void navigator.clipboard?.writeText(s.handle);
-              setCopied(s.handle);
-            }}
-            className="flex w-12 flex-col items-center gap-1 text-[10px] font-medium text-yale"
-          >
-            <span className={round}>
-              {copied === s.handle ? <CheckIcon className="h-4 w-4" /> : <SocialMark kind={s.kind} />}
-            </span>
-            {copied === s.handle ? "Copied" : SOCIAL_LABELS[s.kind]}
-          </button>
-        ),
-      )}
     </div>
   );
 }

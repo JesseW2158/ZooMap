@@ -102,19 +102,19 @@ describe("nearby alerts", () => {
 
 describe("event alerts", () => {
   it("a replayed ledger event saves one points alert", async () => {
-    // onLedgerEntry reads the wall clock for quiet hours, so pin it to midday: run at night,
-    // this test used to fail because quiet hours (correctly) suppressed the alert.
+    // points alerts are timed by the wall clock, so pin it to midday: run during quiet hours,
+    // this would save nothing
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(local(16, 12));
-    const e = { entryId: "entry-1", userId: "u6", delta: 42, ruleId: "time-at-activity", balanceAfter: 142 };
     try {
+      const e = { entryId: "entry-1", userId: "u6", delta: 42, ruleId: "time-at-activity", balanceAfter: 142 };
       await onLedgerEntry(e);
       await onLedgerEntry(e);
+      const docs = await t.cols.notifications.find({ userId: "u6" }).toArray();
+      expect(docs.map((d) => d.title)).toEqual(["+42 points"]);
     } finally {
       vi.useRealTimers();
     }
-    const docs = await t.cols.notifications.find({ userId: "u6" }).toArray();
-    expect(docs.map((d) => d.title)).toEqual(["+42 points"]);
   });
 
   it("tells the host someone joined, without saying who", async () => {

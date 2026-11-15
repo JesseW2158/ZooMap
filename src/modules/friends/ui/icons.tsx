@@ -36,6 +36,18 @@ export const CloseIcon = ({ className }: P) => (
   </svg>
 );
 
+export const ChevronUpIcon = ({ className }: P) => (
+  <svg {...base} className={className}>
+    <path d="M6 15l6-6 6 6" />
+  </svg>
+);
+
+export const ChevronDownIcon = ({ className }: P) => (
+  <svg {...base} className={className}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
 /** A navigation arrow: directions. */
 export const GoIcon = ({ className }: P) => (
   <svg {...solid} className={className}>
@@ -110,6 +122,17 @@ export const QrIcon = ({ className }: P) => (
     <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
     <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
     <path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 19.5h1M19.5 14v1.5" />
+  </svg>
+);
+
+/** A QR code with a plus: add a friend by code (show yours or scan theirs). */
+export const QrAddIcon = ({ className }: P) => (
+  <svg {...base} className={className}>
+    <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" />
+    <rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" />
+    <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" />
+    <path d="M6.75 6.75h.01M17.25 6.75h.01M6.75 17.25h.01" strokeWidth={2.6} />
+    <path d="M17.25 13.5v7M13.75 17h7" />
   </svg>
 );
 

@@ -10,12 +10,12 @@ import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
 import { MapSheet, SidebarOpenButton, mapInsetVars, useIsDesktop } from "./MapSheet";
 import { SettingsSheet } from "./Settings";
+import { useTabSwipe } from "./swipe";
 import {
   ActivitiesIcon,
   AskIcon,
   CalendarIcon,
   CrowdIcon,
-  FriendsIcon,
   MapIcon,
   MessagesIcon,
   PointsIcon,
@@ -43,36 +43,28 @@ interface Tab {
   };
 }
 
-/** Bottom navigation, left to right. The map sits in the middle: three tabs either side. */
+/** Bottom navigation, left to right. The map sits in the middle: two tabs either side. */
 const TABS: Tab[] = [
   {
     id: "activities",
     label: "Activities",
     Icon: ActivitiesIcon,
-    panelIds: ["activities", "events"],
+    // the assistant ("Ask ZooKeeper") leads the page, above the activities and events lists
+    panelIds: ["assistant", "activities", "events"],
     accent: {
       bg: "bg-coral",
       text: "text-coral",
     },
   },
   {
+    // friends and direct messages in one list: tapping a friend opens the chat
     id: "friends",
-    label: "Friends",
-    Icon: FriendsIcon,
+    label: "Chat",
+    Icon: MessagesIcon,
     panelIds: ["friends"],
     accent: {
       bg: "bg-rose",
       text: "text-rose",
-    },
-  },
-  {
-    id: "messages",
-    label: "Messages",
-    Icon: MessagesIcon,
-    panelIds: ["messages"],
-    accent: {
-      bg: "bg-lavender",
-      text: "text-lavender",
     },
   },
   {
@@ -107,23 +99,16 @@ const TABS: Tab[] = [
       text: "text-sand",
     },
   },
-  {
-    id: "ask",
-    label: "Ask",
-    Icon: AskIcon,
-    panelIds: ["assistant"],
-    accent: {
-      bg: "bg-mint",
-      text: "text-mint",
-    },
-  },
 ];
+
+const TAB_IDS = TABS.map((t) => t.id);
+const tabIndex = (id: string) => TAB_IDS.indexOf(id);
 
 /** Symbols for panel sections on a page that shows more than one panel. */
 const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   activities: ActivitiesIcon,
-  friends: FriendsIcon,
-  messages: MessagesIcon,
+  assistant: AskIcon,
+  friends: MessagesIcon,
   schedule: CalendarIcon,
   recommend: StudyIcon,
   rewards: PointsIcon,
@@ -167,9 +152,26 @@ export function AppShell({ user }: { user: ShellUser }) {
   const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
   const isDesktop = useIsDesktop();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const keyboardOpen = useVirtualKeyboardOpen();
+  // desktop "Map update" sidebar starts collapsed; its open button sits left of the search bar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const mapTab = TABS.find((t) => t.id === MAP_TAB)!;
   const mapPanels = panelsFor(mapTab);
+
+  // swipe left or right between tabs on a phone (edge swipes only on the map)
+  const mainRef = useRef<HTMLElement>(null);
+  const pageEls = useRef(new Map<string, HTMLElement>());
+  const [peekId, setPeekId] = useState<string | null>(null);
+  const peekTab = peekId && peekId !== active.id ? (TABS.find((t) => t.id === peekId) ?? null) : null;
+  useTabSwipe(mainRef, {
+    enabled: !isDesktop,
+    tabIds: TAB_IDS,
+    activeId: active.id,
+    mapId: MAP_TAB,
+    pageEl: (id) => pageEls.current.get(id) ?? null,
+    setPeek: setPeekId,
+    onSwitch: selectTab,
+  });
 
   // a route or fly request from a panel means "show me on the map"
   useEffect(() => {
@@ -188,7 +190,7 @@ export function AppShell({ user }: { user: ShellUser }) {
   }, []);
 
   return (
-    <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-linen">
+    <main ref={mainRef} className="relative flex h-dvh w-full flex-col overflow-hidden bg-linen">
       <div
         className="relative min-h-0 flex-1"
         style={mapInsetVars(isDesktop, mapPanels.length > 0 && sidebarOpen)}
@@ -253,32 +255,108 @@ export function AppShell({ user }: { user: ShellUser }) {
           </MapSheet>
         ) : null}
 
-        {!onMap ? (
-          <Page tab={active} user={user}>
-            {panelsFor(active).map(({ id, title, Component }, i, all) => (
-              <section
-                key={id}
-                aria-label={title}
-                style={{ animationDelay: `${60 + i * 90}ms` }}
-                className="animate-rise rounded-3xl bg-white p-4 shadow-lg shadow-ink/10 ring-1 ring-ink/5"
-              >
-                {all.length > 1 ? (
-                  <SectionTitle
-                    title={title}
-                    Icon={PANEL_ICONS[id]}
-                    accentBg={active.accent.bg}
-                  />
-                ) : null}
-                <Component />
-              </section>
-            ))}
-          </Page>
-        ) : null}
+        {/* the current page, and while swiping the neighbour sliding in beside it */}
+        {[onMap ? null : active, peekTab].map((tab) =>
+          tab ? (
+            <div
+              key={tab.id}
+              ref={(el) => {
+                if (el) pageEls.current.set(tab.id, el);
+                else pageEls.current.delete(tab.id);
+              }}
+              aria-hidden={tab.id === active.id ? undefined : true}
+              className="absolute inset-0 z-20"
+              style={tab.id === active.id ? undefined : { transform: `translate3d(${tabIndex(tab.id) > tabIndex(active.id) ? 100 : -100}%,0,0)` }}
+            >
+              <Page tab={tab} user={user}>
+                {panelsFor(tab).map(({ id, title, Component }, i, all) => (
+                  <section
+                    key={id}
+                    aria-label={title}
+                    style={{ animationDelay: `${60 + i * 90}ms` }}
+                    className="animate-rise rounded-3xl bg-white p-4 shadow-lg shadow-ink/10 ring-1 ring-ink/5"
+                  >
+                    {all.length > 1 ? (
+                      <SectionTitle
+                        title={title}
+                        Icon={PANEL_ICONS[id]}
+                        accentBg={tab.accent.bg}
+                      />
+                    ) : null}
+                    <Component />
+                  </section>
+                ))}
+              </Page>
+            </div>
+          ) : null,
+        )}
       </div>
 
-      <TabBar activeId={active.id} onSelect={selectTab} badges={{ messages: unread }} />
+      {/* phones: hidden while the on-screen keyboard is up, so it doesn't ride up above it */}
+      <TabBar
+        activeId={active.id}
+        onSelect={selectTab}
+        badges={{ friends: unread }}
+        hidden={!isDesktop && keyboardOpen}
+      />
     </main>
   );
+}
+
+/** Keyboard height below which a viewport shrink is not counted as the on-screen keyboard. */
+const KEYBOARD_MIN_PX = 150;
+const NON_TEXT_INPUTS = new Set([
+  "button", "checkbox", "color", "file", "hidden", "image", "radio", "range", "reset", "submit",
+]);
+
+function isTextField(el: Element | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  if (el.isContentEditable) return true;
+  if (el instanceof HTMLTextAreaElement) return !el.readOnly;
+  if (el instanceof HTMLInputElement) return !el.readOnly && !NON_TEXT_INPUTS.has(el.type);
+  return false;
+}
+
+/**
+ * Whether the on-screen keyboard is up: a text field has focus and the visible viewport is
+ * well short of its full height. Covers both the Android WebView (which resizes the page) and
+ * mobile browsers (which shrink only the visual viewport). The full height is the largest seen
+ * at the current width, so it resets on rotation.
+ */
+function useVirtualKeyboardOpen(): boolean {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const height = () => vv?.height ?? window.innerHeight;
+    let width = window.innerWidth;
+    let full = height();
+    const update = () => {
+      if (window.innerWidth !== width) {
+        width = window.innerWidth;
+        full = height();
+      }
+      full = Math.max(full, height());
+      setOpen(isTextField(document.activeElement) && full - height() > KEYBOARD_MIN_PX);
+    };
+    // on focusout the next field isn't focused yet; wait a frame so moving between fields doesn't flicker
+    let frame = 0;
+    const updateNextFrame = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+    vv?.addEventListener("resize", update);
+    window.addEventListener("resize", update);
+    document.addEventListener("focusin", updateNextFrame);
+    document.addEventListener("focusout", updateNextFrame);
+    return () => {
+      cancelAnimationFrame(frame);
+      vv?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
+      document.removeEventListener("focusin", updateNextFrame);
+      document.removeEventListener("focusout", updateNextFrame);
+    };
+  }, []);
+  return open;
 }
 
 function Page({
@@ -295,7 +373,7 @@ function Page({
     <div
       role="tabpanel"
       aria-label={label}
-      className="zm-dots absolute inset-0 z-20 flex flex-col overflow-y-auto bg-linen text-ink"
+      className="zm-dots absolute inset-0 z-20 flex touch-pan-y flex-col overflow-y-auto bg-linen text-ink"
     >
       {/* navy hero band with the section's colour; the cards overlap its bottom edge */}
       <header className="relative shrink-0 bg-gradient-to-br from-ink via-ink to-yale pb-14 pt-[max(1.25rem,env(safe-area-inset-top))] text-ivory">
@@ -309,7 +387,8 @@ function Page({
           <div className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70" />
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-ivory/20 to-transparent" />
         </div>
-        <div className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
+        {/* data-page-hero / data-page-body: a panel may move these (the friends pull-down code) */}
+        <div data-page-hero className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
           <span
             className={`animate-pop flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-ink shadow-lg shadow-black/25 ring-4 ring-ivory/15 ${accent.bg}`}
           >
@@ -322,7 +401,7 @@ function Page({
           <AccountButton user={user} />
         </div>
       </header>
-      <div className="relative mx-auto -mt-7 flex w-full max-w-2xl flex-1 flex-col gap-3 px-4 pb-8">
+      <div data-page-body className="relative mx-auto -mt-7 flex w-full max-w-2xl flex-1 flex-col gap-3 px-4 pb-8">
         {children}
       </div>
     </div>
@@ -357,7 +436,7 @@ function SectionTitle({
 const MESSAGES_CHANGED_EVENT = "zoomap:messages-changed";
 const UNREAD_POLL_MS = 20_000;
 
-/** Unread direct messages, for the Messages tab badge. */
+/** Unread direct messages, for the Chat tab badge. */
 function useUnreadMessages(): number {
   const [count, setCount] = useState(0);
   const load = async (signal?: AbortSignal) => {
@@ -385,19 +464,22 @@ function TabBar({
   activeId,
   onSelect,
   badges,
+  hidden,
 }: {
   activeId: string;
   onSelect: (id: string) => void;
   badges: Record<string, number>;
+  hidden: boolean;
 }) {
   return (
     <nav
       aria-label="Sections"
-      className="relative z-30 bg-ink bg-gradient-to-b from-yale/40 to-ink pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(21,50,67,0.35)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-ivory/25 before:to-transparent"
+      hidden={hidden}
+      className="relative z-30 bg-ink bg-gradient-to-b from-yale/40 to-ink pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] shadow-[0_-4px_16px_rgba(21,50,67,0.35)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-ivory/25 before:to-transparent"
     >
       <div
         role="tablist"
-        className="mx-auto flex max-w-2xl items-center justify-around px-2 py-2.5"
+        className="mx-auto flex max-w-2xl items-center justify-between px-6 pt-3"
       >
         {TABS.map(({ id, label, Icon, accent }) => {
           const selected = id === activeId;
@@ -417,14 +499,14 @@ function TabBar({
             >
               {isMap ? (
                 <span
-                  className={`-my-4 flex h-14 w-14 items-center justify-center rounded-full text-ink shadow-lg shadow-black/30 ring-4 ring-ink transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-hover:-translate-y-0.5 group-active:scale-95 ${
+                  className={`-my-3 flex h-12 w-12 items-center justify-center rounded-full text-ink shadow-lg shadow-black/30 ring-4 ring-ink transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-hover:-translate-y-0.5 group-active:scale-95 ${
                     accent.bg
-                  } ${selected ? "scale-110" : "animate-glow opacity-90"}`}
+                  } ${selected ? "scale-110" : "opacity-90"}`}
                 >
-                  <Icon className="h-8 w-8" />
+                  <Icon className="h-7 w-7" />
                 </span>
               ) : (
-                <span className="relative flex h-11 w-11 flex-col items-center justify-center">
+                <span className="relative flex h-10 w-10 flex-col items-center justify-center">
                   {/* a soft disc behind the selected symbol */}
                   <span
                     aria-hidden
@@ -433,7 +515,7 @@ function TabBar({
                     }`}
                   />
                   <Icon
-                    className={`relative h-7 w-7 transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-active:scale-90 ${selected ? "scale-115 -translate-y-px" : ""}`}
+                    className={`relative h-6 w-6 transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-active:scale-90 ${selected ? "scale-115 -translate-y-px" : ""}`}
                   />
                   {badges[id] ? (
                     <span

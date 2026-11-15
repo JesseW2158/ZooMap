@@ -7,7 +7,7 @@ import { useUserLocation } from "@/shared/platform";
 /**
  * On-screen map controls with plain labels: zoom, rotate left/right, 3D/2D, a compass that
  * shows where north is (tap: face north), back to campus, find me, and a gesture help card
- * that also shows once on a first visit.
+ * that also shows once on a first visit. Phones get only the compass, 3D/2D, find me and help.
  */
 
 const TIP_KEY = "zoomap:map-tips-seen";
@@ -31,7 +31,7 @@ function spotlightElement(): HTMLElement {
 }
 export const CAMPUS_VIEW = { center: [-72.5275, 42.389] as [number, number], zoom: 16, pitch: 55, bearing: -20 };
 
-function Btn(props: { label: string; onClick: () => void; children: ReactNode; active?: boolean; wide?: boolean }) {
+function Btn(props: { label: string; onClick: () => void; children: ReactNode; active?: boolean; wide?: boolean; className?: string }) {
   return (
     <button
       type="button"
@@ -40,16 +40,16 @@ function Btn(props: { label: string; onClick: () => void; children: ReactNode; a
       title={props.label}
       className={`flex h-10 items-center justify-center text-[15px] font-semibold transition-colors duration-150 active:scale-90 [transition-property:background-color,color,transform] ${
         props.wide ? "w-full px-2" : "w-10"
-      } ${props.active ? "bg-ink text-ivory hover:bg-yale" : "text-ink hover:bg-linen active:bg-ash/40"}`}
+      } ${props.active ? "bg-ink text-ivory hover:bg-yale" : "text-ink hover:bg-linen active:bg-ash/40"} ${props.className ?? ""}`}
     >
       {props.children}
     </button>
   );
 }
 
-function Group({ children }: { children: ReactNode }) {
+function Group({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className="animate-pop flex flex-col divide-y divide-ash/40 overflow-hidden rounded-2xl bg-white/95 shadow-lg shadow-ink/15 ring-1 ring-ink/5">
+    <div className={`animate-pop ${className} flex flex-col divide-y divide-ash/40 overflow-hidden rounded-2xl bg-white/95 shadow-lg shadow-ink/15 ring-1 ring-ink/5`}>
       {children}
     </div>
   );
@@ -126,13 +126,14 @@ export function MapControls({ map }: { map: MapLibreMap }) {
   return (
     <>
       <div className="pointer-events-auto absolute right-3 top-[calc(env(safe-area-inset-top)+4.25rem)] z-[7] flex w-10 flex-col gap-2">
-        <Group>
+        {/* phones pinch to zoom and twist to rotate, so those buttons and ⌂ are desktop-only */}
+        <Group className="max-md:hidden">
           <Btn label="Zoom in" onClick={() => ease({ zoom: map.getZoom() + 1 })}>+</Btn>
           <Btn label="Zoom out" onClick={() => ease({ zoom: map.getZoom() - 1 })}>−</Btn>
         </Group>
         <Group>
-          <Btn label="Rotate left" onClick={() => ease({ bearing: map.getBearing() - 45 })}>⟲</Btn>
-          <Btn label="Face north" onClick={() => ease({ bearing: 0 })}>
+          <Btn label="Rotate left" className="max-md:hidden" onClick={() => ease({ bearing: map.getBearing() - 45 })}>⟲</Btn>
+          <Btn label="Face north" className="max-md:border-b-0" onClick={() => ease({ bearing: 0 })}>
             <span className="relative block h-6 w-6" aria-hidden>
               {/* the needle points to north as the map turns */}
               <span className="absolute inset-0 flex flex-col items-center justify-between" style={{ transform: `rotate(${-bearing}deg)` }}>
@@ -141,7 +142,7 @@ export function MapControls({ map }: { map: MapLibreMap }) {
               </span>
             </span>
           </Btn>
-          <Btn label="Rotate right" onClick={() => ease({ bearing: map.getBearing() + 45 })}>⟳</Btn>
+          <Btn label="Rotate right" className="max-md:hidden" onClick={() => ease({ bearing: map.getBearing() + 45 })}>⟳</Btn>
         </Group>
         <Group>
           <Btn label={is3d ? "Switch to flat 2D view" : "Switch to 3D view"} onClick={() => ease({ pitch: is3d ? 0 : 55 })}>
@@ -149,7 +150,7 @@ export function MapControls({ map }: { map: MapLibreMap }) {
           </Btn>
         </Group>
         <Group>
-          <Btn label="Back to campus" onClick={() => map.flyTo({ ...CAMPUS_VIEW, essential: true })}>⌂</Btn>
+          <Btn label="Back to campus" className="max-md:hidden" onClick={() => map.flyTo({ ...CAMPUS_VIEW, essential: true })}>⌂</Btn>
           <Btn
             label="Find me"
             active={wantLocate && !position}
@@ -174,10 +175,10 @@ export function MapControls({ map }: { map: MapLibreMap }) {
           </div>
           <ul className="space-y-1 [&_b]:text-ink">
             <li><b>Move:</b> drag with one finger or the mouse.</li>
-            <li><b>Zoom:</b> pinch, scroll, or + and −.</li>
-            <li><b>Rotate:</b> twist two fingers, or right-drag (Ctrl + drag on a trackpad), or ⟲ ⟳.</li>
-            <li><b>Tilt:</b> slide two fingers up or down, or right-drag up/down, or 3D / 2D.</li>
-            <li><b>Lost?</b> The needle points north; tap it to face north. ⌂ goes back to campus.</li>
+            <li><b>Zoom:</b> pinch<span className="max-md:hidden">, scroll, or + and −</span>.</li>
+            <li><b>Rotate:</b> twist two fingers<span className="max-md:hidden">, or right-drag (Ctrl + drag on a trackpad), or ⟲ ⟳</span>.</li>
+            <li><b>Tilt:</b> slide two fingers up or down,<span className="max-md:hidden"> or right-drag up/down,</span> or 3D / 2D.</li>
+            <li><b>Lost?</b> The needle points north; tap it to face north.<span className="max-md:hidden"> ⌂ goes back to campus.</span></li>
           </ul>
           {status === "denied" ? <p className="mt-2 text-red-700">Location is blocked for this site, so “Find me” cannot work.</p> : null}
         </div>

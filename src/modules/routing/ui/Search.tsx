@@ -135,13 +135,7 @@ export function RoutingSearch() {
           >
             <CloseIcon className="h-4 w-4" />
           </button>
-        ) : (
-          <span
-            aria-hidden
-            title={position ? "Using your location" : "Location off"}
-            className={`mr-1 h-2.5 w-2.5 rounded-full ${position ? "bg-[#118a5b] shadow-[0_0_0_3px_rgb(17_138_91/0.18)]" : "bg-ash"}`}
-          />
-        )}
+        ) : null}
       </div>
 
       {shown.length > 0 ? (

@@ -37,8 +37,17 @@ function pollFrom(all: Message[], friendId: string): string | null {
   return mine && !mine.readAt && newest && mine.createdAt < newest ? mine.createdAt : newest;
 }
 
-/** Full-screen direct messages with one friend. Portalled to <body>, like "My code". */
-export function ChatOverlay({ friend, onClose }: { friend: { userId: string; name: string; image: string | null }; onClose: () => void }) {
+/** Full-screen direct messages with one friend. Portalled to <body>, like the friend code screen. */
+export function ChatOverlay({
+  friend,
+  onClose,
+  onProfile,
+}: {
+  friend: { userId: string; name: string; image: string | null };
+  onClose: () => void;
+  /** Tapping the name in the header opens the friend's profile, when given. */
+  onProfile?: () => void;
+}) {
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [gone, setGone] = useState(false);
   const [draft, setDraft] = useState("");
@@ -116,8 +125,22 @@ export function ChatOverlay({ friend, onClose }: { friend: { userId: string; nam
         <button type="button" onClick={onClose} aria-label="Back" className="rounded-lg px-2 py-1 text-lg font-semibold hover:bg-white/10">
           ←
         </button>
-        <Avatar person={friend} size={36} />
-        <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{friend.name}</h2>
+        {onProfile ? (
+          <button
+            type="button"
+            onClick={onProfile}
+            aria-label={`${friend.name}'s profile`}
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-0.5 pr-2 text-left hover:bg-white/10"
+          >
+            <Avatar person={friend} size={36} />
+            <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{friend.name}</h2>
+          </button>
+        ) : (
+          <>
+            <Avatar person={friend} size={36} />
+            <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{friend.name}</h2>
+          </>
+        )}
       </header>
 
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-3 py-4">

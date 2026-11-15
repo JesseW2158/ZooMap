@@ -5,7 +5,7 @@ import { apiFetch } from "@/shared/http/client";
 import { createStore, usePolling, useStore } from "@/shared/ui";
 
 /**
- * The inbox shown in the Messages tab, and which chat is open. The shell's tab badge polls
+ * The inbox shown in the Chat tab (merged into the friends list), and which chat is open. The shell's tab badge polls
  * `/api/messages/unread` on its own and also listens for `MESSAGES_CHANGED_EVENT`, which this
  * module fires after reading or sending so the badge updates at once.
  */
@@ -43,7 +43,7 @@ export function closeChat(): void {
   messagesChanged();
 }
 
-/** Polls the inbox while the Messages tab is open. */
+/** Polls the inbox while the Chat tab is open. */
 export function useConversations() {
   usePolling(refreshConversations, { intervalMs: INBOX_POLL_MS });
   const conversations = useStore(store, (s) => s.conversations);
