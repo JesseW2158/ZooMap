@@ -38,3 +38,14 @@ Done-when list:
 - Events emitted: `friendship.created` / `friendship.ended` (once each), `activity.invite.created`. A reward rule could use them.
 - `.env.local` needs `ENCRYPTION_KEY` for the schedule DB tests (not a friends requirement, but `npm run check` fails without it).
 - The invite banner sits under the search bar and over the top-right map controls until dismissed.
+
+## Direct messages (ws/messages, 2026-11-14)
+
+Owner decisions: Friends gets its own bottom tab (7th, after Points); a chat opens as a full-screen overlay; v1 has an inbox, unread badges, and unfriend hides the chat. No offline retry queue.
+
+- Contracts (own commit): `messages.ts` (`DirectMessage`, `Conversation`, `SendMessageBody` max 1000 chars, `UnreadCount`), `MessageDoc`, five routes: `GET /api/messages` (inbox), `GET /api/messages/unread`, `GET|POST /api/messages/[friendId]` (`?after=` for polling, `$gte`, client dedupes by id), `POST /api/messages/[friendId]/read`.
+- DB (own commit): `messages` collection; indexes `conversationId_createdAt`, `toUserId_readAt`. **Run `npm run db:setup` after merging.**
+- Service `src/modules/friends/messages.ts`: every call checks the friendship (stranger / self / unfriended → 404). `conversationId` = friendship id. Unfriend leaves the history stored; it reappears if they re-friend. Sending rate limited at 30/min (`rate_limits`, bucket `dm`). Thread returns the latest 200.
+- Polling: open chat 3 s, inbox 10 s while the Friends tab is open, tab badge 20 s (paused when the page is hidden). The friends UI fires `window` event `zoomap:messages-changed` after read/send so the shell badge refreshes at once.
+- Shell (`src/app/_shell/AppShell.tsx`, `icons.tsx`, `globals.css`): Friends tab with `FriendsIcon`, accent `--color-rose`, a badge on the tab. The Map tab is no longer exactly centred with seven tabs.
+- Tests: `messages.db.test.ts` (send/thread order, 404s, `after`, unread counts and read marks, unfriend hides for both and blocks sending, rate limit). **Not run yet**: no `MONGODB_URI` in this worktree. Unit tests, lint, typecheck and `npm run build` pass.

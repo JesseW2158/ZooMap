@@ -80,6 +80,11 @@ vi.mock("@/modules/friends", async (importOriginal) => {
       return fixtures.participationResultFixture("fixture-activity-1", user.id, new Date());
     },
     declineInvite: async () => ({ ok: true as const }),
+    listConversations: async () => [f.conversationFixture()],
+    countUnread: async () => ({ count: 1 }),
+    listMessages: async (userId: string, friendId: string) => [f.messageFixture(friendId, userId)],
+    sendMessage: async (userId: string, friendId: string, body: string) => ({ ...f.messageFixture(userId, friendId), body }),
+    markConversationRead: async () => ({ ok: true as const }),
   };
 });
 
@@ -171,6 +176,7 @@ const SAMPLES: Record<string, { query?: string; body?: unknown; headers?: Record
   friendPreview: { query: "?code=ABCDEFGHJKLMNPQRSTUV" },
   invitesSend: { body: { activityId: "act-1", toUserIds: ["seed-blair"] } },
   inviteAccept: { body: {} },
+  messagesSend: { body: { body: "Meet at the library?" } },
   notificationsRead: { body: { all: true } },
   notificationsSettings: { body: { quietRooms: true, nearbyRadiusM: 400 } },
   plannedEventsCreate: {

@@ -16,4 +16,5 @@ export {
   acceptInvite,
   declineInvite,
 } from "./service";
+export { listMessages, sendMessage, markConversationRead, listConversations, countUnread } from "./messages";
 export * as fixtures from "./fixtures";

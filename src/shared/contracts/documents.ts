@@ -251,3 +251,16 @@ export const PlannedEventDoc = z.object({
   cancelledAt: z.date().optional(),
 });
 export type PlannedEventDoc = z.infer<typeof PlannedEventDoc>;
+
+/** Friends: one direct message. `conversationId` is the friendship id (the two user ids sorted and joined with ":"). */
+export const MessageDoc = z.object({
+  _id: id,
+  conversationId: id,
+  fromUserId: id,
+  toUserId: id,
+  body: z.string(),
+  createdAt: z.date(),
+  /** null while unread, so the unread index can match it. */
+  readAt: z.date().nullable(),
+});
+export type MessageDoc = z.infer<typeof MessageDoc>;
