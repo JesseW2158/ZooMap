@@ -309,8 +309,10 @@ async function myPendingInvite(userId: string, inviteId: string) {
 
 /**
  * Accept: join the activity through the activities module, so capacity and one-activity-at-a-
- * time still apply and its errors pass through unchanged (the invite stays pending). With
- * `leaveCurrent`, leave the activity you are in first (a host leaving ends theirs).
+ * time still apply and its errors pass through unchanged (the invite stays pending). Being in
+ * another activity is refused (ALREADY_IN_ACTIVITY) unless the caller confirms with
+ * `leaveCurrent`, which leaves it first (a host leaving ends theirs). The invited activity is
+ * checked (still active, not full) before anything is left, so a failed accept costs nothing.
  */
 export async function acceptInvite(user: User, inviteId: string, body: AcceptInviteBody, now = new Date()): Promise<ParticipationResult> {
   const invite = await myPendingInvite(user.id, inviteId);
@@ -324,6 +326,13 @@ export async function acceptInvite(user: User, inviteId: string, body: AcceptInv
     return { participation: current.participation, activity: current.activity };
   }
   if (current.participation && current.activity && body.leaveCurrent) {
+    // Leaving cannot be undone (a host leaving ends theirs for everyone), so make sure the
+    // invited activity can still be joined before giving anything up.
+    const target = (await listActiveActivities(now)).find((a) => a.id === invite.activityId);
+    if (!target) throw new ApiError("ACTIVITY_ENDED", "This activity has ended");
+    if (target.capacity !== undefined && target.participantCount >= target.capacity) {
+      throw new ApiError("CAPACITY_FULL", "This activity is full");
+    }
     await leaveActivity(user, current.activity.id, now);
   }
   const joined = await joinActivity(user, invite.activityId, now);
