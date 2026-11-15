@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { InviteResult, Profile, SocialKind, type Friend, type Profile as ProfileT, type SocialInput } from "@/shared/contracts";
+import { InviteResult, Profile, type Friend, type Profile as ProfileT } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import { errorText, refreshFriends, setMyProfile, useFriendsFeed } from "./feed";
 import { MyCodeOverlay, ScanOverlay } from "./overlays";
-import { ChatIcon, CheckIcon, CloseIcon, HeartIcon, MailIcon, PencilIcon, QrIcon, ScanIcon, SendIcon, UserMinusIcon, UserPlusIcon, UsersIcon } from "./icons";
-import { Avatar, ContactButtons, InviteCard, SOCIAL_LABELS } from "./parts";
+import { ChatIcon, CheckIcon, HeartIcon, MailIcon, PencilIcon, QrIcon, ScanIcon, SendIcon, UserMinusIcon, UserPlusIcon, UsersIcon } from "./icons";
+import { Avatar, ContactButtons, InviteCard } from "./parts";
 
 /**
  * Friends: you (with your code, Scan and Edit as symbols), pending invites, and your friends as
@@ -320,22 +320,10 @@ function UnfriendButton({ friend }: { friend: Friend }) {
   );
 }
 
-const SOCIAL_HINTS: Record<SocialInput["kind"], string> = {
-  instagram: "username",
-  x: "username",
-  linkedin: "profile name (linkedin.com/in/…)",
-  github: "username",
-  snapchat: "username",
-  tiktok: "username",
-  discord: "username",
-  website: "https://…",
-};
-
 function ProfileEditor({ me, onDone }: { me: ProfileT; onDone: () => void }) {
   const [pronouns, setPronouns] = useState(me.pronouns ?? "");
   const [phone, setPhone] = useState(me.phone ?? "");
   const [email, setEmail] = useState(me.email ?? "");
-  const [socials, setSocials] = useState<SocialInput[]>(me.socials.map((s) => ({ kind: s.kind, handle: s.handle })));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -351,7 +339,6 @@ function ProfileEditor({ me, onDone }: { me: ProfileT; onDone: () => void }) {
           pronouns: pronouns.trim() || null,
           phone: phone.trim() || null,
           contactEmail: email.trim() || null,
-          socials: socials.filter((s) => s.handle.trim()),
         },
       });
       setMyProfile(saved);
@@ -385,41 +372,6 @@ function ProfileEditor({ me, onDone }: { me: ProfileT; onDone: () => void }) {
         <span className="text-xs font-semibold uppercase tracking-wide text-yale">Contact email</span>
         <input type="email" maxLength={200} value={email} onChange={(e) => setEmail(e.target.value)} className={input} placeholder="Shown to friends" />
       </label>
-      <fieldset className="space-y-2">
-        <legend className="text-xs font-semibold uppercase tracking-wide text-yale">Social links</legend>
-        {socials.map((s, i) => (
-          <div key={i} className="flex gap-2">
-            <select
-              value={s.kind}
-              onChange={(e) => setSocials((all) => all.map((x, j) => (j === i ? { ...x, kind: e.target.value as SocialInput["kind"] } : x)))}
-              className="rounded-xl border-0 bg-linen px-2 py-2.5"
-              aria-label="Service"
-            >
-              {SocialKind.options.map((k) => (
-                <option key={k} value={k}>
-                  {SOCIAL_LABELS[k]}
-                </option>
-              ))}
-            </select>
-            <input
-              value={s.handle}
-              maxLength={200}
-              onChange={(e) => setSocials((all) => all.map((x, j) => (j === i ? { ...x, handle: e.target.value } : x)))}
-              className={`${input} min-w-0 flex-1`}
-              placeholder={SOCIAL_HINTS[s.kind]}
-              aria-label={`${SOCIAL_LABELS[s.kind]} ${SOCIAL_HINTS[s.kind]}`}
-            />
-            <button type="button" onClick={() => setSocials((all) => all.filter((_, j) => j !== i))} className="px-2 text-yale" aria-label="Remove">
-              <CloseIcon className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
-        {socials.length < 8 ? (
-          <button type="button" onClick={() => setSocials((all) => [...all, { kind: "instagram", handle: "" }])} className="font-semibold text-ink">
-            + Add a link
-          </button>
-        ) : null}
-      </fieldset>
       {message ? <p className="text-red-600">{message}</p> : null}
       <button type="submit" disabled={busy} className="w-full rounded-full bg-ink px-4 py-3 font-semibold text-ivory disabled:opacity-50">
         {busy ? "Saving…" : "Save profile"}

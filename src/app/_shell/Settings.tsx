@@ -38,7 +38,7 @@ export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () 
       <div className="zm-stagger mx-auto w-full max-w-2xl space-y-5 px-4 py-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
         <Group title="Account">
           <Row title={user.name ?? "Signed in"} hint={user.email} />
-          <Row title="Pronouns, phone and socials" hint="Edit your card in the Friends tab" />
+          <Row title="Pronouns and phone" hint="Edit your card in the Friends tab" />
         </Group>
 
         <Group title="Privacy and location">
