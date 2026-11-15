@@ -1,13 +1,25 @@
 import type { ChatResponse, RecommendPrefs } from "@/shared/contracts";
 import { rangeFromText } from "./time";
-import { CardCollector, categoryFor, findPlaceTool, searchActivitiesTool, searchEventsTool, studySpotTool, tokens, type ToolContext } from "./tools";
+import { CardCollector, categoryFor, findPlaceTool, searchActivitiesTool, searchEventsTool, soundsLikeActivityQuery, studySpotTool, tokens, type ToolContext } from "./tools";
 
 /**
  * Keyword answers for when Gemini is unavailable: no key, an error or a timeout. Covers what
  * the assistant is for: activities now, events later, study spots and how busy a place is.
  */
 
-export type Intent = "help" | "study" | "activities" | "events" | "place";
+export type Intent = "help" | "thanks" | "study" | "activities" | "events" | "place";
+
+const HELP_TEXT =
+  "I can find activities happening on campus right now (try “anyone playing soccer?”), events coming up (“what can I do this weekend?”), suggest a study spot (“a quiet place to study near me”), or tell you how busy a building is (“how busy is the Du Bois Library?”).";
+
+/** The whole message is an acknowledgement, e.g. "thanks!" or "ok cool". */
+const THANKS = /^(?:(?:ok|okay|cool|great|nice|perfect|awesome|got it|thanks|thank you|thx|ty)(?: so much| a lot| again)?[\s,!.]*)+$/;
+
+/** Phrasing that asks for something to do, even when no word names a known activity. */
+const ACTIVITY_ASK = /\b(anyone|anybody|is there|are there|anything|things to do|something to do|what can i do|what to do|join|club|clubs|hang out|hosting)\b/;
+
+/** Time words that are not part of a building's name: "how busy is the ILC right now?". */
+const TIME_WORDS = /\b(right now|at the moment|currently|now|today|tonight|this (?:morning|afternoon|evening)|rn|atm)\b/gi;
 
 /** A question about a later time, which only planned events can answer. */
 const LATER = /\b(weekend|tonight|tomorrow|this week|next week|later|upcoming|coming up|events?|friday|saturday|sunday|monday|tuesday|wednesday|thursday)\b/;
@@ -19,6 +31,7 @@ const STUDY_SPOT = /\b(study|studying|quiet|library|focus|homework|work|read|rea
 
 export function detectIntent(text: string): Intent {
   const t = text.toLowerCase().trim();
+  if (THANKS.test(t)) return "thanks";
   if (HELP.test(t) && t.split(/\s+/).length <= 5) return "help";
   if (PLACE.test(t)) return "place";
   // "study group" is an activity; "a quiet place to study" is a spot
@@ -37,10 +50,11 @@ export function prefsFrom(text: string): RecommendPrefs {
   return prefs;
 }
 
-/** The place name in "where is X" / "how busy is X". */
+/** The place name in "where is X" / "how busy is X", without time words such as "right now". */
 export function placeQuery(text: string): string {
-  const m = text.match(/(?:where is|where's|how busy is|how crowded is|is)\s+(?:the\s+)?(.+?)(?:\s+(?:busy|crowded))?\s*\??$/i);
-  return (m?.[1] ?? text).trim();
+  const q = text.replace(TIME_WORDS, " ").replace(/\s+/g, " ").trim();
+  const m = q.match(/(?:where is|where's|how busy is|how crowded is|is)\s+(?:the\s+)?(.+?)(?:\s+(?:busy|crowded))?\s*[?.!]*$/i);
+  return (m?.[1] ?? q).trim();
 }
 
 const list = (items: string[]) => (items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`);
@@ -52,8 +66,9 @@ export async function fallbackReply(ctx: Omit<ToolContext, "cards">, text: strin
   let reply: string;
 
   if (intent === "help") {
-    reply =
-      "I can find activities happening on campus right now (try “anyone playing soccer?”), events coming up (“what can I do this weekend?”), suggest a study spot (“a quiet place to study near me”), or tell you how busy a building is (“how busy is the Du Bois Library?”).";
+    reply = HELP_TEXT;
+  } else if (intent === "thanks") {
+    reply = "Anytime! Ask me about activities, events, study spots or how busy a building is.";
   } else if (intent === "study") {
     const res = await studySpotTool(tctx, prefsFrom(text));
     const [best, ...rest] = res.bestFirst;
@@ -89,9 +104,10 @@ export async function fallbackReply(ctx: Omit<ToolContext, "cards">, text: strin
       const later = await searchEventsTool(tctx, { query: text, category });
       const what = category ? `${category} ` : "";
       const none = `I could not find any active ${what}activities${words.length ? ` matching “${text.trim().slice(0, 60)}”` : ""} right now.`;
-      reply = later.matched
-        ? `${none} Coming up: ${list(later.events.slice(0, 3).map((e) => `${e.title} at ${e.place}, ${e.starts}`))}.`
-        : `${none} You can host one from the Activities tab.`;
+      if (later.matched) reply = `${none} Coming up: ${list(later.events.slice(0, 3).map((e) => `${e.title} at ${e.place}, ${e.starts}`))}.`;
+      else if (soundsLikeActivityQuery(text) || ACTIVITY_ASK.test(text.toLowerCase())) reply = `${none} You can host one from the Activities tab.`;
+      // not about activities at all ("what time does the dining hall close?"): say what we can do
+      else reply = `I'm not sure I can help with that. ${HELP_TEXT}`;
     }
   }
 
