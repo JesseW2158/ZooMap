@@ -153,8 +153,8 @@ export function SchedulePanel() {
           {next ? <NextUp event={next} previous={previousPlaced(timed, next)} now={now} /> : null}
 
           {/* week strip: a circle per day, a dot where something is planned, and the add button */}
-          <div className="flex items-center gap-2">
-            <div role="tablist" aria-label="Day" className="flex min-w-0 flex-1 justify-between gap-1 overflow-x-auto">
+          <div className="flex items-center gap-3">
+            <div role="tablist" aria-label="Day" className="grid min-w-0 flex-1 grid-cols-7 gap-1">
               {days.map((d, i) => {
                 const at = new Date(now + i * DAY_MS);
                 const selected = d === day;
@@ -167,13 +167,13 @@ export function SchedulePanel() {
                     aria-selected={selected}
                     aria-label={i === 0 ? "Today" : i === 1 ? "Tomorrow" : chipFmt.format(at)}
                     onClick={() => setSelectedDay(d)}
-                    className="flex shrink-0 flex-col items-center gap-1"
+                    className="flex min-w-0 flex-col items-center gap-1"
                   >
-                    <span className={`text-[10px] font-bold uppercase ${selected ? "text-ink" : "text-yale/70"}`}>
+                    <span className={`max-w-full truncate text-[10px] font-bold uppercase ${selected ? "text-ink" : "text-yale/70"}`}>
                       {i === 0 ? "Today" : weekdayFmt.format(at)}
                     </span>
                     <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors ${
+                      className={`flex aspect-square w-full max-w-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors ${
                         selected ? "bg-ink text-ivory" : i === 0 ? "bg-sky/40 text-ink" : "bg-linen text-ink hover:bg-ash/50"
                       }`}
                     >
@@ -184,7 +184,7 @@ export function SchedulePanel() {
                 );
               })}
             </div>
-            <div className="relative shrink-0 self-center">
+            <div className="relative shrink-0 self-center border-l border-ash/40 pl-3">
               <button
                 type="button"
                 aria-expanded={menu}

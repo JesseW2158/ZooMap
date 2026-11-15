@@ -56,8 +56,8 @@ const TABS: Tab[] = [
     Icon: FriendsIcon,
     panelIds: ["friends"],
     accent: {
-      bg: "bg-mint",
-      text: "text-mint",
+      bg: "bg-rose",
+      text: "text-rose",
     },
   },
   {

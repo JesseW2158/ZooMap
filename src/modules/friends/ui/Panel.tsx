@@ -28,7 +28,7 @@ export function FriendsPanel() {
       ) : (
         <section className="flex items-center gap-3">
           {me ? (
-            <span className="rounded-full p-0.5 ring-2 ring-mint">
+            <span className="rounded-full p-0.5 ring-2 ring-rose">
               <Avatar person={me} size={52} />
             </span>
           ) : (
@@ -164,7 +164,7 @@ function FriendsList({
               setPicked(new Set());
               setResult(null);
             }}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${choosing ? "bg-linen text-ink" : "bg-mint text-ink"}`}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${choosing ? "bg-linen text-ink" : "bg-rose text-ink"}`}
           >
             {choosing ? (
               "Cancel"
@@ -190,7 +190,7 @@ function FriendsList({
 
       {friends?.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl bg-linen px-4 py-6 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mint text-ink" aria-hidden>
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-rose text-ink" aria-hidden>
             <UserPlusIcon className="h-7 w-7" />
           </span>
           <p className="font-semibold">Add your first friend</p>
@@ -271,7 +271,7 @@ function FriendsList({
             disabled={sending || picked.size === 0}
             onClick={invite}
             aria-label="Send invites"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-mint text-ink disabled:opacity-40"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-rose text-ink disabled:opacity-40"
           >
             <SendIcon className="h-5 w-5" />
           </button>

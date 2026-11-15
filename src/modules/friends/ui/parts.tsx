@@ -177,7 +177,7 @@ export function InviteCard({ invite, compact = false }: { invite: ActivityInvite
       <div className="flex items-center gap-3">
         <span className="relative">
           <Avatar person={invite.from} size={compact ? 36 : 44} />
-          <span aria-hidden className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-mint text-ink ring-2 ring-white">
+          <span aria-hidden className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose text-ink ring-2 ring-white">
             <MailIcon className="h-3 w-3" />
           </span>
         </span>
