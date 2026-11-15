@@ -82,9 +82,9 @@ export interface Tracker {
   clearOrphans(): Promise<void>;
 }
 
-export const BACKGROUND_TITLE = "Minute Map is sharing your location";
+export const BACKGROUND_TITLE = "ZooMap is sharing your location";
 export const BACKGROUND_MESSAGE =
-  "Minute Map is sharing an approximate location for the crowd heatmap and activity time. Turn it off in the app.";
+  "ZooMap is sharing an approximate location for the crowd heatmap and activity time. Turn it off in the app.";
 
 const START_RETRIES = 5;
 const START_RETRY_MS = 1500;

@@ -8,7 +8,7 @@ declare module "next-auth" {
 
 declare module "@auth/core/jwt" {
   interface JWT {
-    /** Minute Map user id (`users._id`), set at sign-in. */
+    /** ZooMap user id (`users._id`), set at sign-in. */
     uid?: string;
   }
 }

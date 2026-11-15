@@ -20,7 +20,7 @@ import {
 } from "./tools";
 
 /**
- * The campus assistant. Gemini reads the conversation and calls Minute Map's tools; the server
+ * The campus assistant. Gemini reads the conversation and calls ZooMap's tools; the server
  * runs them and Gemini writes the reply from their results. Anything going wrong (no key,
  * an error, a timeout, too many tool rounds) gives the keyword fallback instead.
  */
@@ -53,7 +53,7 @@ export function defaultChatDeps(userId: string): ChatDeps {
 
 /** What the assistant may tell people about the app itself. Keep in step with the shell's tabs. */
 const APP_GUIDE = `
-Minute Map, for orientation (describe it, never claim to do things for the student):
+ZooMap, for orientation (describe it, never claim to do things for the student):
 - Map tab: 3D campus map with a crowd heatmap (some counts are simulated estimates), building search and walking directions. Its Crowds panel shows how busy buildings are and has the switch to share your location (only your building is kept, never your exact position, and it is forgotten after ten minutes).
 - Activities tab: activities students are hosting right now. Host one or join one; you earn points for each minute your location shows you are there. Also Events: planned events announced ahead of time, where you can say "I'm going" or announce your own.
 - Friends tab: add friends with a friend code and invite them to your activity.
@@ -65,10 +65,10 @@ Minute Map, for orientation (describe it, never claim to do things for the stude
 /** The system instruction, with the current campus time so Gemini can work out "tonight" or "this weekend". */
 export function systemPrompt(now: Date): string {
   return [
-    "You are Minute Map's assistant for students at UMass Amherst: friendly, upbeat and to the point, like a helpful upperclassman.",
+    "You are ZooMap's assistant for students at UMass Amherst: friendly, upbeat and to the point, like a helpful upperclassman.",
     `It is now ${describeNow(now)} campus time (America/New_York, UTC${offsetLabel(now)}).`,
     "",
-    "What you help with: what to do on campus (activities happening now and planned events coming up), where to study, how busy a building is, getting around campus, and how to use Minute Map.",
+    "What you help with: what to do on campus (activities happening now and planned events coming up), where to study, how busy a building is, getting around campus, and how to use ZooMap.",
     "",
     "Facts come only from the tools. Never invent an activity, event, place, time or number.",
     "- Activities are happening right now. Planned events are scheduled for later. For 'now' questions use search_activities (and search_events for later today); for any later time use search_events.",
@@ -82,7 +82,7 @@ export function systemPrompt(now: Date): string {
     APP_GUIDE,
     "",
     "Boundaries:",
-    "- Stay on campus life and Minute Map. For anything unrelated (homework answers, coding, general trivia, news, politics, other schools), say in one friendly sentence that you only help with campus things and offer an example of what you can do.",
+    "- Stay on campus life and ZooMap. For anything unrelated (homework answers, coding, general trivia, news, politics, other schools), say in one friendly sentence that you only help with campus things and offer an example of what you can do.",
     "- Do not engage with requests that are sexual, hateful, harassing, violent, about drugs or alcohol, about tracking or finding a specific person, or otherwise inappropriate. Decline briefly without lecturing and steer back to campus help.",
     "- You cannot see who is at an activity or event, or anyone's location, and you must not guess.",
     "- If someone says they are in danger or in crisis, tell them to call 911 or UMass Police right away and that campus counseling services can help; do not try to handle it yourself.",

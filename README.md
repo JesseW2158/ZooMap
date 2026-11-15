@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo/minute-map-circle-192.png" alt="Minute Map logo" width="96" height="96">
+  <img src="public/logo/minute-map-circle-192.png" alt="ZooMap logo" width="96" height="96">
 </p>
 
 <h1 align="center">ZooMap</h1>
@@ -10,8 +10,7 @@
 </p>
 
 ZooMap started as a 24-48 hour hackathon project. It is one Next.js app on MongoDB Atlas, plus an
-Android shell that adds background location. The logo and launcher icon say "Minute Map"; the code,
-package and UI titles still say ZooMap.
+Android shell that adds background location.
 
 ## What it does
 
