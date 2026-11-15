@@ -32,7 +32,9 @@ export function Legend({ snapshot, overlay = false }: { snapshot: DensityRespons
       className="pointer-events-none fixed left-[calc(var(--map-inset-left,0px)+0.75rem)] z-[5] flex flex-col items-start gap-1.5"
       style={{
         bottom:
-          "max(calc(var(--map-attrib-clear,1.5rem)+2.75rem),calc(env(safe-area-inset-bottom)+6rem+var(--map-inset-bottom,0px)))",
+          // CSS needs spaces around + inside calc(); without them the whole value is dropped
+          // and the legend falls back to the top-left corner, under the search bar.
+          "max(calc(var(--map-attrib-clear, 1.5rem) + 2.75rem), calc(env(safe-area-inset-bottom) + 6rem + var(--map-inset-bottom, 0px)))",
       }}
     >
       {key ? <div className="rounded-lg bg-white/90 px-2 py-1.5 shadow-sm">{key}</div> : null}
