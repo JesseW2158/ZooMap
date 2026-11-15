@@ -31,6 +31,8 @@ import {
   ProfileUpdateBody,
 } from "./friends";
 import { Ok } from "./common";
+import { AlertSettings, AlertSettingsBody, MarkReadBody, NotificationsResponse } from "./notifications";
+import { CreatePlannedEventBody, GoingBody, PlannedEvent, PlannedEventList } from "./planned";
 
 /**
  * Every JSON route, its validators and its success body. The route stubs parse their
@@ -124,6 +126,13 @@ export const API_ROUTES = {
     response: ParticipationResult,
   },
   inviteDecline: { path: "/api/friends/invites/[id]/decline", method: "POST", status: 200, response: Ok },
+  notificationsList: { path: "/api/notifications", method: "GET", status: 200, response: NotificationsResponse },
+  notificationsRead: { path: "/api/notifications/read", method: "POST", status: 200, body: MarkReadBody, response: Ok },
+  notificationsSettings: { path: "/api/notifications/settings", method: "PUT", status: 200, body: AlertSettingsBody, response: AlertSettings },
+  plannedEventsList: { path: "/api/planned-events", method: "GET", status: 200, response: PlannedEventList },
+  plannedEventsCreate: { path: "/api/planned-events", method: "POST", status: 201, body: CreatePlannedEventBody, response: PlannedEvent },
+  plannedEventGoing: { path: "/api/planned-events/[id]/going", method: "POST", status: 200, body: GoingBody, response: PlannedEvent },
+  plannedEventCancel: { path: "/api/planned-events/[id]", method: "DELETE", status: 200, response: Ok },
 } as const satisfies Record<string, ApiRouteSpec>;
 
 export type ApiRouteName = keyof typeof API_ROUTES;

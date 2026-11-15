@@ -11,6 +11,8 @@ export * from "./recommend";
 export * from "./assistant";
 export * from "./platform";
 export * from "./friends";
+export * from "./notifications";
+export * from "./planned";
 export * from "./events";
 export * from "./registries";
 export * from "./documents";
