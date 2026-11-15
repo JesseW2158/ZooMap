@@ -184,11 +184,8 @@ export function AppShell({ user }: { user: ShellUser }) {
 
   return (
     <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-linen">
-      {/* data-map-tab lets map-only overlays rendered in here (such as the mobile sharing pill)
-          hide themselves on the other tabs with the group-data-[map-tab=on]/shell variant. */}
       <div
-        className="group/shell relative min-h-0 flex-1"
-        data-map-tab={onMap ? "on" : "off"}
+        className="relative min-h-0 flex-1"
         style={mapInsetVars(isDesktop, mapPanels.length > 0 && sidebarOpen)}
       >
         <MapProvider>
