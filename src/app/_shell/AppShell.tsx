@@ -8,6 +8,7 @@ import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
 import {
   ActivitiesIcon,
+  AskIcon,
   CalendarIcon,
   CrowdIcon,
   MapIcon,
@@ -92,6 +93,17 @@ const TABS: Tab[] = [
       bg: "bg-sand",
       text: "text-sand",
       card: "bg-[linear-gradient(var(--color-sand)_6px,white_6px)]",
+    },
+  },
+  {
+    id: "ask",
+    label: "Ask",
+    Icon: AskIcon,
+    panelIds: ["assistant"],
+    accent: {
+      bg: "bg-mint",
+      text: "text-mint",
+      card: "bg-[linear-gradient(var(--color-mint)_6px,white_6px)]",
     },
   },
 ];
