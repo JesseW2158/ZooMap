@@ -205,15 +205,14 @@ function Page({
       className="absolute inset-0 z-20 flex flex-col overflow-y-auto bg-linen text-ink"
     >
       {/* navy hero band with the section's colour; the cards overlap its bottom edge */}
-      <header className="relative shrink-0 overflow-hidden bg-ink pb-12 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
-        <div
-          aria-hidden
-          className="absolute -bottom-24 right-6 h-40 w-40 rounded-full bg-yale/45"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70"
-        />
+      <header className="relative shrink-0 bg-ink pb-12 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
+        {/* clip only the decorative circles: the header itself must not clip the account menu.
+            The header has no z-index on purpose: the cards after it paint over its bottom edge,
+            while the menu's own z-40 lifts it above those cards. */}
+        <div aria-hidden className="absolute inset-0 overflow-hidden">
+          <div className="absolute -bottom-24 right-6 h-40 w-40 rounded-full bg-yale/45" />
+          <div className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70" />
+        </div>
         <div className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
           <span
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-ink ${accent.bg}`}
