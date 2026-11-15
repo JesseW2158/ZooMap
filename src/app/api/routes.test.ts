@@ -124,6 +124,18 @@ vi.mock("@/modules/chain", async (importOriginal) => {
   };
 });
 
+// Notifications read the schedule, activities and density; this test checks shape only.
+// src/modules/notifications/notifications.db.test.ts covers real behaviour.
+vi.mock("@/modules/notifications", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/modules/notifications")>();
+  return {
+    ...real,
+    getNotifications: async () => real.fixtures.notificationsFixture(new Date()),
+    markAlertsRead: async () => undefined,
+    updateAlertSettings: async (_userId: string, body: object) => ({ ...real.DEFAULT_SETTINGS, ...body }),
+  };
+});
+
 const loaders = import.meta.glob<Record<string, (req: NextRequest, ctx?: unknown) => Promise<Response>>>("./**/route.ts");
 
 /** A valid request for each route. Keyed like `API_ROUTES`. */
@@ -145,6 +157,8 @@ const SAMPLES: Record<string, { query?: string; body?: unknown; headers?: Record
   friendPreview: { query: "?code=ABCDEFGHJKLMNPQRSTUV" },
   invitesSend: { body: { activityId: "act-1", toUserIds: ["seed-blair"] } },
   inviteAccept: { body: {} },
+  notificationsRead: { body: { all: true } },
+  notificationsSettings: { body: { quietRooms: true, nearbyRadiusM: 400 } },
 };
 
 function routeFile(path: string): string {
