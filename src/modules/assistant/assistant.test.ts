@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Activity, ChatBody, Place } from "@/shared/contracts";
+import type { Activity, ChatBody, Place, PlannedEvent } from "@/shared/contracts";
 import { ChatBody as ChatBodySchema, ChatResponse } from "@/shared/contracts";
 import { detectIntent, placeQuery, prefsFrom } from "./fallback";
 import type { ChatModel, ModelTurn } from "./model";
-import { chatWith, studyPrefsFrom, type ChatDeps } from "./service";
+import { chatWith, studyPrefsFrom, systemPrompt, type ChatDeps } from "./service";
+import { campusTime, clampRange, offsetLabel, rangeFromText } from "./time";
 import { matchActivities } from "./tools";
 
 const NOW = new Date("2026-11-16T22:00:00Z");
@@ -40,6 +41,32 @@ const PLACE: Place = {
   heightM: 90,
 };
 
+// NOW is Monday 16 Nov 2026, 5 pm campus time (EST, UTC-5)
+const plannedEvent = (id: string, over: Partial<PlannedEvent>): PlannedEvent => ({
+  id,
+  hostId: `host-${id}`,
+  hostName: "Secret Host",
+  title: `Event ${id}`,
+  placeId: "mullins",
+  placeName: "Mullins Center",
+  category: "other",
+  startsAt: "2026-11-21T20:00:00Z",
+  endsAt: "2026-11-21T22:00:00Z",
+  goingCount: 4,
+  going: false,
+  hosting: false,
+  big: false,
+  createdAt: "2026-11-10T12:00:00Z",
+  ...over,
+});
+
+const EVENTS: PlannedEvent[] = [
+  plannedEvent("e1", { title: "Chess club open night", category: "social", startsAt: "2026-11-18T23:00:00Z", endsAt: "2026-11-19T01:00:00Z" }), // Wed 6 pm
+  plannedEvent("e2", { title: "Friday night concert", category: "social", startsAt: "2026-11-20T23:30:00Z", endsAt: "2026-11-21T02:00:00Z" }), // Fri 6:30 pm
+  plannedEvent("e3", { title: "Saturday soccer scrimmage", category: "sports", startsAt: "2026-11-21T15:00:00Z", endsAt: "2026-11-21T17:00:00Z", capacity: 22 }), // Sat 10 am
+  plannedEvent("e4", { title: "Thanksgiving potluck", category: "food", startsAt: "2026-11-26T22:00:00Z", endsAt: "2026-11-27T01:00:00Z" }), // next Thu
+];
+
 const pickStudySpots = vi.fn<ChatDeps["pickStudySpots"]>(async () => ({
   pick: { placeId: "dubois", reason: "W.E.B. Du Bois Library is quiet right now, 6 min walk." },
   spots: [
@@ -60,6 +87,7 @@ function deps(over: Partial<ChatDeps> = {}): ChatDeps {
       places: [{ placeId: "dubois", count: 30, live: 0, simulated: 30, level: 3 }],
     }),
     pickStudySpots,
+    listPlannedEvents: async (to) => EVENTS.filter((e) => Date.parse(e.endsAt) > NOW.getTime() && Date.parse(e.startsAt) <= to.getTime()),
     model: null,
     timeoutMs: 5_000,
     ...over,
@@ -214,6 +242,88 @@ describe("chatWith with Gemini (scripted)", () => {
   it("an empty reply falls back", async () => {
     const res = await chatWith(deps({ model: scripted({ text: "  " }) }), ask("hi"));
     expect(res.source).toBe("fallback");
+  });
+});
+
+describe("campus time", () => {
+  it("converts campus wall-clock times across a DST change", () => {
+    expect(campusTime(2026, 11, 20, 17).toISOString()).toBe("2026-11-20T22:00:00.000Z"); // EST
+    expect(campusTime(2026, 7, 4, 12).toISOString()).toBe("2026-07-04T16:00:00.000Z"); // EDT
+    expect(campusTime(2026, 11, 31).toISOString()).toBe("2026-12-01T05:00:00.000Z"); // day overflow
+    expect(offsetLabel(NOW)).toBe("-05:00");
+  });
+
+  it("this weekend, asked on a Monday, is Friday 5 pm to Monday 0:00", () => {
+    const r = rangeFromText("what can I do this weekend at umass?", NOW);
+    expect(r.from.toISOString()).toBe("2026-11-20T22:00:00.000Z");
+    expect(r.to.toISOString()).toBe("2026-11-23T05:00:00.000Z");
+  });
+
+  it("this weekend, asked on a Saturday, is now to Monday 0:00", () => {
+    const sat = new Date("2026-11-21T18:00:00Z");
+    const r = rangeFromText("anything this weekend", sat);
+    expect(r.from).toEqual(sat);
+    expect(r.to.toISOString()).toBe("2026-11-23T05:00:00.000Z");
+  });
+
+  it("tonight and tomorrow", () => {
+    expect(rangeFromText("tonight", NOW).to.toISOString()).toBe("2026-11-17T05:00:00.000Z");
+    const t = rangeFromText("tomorrow?", NOW);
+    expect([t.from.toISOString(), t.to.toISOString()]).toEqual(["2026-11-17T05:00:00.000Z", "2026-11-18T05:00:00.000Z"]);
+  });
+
+  it("clamps Gemini's range: not in the past, not past 90 days, a day when backwards, a week by default", () => {
+    expect(clampRange(NOW, "2020-01-01T00:00:00Z", "2026-11-18T00:00:00Z").from).toEqual(NOW);
+    expect(clampRange(NOW, undefined, "2031-01-01T00:00:00Z").to.getTime()).toBe(NOW.getTime() + 90 * 86_400_000);
+    const back = clampRange(NOW, "2026-11-20T00:00:00Z", "2026-11-19T00:00:00Z");
+    expect(back.to.getTime() - back.from.getTime()).toBe(86_400_000);
+    const def = clampRange(NOW, "garbage", 42);
+    expect([def.from, def.to.getTime() - def.from.getTime()]).toEqual([NOW, 7 * 86_400_000]);
+  });
+});
+
+describe("planned events", () => {
+  it("'what can I do this weekend at umass?' lists the weekend's events (fallback)", async () => {
+    expect(detectIntent("what can I do this weekend at umass?")).toBe("events");
+    const res = await chatWith(deps(), ask("what can I do this weekend at umass?"));
+    expect(ChatResponse.parse(res)).toBeTruthy();
+    expect(res.reply).toContain("Coming up this weekend");
+    expect(res.reply).toContain("Friday night concert");
+    expect(res.reply).toContain("Saturday soccer scrimmage");
+    expect(res.reply).not.toContain("Chess club");
+    expect(res.reply).not.toContain("Thanksgiving");
+    expect(res.cards.map((c) => c.kind === "event" && c.event.id)).toEqual(["e2", "e3"]);
+  });
+
+  it("matches words within the range, with synonyms", async () => {
+    const res = await chatWith(deps(), ask("any football this weekend?"));
+    expect(res.cards.map((c) => c.kind === "event" && c.event.id)).toEqual(["e3"]);
+  });
+
+  it("no live soccer activity points to a soccer event this week", async () => {
+    const res = await chatWith(deps({ listActivities: async () => [] }), ask("anyone playing soccer?"));
+    expect(res.reply).toMatch(/could not find any active sports activities.*Coming up: Saturday soccer scrimmage at Mullins Center, Sat, Nov 21, 10:00 AM/);
+  });
+
+  it("Gemini picks the range and gets times in campus time, without host names", async () => {
+    const model = scripted(
+      { calls: [{ id: "c1", name: "search_events", args: { from: "2026-11-20T17:00:00-05:00", to: "2026-11-23T00:00:00-05:00" } }] },
+      { text: "This weekend there's the Friday night concert at the Mullins Center and the Saturday soccer scrimmage. Want me to find more?" },
+    );
+    const res = await chatWith(deps({ model }), ask("what can I do this weekend at umass?"));
+    expect(res.source).toBe("gemini");
+    expect(res.cards.map((c) => c.kind === "event" && c.event.id)).toEqual(["e2", "e3"]);
+    const sent = JSON.stringify(model.mock.calls[1][0].contents);
+    expect(sent).toContain("Sat, Nov 21, 10:00 AM");
+    expect(sent).not.toContain("Secret Host");
+  });
+
+  it("tells Gemini the campus date and time, and the boundaries", () => {
+    const p = systemPrompt(NOW);
+    expect(p).toMatch(/Monday, November 16, 2026(,| at) 5:00 PM/);
+    expect(p).toContain("UTC-05:00");
+    expect(p).toMatch(/only help with campus things/);
+    expect(p).toMatch(/inappropriate/);
   });
 });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChatResponse, type ChatBody, type ChatCard, type ChatMessage } from "@/shared/contracts";
+import { ChatResponse, PlannedEvent, type Activity, type ChatBody, type ChatCard, type ChatMessage } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { useUserLocation } from "@/shared/platform";
 import { createStore, useMapStore, useStore } from "@/shared/ui";
@@ -19,7 +19,7 @@ interface Turn extends ChatMessage {
 const HISTORY_SENT = 10;
 const chatStore = createStore<{ turns: Turn[]; pending: boolean; error: string | null }>({ turns: [], pending: false, error: null });
 
-const SUGGESTIONS = ["Anyone playing soccer?", "Quiet study spot near me", "What's happening right now?", "How busy is the Du Bois Library?"];
+const SUGGESTIONS = ["What can I do this weekend?", "Anyone playing soccer?", "Quiet study spot near me", "How busy is the Du Bois Library?"];
 const LEVEL_WORDS = ["Empty", "Quiet", "Moderate", "Busy", "Packed"];
 
 async function send(text: string, origin: ChatBody["origin"]) {
@@ -97,7 +97,7 @@ export function AssistantPanel() {
                 {t.cards?.length ? (
                   <div className="space-y-1.5">
                     {t.cards.map((c) => (
-                      <Card key={c.kind === "activity" ? c.activity.id : c.placeId} card={c} />
+                      <Card key={c.kind === "activity" ? `a-${c.activity.id}` : c.kind === "event" ? `e-${c.event.id}` : `p-${c.placeId}`} card={c} />
                     ))}
                   </div>
                 ) : null}
@@ -126,7 +126,7 @@ export function AssistantPanel() {
           value={draft}
           maxLength={1000}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask about activities or study spots"
+          placeholder="Ask about activities, events or study spots"
           aria-label="Message"
           className="min-w-0 flex-1 rounded-full border border-ash bg-white px-4 py-2 placeholder:text-neutral-400"
         />
@@ -139,35 +139,108 @@ export function AssistantPanel() {
 }
 
 function Card({ card }: { card: ChatCard }) {
-  const { selectPlace, requestRoute } = useMapStore();
-  const [joinState, setJoinState] = useState<string | null>(null);
+  if (card.kind === "event") return <EventCard event={card.event} />;
+  if (card.kind === "place") return <PlaceCard card={card} />;
+  return <ActivityCard activity={card.activity} />;
+}
 
-  if (card.kind === "place") {
-    return (
-      <div className="flex items-center gap-2 rounded-xl border border-ash bg-white px-3 py-2">
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-medium">{card.name}</div>
-          <div className="text-xs text-yale">
-            {card.level !== undefined ? LEVEL_WORDS[card.level] : null}
-            {card.simulated ? " (estimate)" : ""}
-            {card.walkMin !== undefined ? ` · ${Math.max(1, Math.round(card.walkMin))} min walk` : ""}
-          </div>
-        </div>
+const whenFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const timeFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
+
+function EventCard({ event: initial }: { event: PlannedEvent }) {
+  const { selectPlace, requestRoute } = useMapStore();
+  const [event, setEvent] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const full = event.capacity !== undefined && event.goingCount >= event.capacity && !event.going;
+
+  const toggle = async () => {
+    setBusy(true);
+    setNote(null);
+    try {
+      setEvent(
+        await apiFetch(`/api/planned-events/${encodeURIComponent(event.id)}/going`, {
+          method: "POST",
+          body: { going: !event.going },
+          schema: PlannedEvent,
+        }),
+      );
+    } catch (err) {
+      const code = err instanceof ApiClientError ? err.code : null;
+      setNote(code === "CAPACITY_FULL" ? "It's full" : code === "NOT_FOUND" ? "It's over or was cancelled" : code === "CONFLICT" ? "You're hosting this one" : "Could not update");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-ash bg-white px-3 py-2">
+      <div className="truncate font-medium">{event.title}</div>
+      <div className="text-xs text-yale">
+        {whenFmt.format(new Date(event.startsAt))}–{timeFmt.format(new Date(event.endsAt))} · {event.placeName ?? "On campus"}
+      </div>
+      <div className="text-xs text-yale">
+        {event.goingCount} going{event.capacity ? ` of ${event.capacity}` : ""} · {event.category}
+      </div>
+      {event.description ? <p className="mt-0.5 line-clamp-2 text-xs text-yale">{event.description}</p> : null}
+      <div className="mt-1.5 flex items-center gap-2">
+        {event.hosting ? (
+          <span className="text-xs text-yale">You&apos;re hosting</span>
+        ) : (
+          <button
+            type="button"
+            disabled={busy || full}
+            onClick={() => void toggle()}
+            className={`rounded-lg px-3 py-1 text-xs font-medium disabled:opacity-50 ${event.going ? "border border-ash bg-ivory text-ink" : "bg-ink text-white"}`}
+          >
+            {event.going ? "Going ✓" : full ? "Full" : "I'm going"}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {
-            selectPlace(card.placeId);
-            requestRoute(card.placeId);
+            selectPlace(event.placeId);
+            requestRoute(event.placeId);
           }}
-          className="shrink-0 rounded-lg bg-ink px-3 py-1 text-xs font-medium text-white"
+          className="rounded-lg border border-ash bg-white px-3 py-1 text-xs"
         >
           Route
         </button>
+        {note ? <span className="text-xs text-red-700">{note}</span> : null}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  const a = card.activity;
+function PlaceCard({ card }: { card: Extract<ChatCard, { kind: "place" }> }) {
+  const { selectPlace, requestRoute } = useMapStore();
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-ash bg-white px-3 py-2">
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium">{card.name}</div>
+        <div className="text-xs text-yale">
+          {card.level !== undefined ? LEVEL_WORDS[card.level] : null}
+          {card.simulated ? " (estimate)" : ""}
+          {card.walkMin !== undefined ? ` · ${Math.max(1, Math.round(card.walkMin))} min walk` : ""}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          selectPlace(card.placeId);
+          requestRoute(card.placeId);
+        }}
+        className="shrink-0 rounded-lg bg-ink px-3 py-1 text-xs font-medium text-white"
+      >
+        Route
+      </button>
+    </div>
+  );
+}
+
+function ActivityCard({ activity: a }: { activity: Activity }) {
+  const { selectPlace, requestRoute } = useMapStore();
+  const [joinState, setJoinState] = useState<string | null>(null);
   const full = a.capacity !== undefined && a.participantCount >= a.capacity;
   const join = async () => {
     setJoinState("Joining…");
