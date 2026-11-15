@@ -84,3 +84,14 @@ export function AskIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+/** Two people, one in front of the other. */
+export function FriendsIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 19.5c.6-3.4 3-5.3 6-5.3s5.4 1.9 6 5.3" />
+      <path d="M15.5 4.9a3.2 3.2 0 0 1 0 6.2M17.6 14.6c1.8.7 3 2.4 3.4 4.9" />
+    </svg>
+  );
+}

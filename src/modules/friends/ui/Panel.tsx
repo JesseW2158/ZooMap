@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { InviteResult, Profile, SocialKind, type Friend, type Profile as ProfileT, type SocialInput } from "@/shared/contracts";
+import { InviteResult, Profile, SocialKind, type Conversation, type Friend, type Profile as ProfileT, type SocialInput } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import { errorText, refreshFriends, setMyProfile, useFriendsFeed } from "./feed";
+import { ChatOverlay } from "./Chat";
+import { closeChat, openChat, useConversations } from "./messages-feed";
 import { MyCodeOverlay, ScanOverlay } from "./overlays";
 import { Avatar, ContactButtons, InviteCard, SOCIAL_LABELS } from "./parts";
 
@@ -15,6 +17,7 @@ export function FriendsPanel() {
   const { me, friends, invites, current, error } = useFriendsFeed();
   const [overlay, setOverlay] = useState<"code" | "scan" | null>(null);
   const [editing, setEditing] = useState(false);
+  const { conversations, openWith } = useConversations();
 
   useEffect(() => {
     void refreshFriends();
@@ -62,11 +65,62 @@ export function FriendsPanel() {
         </section>
       ) : null}
 
+      <Inbox conversations={conversations} />
+
       <FriendsList friends={friends} current={current?.participation ? current.activity : null} />
 
       {overlay === "code" ? <MyCodeOverlay me={me} onClose={() => setOverlay(null)} /> : null}
       {overlay === "scan" ? <ScanOverlay onClose={() => setOverlay(null)} /> : null}
+      {openWith ? <ChatOverlay key={openWith.userId} friend={openWith} onClose={closeChat} /> : null}
     </div>
+  );
+}
+
+const shortTime = (iso: string) => {
+  const d = new Date(iso);
+  return Date.now() - d.getTime() < 86_400_000
+    ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : d.toLocaleDateString([], { month: "short", day: "numeric" });
+};
+
+/** Conversations with friends, newest first. Tapping one opens the chat. */
+function Inbox({ conversations }: { conversations: Conversation[] | null }) {
+  if (!conversations?.length) return null;
+  return (
+    <section className="space-y-2">
+      <h2 className="text-base font-semibold">Messages</h2>
+      <ul className="space-y-2">
+        {conversations.map((c) => {
+          const theirs = c.lastMessage.fromUserId === c.friend.userId;
+          return (
+            <li key={c.friend.userId}>
+              <button
+                type="button"
+                onClick={() => openChat({ userId: c.friend.userId, name: c.friend.name, image: c.friend.image })}
+                className="flex w-full items-center gap-3 rounded-xl border border-neutral-200 p-2.5 text-left hover:bg-neutral-50"
+              >
+                <Avatar person={c.friend} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline gap-2">
+                    <span className={`min-w-0 flex-1 truncate ${c.unread ? "font-bold" : "font-semibold"}`}>{c.friend.name}</span>
+                    <span className="shrink-0 text-xs text-neutral-500">{shortTime(c.lastMessage.createdAt)}</span>
+                  </span>
+                  <span className={`block truncate ${c.unread ? "font-medium text-neutral-900" : "text-neutral-500"}`}>
+                    {theirs ? "" : "You: "}
+                    {c.lastMessage.body}
+                  </span>
+                </span>
+                {c.unread ? (
+                  <span aria-label={`${c.unread} unread`} className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">
+                    {c.unread > 99 ? "99+" : c.unread}
+                  </span>
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -148,6 +202,13 @@ function FriendsList({ friends, current }: { friends: Friend[] | null; current: 
             </div>
             {open === f.userId ? (
               <div className="mt-2 space-y-2 border-t border-neutral-100 pt-2">
+                <button
+                  type="button"
+                  onClick={() => openChat({ userId: f.userId, name: f.name, image: f.image })}
+                  className="w-full rounded-lg bg-ink px-3 py-2 font-semibold text-ivory"
+                >
+                  Message
+                </button>
                 <ContactButtons profile={f} />
                 <p className="text-xs text-neutral-500">Friends since {new Date(f.since).toLocaleDateString()}</p>
                 <UnfriendButton friend={f} />

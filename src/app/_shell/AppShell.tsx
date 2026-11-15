@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { MapProvider, mapStore } from "@/shared/ui";
+import { MapProvider, mapStore, usePolling } from "@/shared/ui";
+import { UnreadCount } from "@/shared/contracts";
+import { apiFetch } from "@/shared/http/client";
 import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
@@ -11,6 +13,7 @@ import {
   AskIcon,
   CalendarIcon,
   CrowdIcon,
+  FriendsIcon,
   MapIcon,
   PointsIcon,
 } from "./icons";
@@ -38,7 +41,7 @@ interface Tab {
   };
 }
 
-/** Bottom navigation, left to right. The map sits in the middle. */
+/** Bottom navigation, left to right. */
 const TABS: Tab[] = [
   {
     id: "activities",
@@ -96,6 +99,17 @@ const TABS: Tab[] = [
     },
   },
   {
+    id: "friends",
+    label: "Friends",
+    Icon: FriendsIcon,
+    panelIds: ["friends"],
+    accent: {
+      bg: "bg-rose",
+      text: "text-rose",
+      card: "bg-[linear-gradient(var(--color-rose)_6px,white_6px)]",
+    },
+  },
+  {
     id: "ask",
     label: "Ask",
     Icon: AskIcon,
@@ -132,7 +146,8 @@ function panelsFor(tab: Tab): PanelEntry[] {
  */
 export function AppShell({ user }: { user: ShellUser }) {
   const [activeId, setActiveId] = useState<string>(MAP_TAB);
-  const active = TABS.find((t) => t.id === activeId) ?? TABS[2]!;
+  const active = TABS.find((t) => t.id === activeId) ?? TABS.find((t) => t.id === MAP_TAB)!;
+  const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
 
   // a route or fly request from a panel means "show me on the map"
@@ -196,7 +211,7 @@ export function AppShell({ user }: { user: ShellUser }) {
         ) : null}
       </div>
 
-      <TabBar activeId={active.id} onSelect={setActiveId} />
+      <TabBar activeId={active.id} onSelect={setActiveId} badges={{ friends: unread }} />
     </main>
   );
 }
@@ -245,12 +260,37 @@ function Page({
   );
 }
 
+/** Fired by the friends module after reading or sending, so the badge updates without waiting for a poll. */
+const MESSAGES_CHANGED_EVENT = "zoomap:messages-changed";
+const UNREAD_POLL_MS = 20_000;
+
+/** Unread direct messages, for the Friends tab badge. */
+function useUnreadMessages(): number {
+  const [count, setCount] = useState(0);
+  const load = async (signal?: AbortSignal) => {
+    try {
+      setCount((await apiFetch("/api/messages/unread", { schema: UnreadCount, signal })).count);
+    } catch {
+      // keep the last count; the next poll retries
+    }
+  };
+  usePolling(load, { intervalMs: UNREAD_POLL_MS });
+  useEffect(() => {
+    const onChange = () => void load();
+    window.addEventListener(MESSAGES_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(MESSAGES_CHANGED_EVENT, onChange);
+  }, []);
+  return count;
+}
+
 function TabBar({
   activeId,
   onSelect,
+  badges,
 }: {
   activeId: string;
   onSelect: (id: string) => void;
+  badges: Record<string, number>;
 }) {
   return (
     <nav
@@ -287,14 +327,25 @@ function TabBar({
                 </span>
               ) : (
                 <span
-                  className={`flex h-8 w-14 items-center justify-center rounded-full transition-colors ${
+                  className={`relative flex h-8 w-14 max-w-full items-center justify-center rounded-full transition-colors ${
                     selected ? `${accent.bg} text-ink` : ""
                   }`}
                 >
                   <Icon className="h-6 w-6" />
+                  {badges[id] ? (
+                    <span
+                      aria-hidden
+                      className="absolute -top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-ink"
+                    >
+                      {badges[id] > 9 ? "9+" : badges[id]}
+                    </span>
+                  ) : null}
                 </span>
               )}
               {label}
+              {badges[id] ? (
+                <span className="sr-only">, {badges[id]} unread</span>
+              ) : null}
             </button>
           );
         })}
