@@ -85,7 +85,7 @@ function html(status: number, title: string, body: string): Response {
 <meta name="referrer" content="same-origin"><title>${title} · ZooMap</title>
 <style>body{font-family:system-ui,sans-serif;margin:0;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:1rem;padding:1.5rem;max-width:24rem;margin-inline:auto}
 a,button{display:block;width:100%;box-sizing:border-box;text-align:center;background:#171717;color:#fff;padding:.9rem 1rem;border:0;border-radius:.75rem;text-decoration:none;font:inherit;font-weight:600}</style>
-</head><body><h1>ZooMap</h1>${body}</body></html>`;
+</head><body><h1 style="display:flex;align-items:center;gap:.75rem;margin:0"><img src="/logo/minute-map-circle-512.png" alt="" width="40" height="40">ZooMap</h1>${body}</body></html>`;
   return new Response(page, {
     status,
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "same-origin" },

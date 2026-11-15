@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Minute Map logo: a map pin with a clock face over a heat map">
+<defs>
+<clipPath id="mm-circle"><circle cx="256" cy="256" r="256"></circle></clipPath>
+<radialGradient id="mm-heat-a" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#FFD54A" stop-opacity="0.95"></stop>
+<stop offset="45%" stop-color="#F57C2B" stop-opacity="0.75"></stop>
+<stop offset="100%" stop-color="#F57C2B" stop-opacity="0"></stop>
+</radialGradient>
+<radialGradient id="mm-heat-b" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#F57C2B" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#F57C2B" stop-opacity="0"></stop>
+</radialGradient>
+</defs>
+<g >
+<rect width="512" height="512" fill="#881C1C"></rect>
+<g stroke="#FFFFFF" stroke-opacity="0.13" stroke-width="10" fill="none" stroke-linecap="round">
+<path d="M-20 150 L540 110"></path>
+<path d="M-20 330 L540 380"></path>
+<path d="M120 -20 L160 540"></path>
+<path d="M380 -20 L350 540"></path>
+<path d="M-20 470 L300 300"></path>
+</g>
+<circle cx="120" cy="390" r="120" fill="url(#mm-heat-a)"></circle>
+<circle cx="410" cy="110" r="95" fill="url(#mm-heat-b)"></circle>
+<circle cx="420" cy="400" r="80" fill="url(#mm-heat-b)"></circle>
+</g>
+<ellipse cx="256" cy="430" rx="52" ry="12" fill="#000000" fill-opacity="0.22"></ellipse>
+<path d="M256 428 C214 360 142 300 142 214 A114 114 0 1 1 370 214 C370 300 298 360 256 428 Z" fill="#FFFFFF"></path>
+<circle cx="256" cy="214" r="80" fill="#881C1C"></circle>
+<g stroke="#FFFFFF" stroke-width="8" stroke-linecap="round">
+<path d="M256 146 L256 160"></path>
+<path d="M324 214 L310 214"></path>
+<path d="M256 282 L256 268"></path>
+<path d="M188 214 L202 214"></path>
+</g>
+<path d="M256 214 L256 160" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"></path>
+<path d="M256 214 L292 236" stroke="#FFC33D" stroke-width="10" stroke-linecap="round"></path>
+<circle cx="256" cy="214" r="11" fill="#FFC33D"></circle>
+</svg>
