@@ -15,7 +15,7 @@ import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { useUserLocation } from "@/shared/platform";
 import { useMapStore } from "@/shared/ui";
 import { GEOFENCE_M } from "../rules";
-import { CATEGORY_COLORS, CATEGORY_LABELS, refreshFeed, useActivitiesFeed } from "./feed";
+import { announceSharing, CATEGORY_COLORS, CATEGORY_LABELS, refreshFeed, useActivitiesFeed } from "./feed";
 import {
   BallIcon,
   BookIcon,
@@ -155,8 +155,11 @@ export function ActivitiesPanel() {
               <MoonIcon className="h-7 w-7" />
             </span>
             <p className="font-semibold">Quiet right now</p>
-            <p className="text-yale">Tap a bubble above to start something.</p>
+            <p className="text-yale">{inActivity || hosting ? "Nothing else is live yet." : "Tap a bubble above to start something."}</p>
           </div>
+        ) : null}
+        {inActivity && sorted.some((a) => a.id !== me?.activity?.id) ? (
+          <p className="text-xs text-yale">You can only be in one activity at a time. Leave yours to join another.</p>
         ) : null}
         <ul className="space-y-2">
           {sorted.map((a) => (
@@ -331,7 +334,7 @@ function CurrentActivity({ me, sharing }: { me: ActivityMe; sharing: boolean | n
   const participation = me.participation!;
   const activity = me.activity!;
   const isHost = participation.role === "host";
-  const { position } = useUserLocation();
+  const { position, status: locationStatus } = useUserLocation();
   const { requestRoute } = useMapStore();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -353,27 +356,33 @@ function CurrentActivity({ me, sharing }: { me: ActivityMe; sharing: boolean | n
     }
   };
 
+  // Same setting as Crowds and Settings: announce it so the map's pinger and those screens follow.
   const turnOnSharing = async () => {
+    setBusy(true);
     setMessage(null);
     try {
-      await apiFetch("/api/presence/sharing", { method: "PUT", body: { enabled: true }, schema: SharingState });
+      const { enabled } = await apiFetch("/api/presence/sharing", { method: "PUT", body: { enabled: true }, schema: SharingState });
+      announceSharing(enabled);
       await refreshFeed();
     } catch (cause) {
       setMessage(errorText(cause));
+    } finally {
+      setBusy(false);
     }
   };
 
+  const placeLabel = activity.placeName ?? "the spot";
   let status: { dot: string; text: string; action?: { label: string; run: () => void } };
   if (sharing === false) {
-    status = { dot: "bg-amber-400", text: "Location off · not counting", action: { label: "Turn on", run: turnOnSharing } };
+    status = { dot: "bg-amber-400", text: "Location sharing is off · time isn't counting", action: { label: "Turn on", run: turnOnSharing } };
   } else if (participation.verifying) {
-    status = { dot: "bg-emerald-400 animate-pulse", text: "You're there · counting" };
+    status = { dot: "bg-emerald-400 animate-pulse", text: `At ${placeLabel} · time is counting` };
+  } else if (!position && (locationStatus === "denied" || locationStatus === "unavailable")) {
+    status = { dot: "bg-amber-400", text: "Your phone's location is blocked · time isn't counting" };
+  } else if (distance !== null && distance > GEOFENCE_M) {
+    status = { dot: "bg-ash", text: `Not at ${placeLabel} yet · ${formatDistance(distance)} away` };
   } else {
-    status = {
-      dot: "bg-ash",
-      text:
-        `Get within ${GEOFENCE_M} m to count` + (distance !== null && distance > GEOFENCE_M ? ` · ${formatDistance(distance)} away` : ""),
-    };
+    status = { dot: "bg-ash", text: `Waiting for your location at ${placeLabel}` };
   }
 
   return (
@@ -396,19 +405,19 @@ function CurrentActivity({ me, sharing }: { me: ActivityMe; sharing: boolean | n
           <p className="text-3xl font-bold tabular-nums">
             {minutes}:{String(seconds).padStart(2, "0")}
           </p>
-          <p className="flex items-center gap-1 text-xs text-ivory/60"><ClockIcon className="h-3.5 w-3.5" />verified</p>
+          <p className="flex items-center gap-1 text-xs text-ivory/60"><ClockIcon className="h-3.5 w-3.5" />time counted</p>
         </div>
         <div className="bg-ink px-4 py-3">
           <p className="text-3xl font-bold tabular-nums text-jasmine">+{participation.pendingPoints}</p>
-          <p className="flex items-center gap-1 text-xs text-ivory/60"><CoinIcon className="h-3.5 w-3.5" />when you leave</p>
+          <p className="flex items-center gap-1 text-xs text-ivory/60"><CoinIcon className="h-3.5 w-3.5" />{isHost ? "points when you end it" : "points when you leave"}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2 px-4 py-3" role="status">
         <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${status.dot}`} />
-        <p className="min-w-0 flex-1 truncate text-sm">{status.text}</p>
+        <p className="min-w-0 flex-1 text-sm leading-snug">{status.text}</p>
         {status.action ? (
-          <button type="button" onClick={status.action.run} className="rounded-full bg-jasmine px-3 py-1 text-xs font-bold text-ink">
+          <button type="button" disabled={busy} onClick={status.action.run} className="rounded-full bg-jasmine px-3 py-1 text-xs font-bold text-ink disabled:opacity-50">
             {status.action.label}
           </button>
         ) : null}
@@ -652,6 +661,7 @@ function HostForm({ initialCategory, onDone }: { initialCategory: Activity["cate
             min={1}
             max={500}
             inputMode="numeric"
+            aria-label="Maximum people"
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
             className={input}
