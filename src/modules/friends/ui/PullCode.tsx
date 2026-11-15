@@ -75,6 +75,14 @@ export function usePullCode(scroller: HTMLElement | null, enabled: boolean): Pul
     modeRef.current = mode;
   }, [mode]);
 
+  // opening closes the on-screen keyboard: the code takes the whole screen, and a page shrunk
+  // above the keyboard would make it open short
+  useEffect(() => {
+    if (mode !== "opening" && mode !== "open") return;
+    const el = document.activeElement;
+    if (el instanceof HTMLElement && el.matches("input, textarea, select, [contenteditable]")) el.blur();
+  }, [mode]);
+
   // opened from a button: paint everything at rest first so it slides
   useEffect(() => {
     if (mode !== "opening") return;

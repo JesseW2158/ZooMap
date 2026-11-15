@@ -10,6 +10,7 @@ export function DevTools() {
 
   return (
     <div
+      data-hide-with-keyboard
       className={
         // Phones (below 768 px, the shell's desktop breakpoint): bottom-right, just above the map
         // sheet's square button (which sits level with the legend's "Map: …" button), in two short

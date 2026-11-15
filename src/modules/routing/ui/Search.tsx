@@ -93,7 +93,13 @@ export function RoutingSearch() {
     setResults([]);
   };
 
+  /** Close the on-screen keyboard: what comes next (the building sheet, the route) needs the screen. */
+  const dismissKeyboard = () => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  };
+
   const choose = (place: Place) => {
+    dismissKeyboard();
     setSelected(place);
     selectPlace(place.id);
     flyTo(place.center, { zoom: 18 });
@@ -101,6 +107,7 @@ export function RoutingSearch() {
   };
 
   const directions = (place: Place) => {
+    dismissKeyboard();
     if (!position && status !== "denied" && status !== "unavailable") startLocation();
     setSelected(place);
     selectPlace(place.id);

@@ -172,3 +172,20 @@ body {
     left: 0;
   }
 }
+
+/*
+ * Phones, on-screen keyboard up (the shell marks <html data-keyboard="open">): things pinned to
+ * the bottom of the screen would ride up above the keyboard, leaving their tab-bar clearance as
+ * empty space. They hide until it closes. (On the map the shell keeps the app its full height
+ * instead, so things pinned inside it simply stay under the keyboard.)
+ */
+@media (max-width: 767px) {
+  html[data-keyboard="open"] [data-hide-with-keyboard] {
+    display: none !important;
+  }
+  /* the tab bar's own bottom padding, with the safe-area inset it had before the keyboard opened
+     (Android reports 0 while it is up); keep in step with TabBar's pb-[…] in AppShell.tsx */
+  html[data-keyboard="open"] [data-tab-bar] {
+    padding-bottom: max(1.25rem, calc(var(--safe-bottom-at-rest, 0px) + 0.75rem)) !important;
+  }
+}
