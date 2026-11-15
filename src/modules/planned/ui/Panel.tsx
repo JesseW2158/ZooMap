@@ -45,13 +45,13 @@ export function PlannedEventsPanel() {
   const [adding, setAdding] = useState(false);
 
   return (
-    <div className="space-y-3 text-neutral-900">
+    <div className="space-y-3 text-ink">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">Coming up on campus</h2>
+        <h2 className="text-base font-bold tracking-tight">Coming up on campus</h2>
         <button
           type="button"
           onClick={() => setAdding((a) => !a)}
-          className="rounded-lg bg-[#881c1c] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#6f1616]"
+          className="zm-press rounded-full bg-gradient-to-br from-[#a12424] to-[#6f1616] px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-[#881c1c]/25 hover:shadow-lg"
         >
           {adding ? "Close" : "+ Announce an event"}
         </button>
@@ -68,13 +68,23 @@ export function PlannedEventsPanel() {
 
       {error ? <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p> : null}
       {events === null ? (
-        <p className="text-sm text-neutral-500">Loading…</p>
+        <p className="animate-pulse text-sm text-yale">Loading…</p>
       ) : events.length === 0 ? (
-        <p className="text-sm text-neutral-500">
-          Nothing announced yet. Planning something big? Announce it so people hear about it days ahead.
-        </p>
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-ash bg-linen/60 px-4 py-6 text-center">
+          {/* a calendar with a star, purely decorative */}
+          <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#881c1c] shadow-sm">
+            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="3" />
+              <path d="M8 3v4M16 3v4M3 10h18" />
+              <path d="M12 13l1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z" />
+            </svg>
+          </span>
+          <p className="max-w-xs text-sm text-yale">
+            Nothing announced yet. Planning something big? Announce it so people hear about it days ahead.
+          </p>
+        </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="zm-stagger space-y-2.5">
           {events.map((e) => (
             <li key={e.id}>
               <EventCard event={e} />
@@ -127,28 +137,30 @@ export function EventCard({ event, onRoute }: { event: PlannedEvent; onRoute?: (
 
   return (
     <div
-      className={`rounded-xl border p-3 ${event.going ? "border-[#881c1c]/40 bg-[#881c1c]/5" : "border-neutral-200 bg-white"}`}
+      className={`relative overflow-hidden rounded-2xl border p-3.5 pl-4 text-ink shadow-sm transition-shadow hover:shadow-md ${event.going ? "border-[#881c1c]/30 bg-gradient-to-br from-[#881c1c]/[0.07] to-white" : "border-ash/50 bg-white"}`}
     >
+      {/* a coloured edge: maroon when you are going */}
+      <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${event.going ? "bg-[#881c1c]" : "bg-coral"}`} />
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">
+          <p className="text-sm font-bold">
             {event.big ? (
-              <span className="mr-1 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900">
+              <span className="mr-1.5 rounded-full bg-gradient-to-br from-jasmine to-sand px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-ink">
                 BIG
               </span>
             ) : null}
             {event.title}
           </p>
-          <p className="text-xs text-neutral-600">
+          <p className="mt-0.5 text-xs font-medium text-yale">
             {when(event.startsAt)} · {event.placeName ?? "On campus"}
           </p>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-yale/80">
             {event.goingCount} going
             {event.capacity ? ` of ${event.capacity}` : ""} · hosted by{" "}
             {event.hostName}
           </p>
           {event.description ? (
-            <p className="mt-1 text-xs text-neutral-700">{event.description}</p>
+            <p className="mt-1 text-xs text-yale">{event.description}</p>
           ) : null}
         </div>
       </div>
@@ -160,14 +172,14 @@ export function EventCard({ event, onRoute }: { event: PlannedEvent; onRoute?: (
                 type="button"
                 disabled={busy}
                 onClick={cancel}
-                className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-medium text-white"
+                className="zm-press rounded-full bg-red-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm"
               >
                 Yes, cancel it
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmCancel(false)}
-                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs"
+                className="zm-press rounded-full border border-ash px-3.5 py-1.5 text-xs font-medium hover:bg-linen"
               >
                 Keep it
               </button>
@@ -176,7 +188,7 @@ export function EventCard({ event, onRoute }: { event: PlannedEvent; onRoute?: (
             <button
               type="button"
               onClick={() => setConfirmCancel(true)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700"
+              className="zm-press rounded-full border border-ash px-3.5 py-1.5 text-xs font-medium text-yale hover:bg-linen hover:text-ink"
             >
               Cancel event
             </button>
@@ -186,7 +198,7 @@ export function EventCard({ event, onRoute }: { event: PlannedEvent; onRoute?: (
             type="button"
             disabled={busy}
             onClick={() => going(false)}
-            className="rounded-lg bg-[#881c1c] px-3 py-1.5 text-xs font-medium text-white"
+            className="zm-press rounded-full bg-[#881c1c] px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm"
           >
             ✓ Going · tap to undo
           </button>
@@ -195,7 +207,7 @@ export function EventCard({ event, onRoute }: { event: PlannedEvent; onRoute?: (
             type="button"
             disabled={busy || full}
             onClick={() => going(true)}
-            className="rounded-lg border border-[#881c1c] px-3 py-1.5 text-xs font-medium text-[#881c1c] disabled:opacity-50"
+            className="zm-press rounded-full border border-[#881c1c] px-3.5 py-1.5 text-xs font-semibold text-[#881c1c] hover:bg-[#881c1c]/5 disabled:opacity-50"
           >
             {full ? "Full" : "I'm going"}
           </button>
@@ -206,7 +218,7 @@ export function EventCard({ event, onRoute }: { event: PlannedEvent; onRoute?: (
             mapActions.requestRoute(event.placeId);
             onRoute?.();
           }}
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+          className="zm-press rounded-full border border-ash px-3.5 py-1.5 text-xs font-medium text-yale hover:bg-linen hover:text-ink"
         >
           Route
         </button>
@@ -260,12 +272,12 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
   };
 
   const field =
-    "w-full rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900";
+    "w-full rounded-lg border border-ash/70 bg-white px-2 py-1.5 text-sm text-ink";
 
   return (
     <form
       onSubmit={submit}
-      className="space-y-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-sm"
+      className="animate-rise space-y-2.5 rounded-2xl border border-ash/50 bg-linen/60 p-3.5 text-sm"
     >
       <input
         required
@@ -277,7 +289,7 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
       />
       <PlacePicker value={place} onChange={setPlace} />
       <div className="grid grid-cols-2 gap-2">
-        <label className="text-xs text-neutral-600">
+        <label className="text-xs text-yale">
           Date
           <input
             type="date"
@@ -287,7 +299,7 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
             className={field}
           />
         </label>
-        <label className="text-xs text-neutral-600">
+        <label className="text-xs text-yale">
           Starts
           <input
             type="time"
@@ -297,7 +309,7 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
             className={field}
           />
         </label>
-        <label className="text-xs text-neutral-600">
+        <label className="text-xs text-yale">
           Lasts
           <select
             value={hours}
@@ -311,7 +323,7 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
             ))}
           </select>
         </label>
-        <label className="text-xs text-neutral-600">
+        <label className="text-xs text-yale">
           Spots (optional)
           <input
             type="number"
@@ -330,7 +342,7 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
             key={c.id}
             type="button"
             onClick={() => setCategory(c.id)}
-            className={`rounded-full border px-2.5 py-1 text-xs ${category === c.id ? "border-[#881c1c] bg-[#881c1c] text-white" : "border-neutral-300 bg-white"}`}
+            className={`rounded-full border px-2.5 py-1 text-xs ${category === c.id ? "border-[#881c1c] bg-[#881c1c] text-white" : "border-ash/70 bg-white"}`}
           >
             {c.label}
           </button>
@@ -344,7 +356,7 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
         rows={2}
         className={field}
       />
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-yale/80">
         With 50 or more spots, everyone with big-event alerts on hears about it
         now, a week before, a day before and an hour before.
       </p>
@@ -352,7 +364,7 @@ function AnnounceForm({ onDone }: { onDone: (created: PlannedEvent) => void }) {
       <button
         type="submit"
         disabled={busy}
-        className="w-full rounded-lg bg-neutral-900 px-3 py-2 font-medium text-white disabled:opacity-50"
+        className="w-full zm-press rounded-full bg-gradient-to-br from-yale to-ink px-3 py-2.5 font-semibold text-white shadow-md shadow-ink/20 disabled:opacity-50"
       >
         {busy ? "Announcing…" : "Announce"}
       </button>
@@ -388,12 +400,12 @@ function PlacePicker({
 
   if (value) {
     return (
-      <div className="flex items-center justify-between rounded-lg border border-neutral-300 bg-white px-2 py-1.5">
+      <div className="flex items-center justify-between rounded-lg border border-ash/70 bg-white px-2 py-1.5">
         <span>📍 {value.name}</span>
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="text-xs text-neutral-500 hover:text-neutral-800"
+          className="text-xs text-yale/80 hover:text-ink"
         >
           Change
         </button>
@@ -406,10 +418,10 @@ function PlacePicker({
         value={q}
         onChange={(e) => void search(e.target.value)}
         placeholder="Where? Search a building"
-        className="w-full rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900"
+        className="w-full rounded-lg border border-ash/70 bg-white px-2 py-1.5 text-sm text-ink"
       />
       {results.length ? (
-        <ul className="absolute left-0 right-0 z-10 mt-1 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-lg">
+        <ul className="absolute left-0 right-0 z-10 mt-1 overflow-hidden rounded-lg border border-ash/50 bg-white shadow-lg">
           {results.map((p) => (
             <li key={p.id}>
               <button
@@ -418,7 +430,7 @@ function PlacePicker({
                   onChange(p);
                   setResults([]);
                 }}
-                className="w-full px-2 py-1.5 text-left text-sm hover:bg-neutral-50"
+                className="w-full px-2 py-1.5 text-left text-sm hover:bg-linen"
               >
                 {p.name}
               </button>
