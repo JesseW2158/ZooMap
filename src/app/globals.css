@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /*
- * Light by default. Dark mode is the `dark` class on <html>, set by the theme toggle in the
- * shell (see _shell/ThemeToggle.tsx), never by the system colour scheme on its own: panels
- * hard-code light utilities, so the dark theme below remaps those instead.
+ * Light only. Every surface (the sheet, panels, the search bar) is white over a light map, so
+ * a dark-scheme text colour made panel text white on white. `color-scheme` keeps form
+ * controls and placeholders light too. A dark theme would need dark surfaces first.
  */
 :root {
   color-scheme: light;
@@ -25,94 +25,3 @@ body {
 }
 
 /* The sheet and panels are light surfaces on top of the map in either colour scheme. */
-
-/*
- * Dark theme. Panels use Tailwind's light utilities (bg-white, text-neutral-900, ...), so rather
- * than editing every module this flips the colour variables those utilities read: the neutral
- * scale is inverted and the light tints (emerald/red/amber/blue 50-300) become dark ones, while
- * the text shades (700-900) become light. Backgrounds that carry white text (bg-neutral-900,
- * bg-red-600) are pinned so their text stays readable. Utilities live in @layer, so these
- * unlayered rules win.
- */
-html.dark {
-  color-scheme: dark;
-  --background: #121212;
-  --foreground: #f2f2f2;
-
-  --color-neutral-50: #1c1c1c;
-  --color-neutral-100: #262626;
-  --color-neutral-200: #333333;
-  --color-neutral-300: #474747;
-  --color-neutral-400: #6b6b6b;
-  --color-neutral-500: #9a9a9a;
-  --color-neutral-600: #b5b5b5;
-  --color-neutral-700: #cfcfcf;
-  --color-neutral-800: #e3e3e3;
-  --color-neutral-900: #f2f2f2;
-  --color-neutral-950: #fafafa;
-
-  --color-emerald-50: #062a20;
-  --color-emerald-100: #0a3d2e;
-  --color-emerald-200: #0d4f3b;
-  --color-emerald-300: #10694e;
-  --color-emerald-700: #6ee7b7;
-  --color-emerald-800: #a7f3d0;
-  --color-emerald-900: #d1fae5;
-
-  --color-red-50: #3a1010;
-  --color-red-100: #4a1515;
-  --color-red-200: #5c1a1a;
-  --color-red-300: #7f1d1d;
-  --color-red-600: #f87171;
-  --color-red-700: #fca5a5;
-  --color-red-800: #fecaca;
-
-  --color-amber-50: #2b2006;
-  --color-amber-100: #3a2a06;
-  --color-amber-200: #4d3808;
-  --color-amber-300: #8a5a06;
-  --color-amber-700: #fcd34d;
-  --color-amber-800: #fde68a;
-  --color-amber-900: #fef3c7;
-
-  --color-blue-50: #0c1a33;
-  --color-blue-700: #93c5fd;
-  --color-blue-900: #dbeafe;
-}
-
-/* Surfaces: white backgrounds go dark (text-white on coloured buttons is left alone). */
-html.dark .bg-white,
-html.dark .bg-white\/95,
-html.dark .bg-white\/90,
-html.dark .bg-white\/80 {
-  background-color: #1c1c1c;
-}
-html.dark .bg-white\/95,
-html.dark .bg-white\/90 {
-  background-color: rgb(28 28 28 / 0.95);
-}
-/* Buttons that keep white text keep a dark background. */
-html.dark .bg-neutral-900 {
-  background-color: #3f3f3f;
-}
-html.dark .bg-neutral-800 {
-  background-color: #4a4a4a;
-}
-html.dark .bg-red-600 {
-  background-color: #dc2626;
-}
-
-/* The map is a WebGL canvas with colours set in code, so darken it with a filter. */
-html.dark .maplibregl-canvas {
-  filter: invert(0.9) hue-rotate(180deg) saturate(0.85) brightness(0.95);
-}
-html.dark .maplibregl-ctrl-attrib {
-  background-color: rgb(28 28 28 / 0.8);
-  color: #cfcfcf;
-}
-html.dark .maplibregl-ctrl-attrib a {
-  color: #cfcfcf;
-}
-html.dark .maplibregl-ctrl-attrib-button {
-  filter: invert(1);
-}
