@@ -21,21 +21,26 @@ export function DevTools() {
       }
     >
       <span className="font-semibold">DEV</span>
-      <button
-        type="button"
-        className="rounded-md bg-amber-300 px-2 py-1 font-medium"
-        onClick={() => setDevPicking(!isDevPicking)}
-      >
-        {isDevPicking ? "Tap the map…" : "Set my location"}
-      </button>
-      {source === "dev" ? (
-        <button type="button" className="underline" onClick={() => setDevLocation(null)}>
-          Clear
-        </button>
-      ) : null}
-      <span className="text-amber-700">
-        {position ? `${source}: ${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}` : "no location"}
-      </span>
+      {/* Phones: two lines, the location text under the button. Larger screens: one line. */}
+      <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="rounded-md bg-amber-300 px-2 py-1 font-medium"
+            onClick={() => setDevPicking(!isDevPicking)}
+          >
+            {isDevPicking ? "Tap the map…" : "Set my location"}
+          </button>
+          {source === "dev" ? (
+            <button type="button" className="underline" onClick={() => setDevLocation(null)}>
+              Clear
+            </button>
+          ) : null}
+        </div>
+        <span className="text-amber-700">
+          {position ? `${source}: ${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}` : "no location"}
+        </span>
+      </div>
     </div>
   );
 }
