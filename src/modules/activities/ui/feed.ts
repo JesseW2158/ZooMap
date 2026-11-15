@@ -3,6 +3,7 @@
 import { ActivityList, ActivityMe, SharingState, type Activity } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { createStore, usePolling, useStore } from "@/shared/ui";
+import { useEffect } from "react";
 
 /**
  * One poller for everything the activities UI shows, so the map layer (always mounted) and
@@ -13,7 +14,7 @@ import { createStore, usePolling, useStore } from "@/shared/ui";
 interface FeedState {
   activities: Activity[] | null;
   me: ActivityMe | null;
-  /** Whether the user shares location; null until known or when not in an activity. */
+  /** Whether the user shares location; null until known or when not in an activity. Kept in step with the Crowds panel and Settings by `SHARING_CHANGED_EVENT`. */
   sharing: boolean | null;
   error: string | null;
 }
@@ -43,9 +44,31 @@ export async function refreshFeed(signal?: AbortSignal): Promise<void> {
   }
 }
 
+/**
+ * Fired on `window` after any control changes the location-sharing setting (the Crowds panel,
+ * Settings, the activity card), with `{ enabled }` as the detail. The one setting lives on the
+ * server; each screen keeps its own copy, and this keeps the copies from drifting. The same name
+ * is used by density/ui/state.ts and app/_shell/Settings.tsx (modules cannot import each other's ui).
+ */
+export const SHARING_CHANGED_EVENT = "zoomap:sharing-changed";
+
+export function announceSharing(enabled: boolean): void {
+  window.dispatchEvent(new CustomEvent(SHARING_CHANGED_EVENT, { detail: { enabled } }));
+}
+
 export function useActivitiesPoller(): void {
   const inActivity = useStore(store, (s) => !!s.me?.participation);
   usePolling(refreshFeed, { intervalMs: inActivity ? ACTIVE_POLL_MS : IDLE_POLL_MS, key: inActivity });
+
+  // another screen switched sharing on or off: show it on the card now, not at the next poll
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const enabled = (e as CustomEvent<{ enabled?: unknown }>).detail?.enabled;
+      if (typeof enabled === "boolean" && store.get().me?.participation) store.set({ sharing: enabled });
+    };
+    window.addEventListener(SHARING_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(SHARING_CHANGED_EVENT, onChange);
+  }, []);
 }
 
 export function useActivitiesFeed() {
