@@ -79,7 +79,7 @@ export function MapControls({ map }: { map: MapLibreMap }) {
 
   return (
     <>
-      <div className="pointer-events-auto absolute right-2 top-[calc(env(safe-area-inset-top)+4rem)] z-[7] flex w-10 flex-col gap-2">
+      <div className="pointer-events-auto absolute right-3 top-[calc(env(safe-area-inset-top)+4.25rem)] z-[7] flex w-10 flex-col gap-2">
         <Group>
           <Btn label="Zoom in" onClick={() => ease({ zoom: map.getZoom() + 1 })}>+</Btn>
           <Btn label="Zoom out" onClick={() => ease({ zoom: map.getZoom() - 1 })}>−</Btn>
@@ -119,7 +119,7 @@ export function MapControls({ map }: { map: MapLibreMap }) {
       </div>
 
       {help ? (
-        <div className="pointer-events-auto absolute right-14 top-[calc(env(safe-area-inset-top)+4rem)] z-[7] w-64 rounded-xl border border-neutral-200 bg-white/95 p-3 text-xs text-neutral-700 shadow-lg">
+        <div className="pointer-events-auto absolute right-16 top-[calc(env(safe-area-inset-top)+4.25rem)] z-[7] w-64 rounded-xl border border-neutral-200 bg-white/95 p-3 text-xs text-neutral-700 shadow-lg">
           <div className="mb-1 flex items-center justify-between">
             <span className="text-sm font-semibold text-neutral-900">Moving around</span>
             <button type="button" aria-label="Close tips" onClick={() => setHelp(false)} className="px-1 text-neutral-400 hover:text-neutral-700">✕</button>

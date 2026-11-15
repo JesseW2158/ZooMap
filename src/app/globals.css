@@ -1,14 +1,34 @@
 @import "tailwindcss";
 
 /*
- * Light by default. Dark mode is the `dark` class on <html>, set by the theme toggle in the
- * shell (see _shell/ThemeToggle.tsx), never by the system colour scheme on its own: panels
- * hard-code light utilities, so the dark theme below remaps those instead.
+ * ZooMap palette. Calm navy and warm off-whites so the map's own colours (heatmap,
+ * maroon selection, blue route) stay the loudest thing on screen. Use as Tailwind
+ * classes: bg-ink, text-yale, border-ash, bg-ivory, bg-linen.
+ */
+@theme {
+  --color-ink: #153243;   /* Deep Space Blue: text, primary buttons, active tab */
+  --color-yale: #284b63;  /* Yale Blue: secondary text, idle tabs */
+  --color-ash: #b4b8ab;   /* Ash Grey: borders, dividers, subtle fills (never text) */
+  --color-ivory: #f4f9e9; /* Ivory: cards, tab bar */
+  --color-linen: #eef0eb; /* Soft Linen: page background */
+
+  /* Section accents, one per tab, all dark enough to carry ink text. */
+  --color-jasmine: #ffe381;  /* The map button */
+  --color-coral: #f4a886;    /* Activities */
+  --color-lavender: #989fce; /* Crowd */
+  --color-sky: #81c3d7;      /* Calendar */
+  --color-sand: #cec288;     /* Points */
+}
+
+/*
+ * Light only. Every surface (the sheet, panels, the search bar) is white over a light map, so
+ * a dark-scheme text colour made panel text white on white. `color-scheme` keeps form
+ * controls and placeholders light too. A dark theme would need dark surfaces first.
  */
 :root {
   color-scheme: light;
-  --background: #fafaf9;
-  --foreground: #1c1917;
+  --background: #eef0eb;
+  --foreground: #153243;
 }
 
 html,
@@ -24,132 +44,11 @@ body {
   overscroll-behavior: none;
 }
 
-/* The sheet and panels are light surfaces on top of the map in either colour scheme. */
-
 /*
- * Dark theme: muted grays; the menu (the sidebar on a computer, the bottom sheet on a phone)
- * matches the map buttons. Panels use Tailwind's light utilities (bg-white, text-neutral-900,
- * ...), so rather than editing every module this flips the colour variables those utilities
- * read: the neutral scale is inverted to soft grays and the light tints (emerald/red/amber/blue
- * 50-300) become dark ones, while the text shades (700-900) become light. Backgrounds that carry white text (bg-neutral-900,
- * bg-red-600) are pinned so their text stays readable. Utilities live in @layer, so these
- * unlayered rules win.
+ * MapLibre's attribution and logo sit at the bottom of the map, where the raised map button
+ * in the tab bar pokes up over them. Lift them clear of it.
  */
-html.dark {
-  color-scheme: dark;
-  --background: #25292d;
-  --foreground: #eef0f2;
-
-  --color-neutral-50: #34383d;
-  --color-neutral-100: #3a3f45;
-  --color-neutral-200: #474d54;
-  --color-neutral-300: #5a6168;
-  --color-neutral-400: #7d848b;
-  --color-neutral-500: #a0a6ac;
-  --color-neutral-600: #b8bdc2;
-  --color-neutral-700: #d0d4d8;
-  --color-neutral-800: #e2e5e8;
-  --color-neutral-900: #eef0f2;
-  --color-neutral-950: #f7f8f9;
-
-  --color-emerald-50: #123d33;
-  --color-emerald-100: #174a3e;
-  --color-emerald-200: #1c5849;
-  --color-emerald-300: #2a7560;
-  --color-emerald-700: #7ee8c0;
-  --color-emerald-800: #abf2d6;
-  --color-emerald-900: #d4f9ea;
-
-  --color-red-50: #4a2224;
-  --color-red-100: #5a292b;
-  --color-red-200: #6b3033;
-  --color-red-300: #8c3b3f;
-  --color-red-600: #f58a8a;
-  --color-red-700: #f9b0b0;
-  --color-red-800: #fcd0d0;
-
-  --color-amber-50: #45391f;
-  --color-amber-100: #524324;
-  --color-amber-200: #5f4e2a;
-  --color-amber-300: #8f6d22;
-  --color-amber-700: #f6d27a;
-  --color-amber-800: #fae4a6;
-  --color-amber-900: #fdf2d2;
-
-  --color-blue-50: #22324a;
-  --color-blue-700: #a3c8f5;
-  --color-blue-900: #dceafc;
-}
-
-/* Surfaces outside the menu (search bar, map buttons, overlays): soft gray, not black. */
-html.dark .bg-white,
-html.dark .bg-white\/80 {
-  background-color: #2f3338;
-}
-html.dark .bg-white\/95,
-html.dark .bg-white\/90 {
-  background-color: rgb(47 51 56 / 0.95);
-}
-
-/* The menu (sidebar on a computer, sheet on a phone): the same gray as the map buttons, with
-   cards and inputs one step lighter so they stand out. */
-html.dark section[aria-label="Panels"] {
-  background-color: #2f3338;
-}
-html.dark section[aria-label="Panels"] .bg-white,
-html.dark section[aria-label="Panels"] .bg-white\/95,
-html.dark section[aria-label="Panels"] .bg-white\/90,
-html.dark section[aria-label="Panels"] .bg-white\/80 {
-  background-color: #383d43;
-}
-
-/* Buttons that keep white text keep a dark background. */
-html.dark .bg-neutral-900 {
-  background-color: #4a5058;
-}
-html.dark .bg-neutral-800 {
-  background-color: #555c64;
-}
-html.dark .bg-red-600 {
-  background-color: #dc2626;
-}
-
-/* The map is a WebGL canvas with colours set in code, so dim it with a filter: a partial invert
-   keeps it a muted gray rather than black. */
-html.dark .maplibregl-canvas {
-  filter: invert(0.8) hue-rotate(180deg) saturate(0.8) brightness(1.05);
-}
-html.dark .maplibregl-ctrl-attrib {
-  background-color: rgb(47 51 56 / 0.85);
-  color: #d0d4d8;
-}
-html.dark .maplibregl-ctrl-attrib a {
-  color: #d0d4d8;
-}
-html.dark .maplibregl-ctrl-attrib-button {
-  filter: invert(1);
-}
-
-/* Map popups (e.g. the building name on hover): MapLibre's own CSS makes the box white while the
-   text inherits the page colour, which is light in dark mode. Match the map buttons instead. */
-html.dark .maplibregl-popup-content {
-  background-color: #2f3338;
-  color: #eef0f2;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
-}
-html.dark .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
-html.dark .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
-html.dark .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
-  border-top-color: #2f3338;
-}
-html.dark .maplibregl-popup-anchor-top .maplibregl-popup-tip,
-html.dark .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
-html.dark .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
-  border-bottom-color: #2f3338;
-}
-html.dark .maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: #2f3338;
-}
-html.dark .maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: #2f3338;
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  margin-bottom: 1.5rem;
 }
