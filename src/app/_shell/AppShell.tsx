@@ -12,6 +12,7 @@ import { MapSheet, SidebarOpenButton, mapInsetVars, useIsDesktop } from "./MapSh
 import { SettingsSheet } from "./Settings";
 import {
   ActivitiesIcon,
+  AskIcon,
   CalendarIcon,
   CrowdIcon,
   MapIcon,
@@ -102,7 +103,7 @@ const TABS: Tab[] = [
 /** Symbols for panel sections on a page that shows more than one panel. */
 const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   activities: ActivitiesIcon,
-  assistant: ActivitiesIcon,
+  assistant: AskIcon,
   friends: MessagesIcon,
   schedule: CalendarIcon,
   recommend: StudyIcon,

@@ -32,7 +32,6 @@ const FALLBACK_REASONS: Record<NonNullable<ChatResponse["fallbackReason"]>, stri
 const HISTORY_SENT = 10;
 const chatStore = createStore<{ turns: Turn[]; pending: boolean; error: string | null }>({ turns: [], pending: false, error: null });
 
-const SUGGESTIONS = ["What can I do this weekend?", "Anyone playing soccer?", "Quiet study spot near me", "How busy is the Du Bois Library?"];
 const LEVEL_WORDS = ["Empty", "Quiet", "Moderate", "Busy", "Packed"];
 
 async function send(text: string, origin: ChatBody["origin"]) {
@@ -74,26 +73,17 @@ export function AssistantPanel() {
 
   return (
     <div className="flex flex-col gap-3 text-sm text-ink">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs text-yale">Activities happening now, study spots, and how busy a building is.</p>
-        {turns.length ? (
-          <button type="button" className="zm-press shrink-0 rounded-full bg-linen px-3 py-1 text-xs font-medium text-yale hover:bg-ash/40 hover:text-ink" onClick={() => chatStore.set({ turns: [], error: null })}>
-            New chat
-          </button>
-        ) : null}
-      </div>
-
-      {turns.length === 0 ? (
-        <div className="zm-stagger flex flex-wrap gap-2">
-          {SUGGESTIONS.map((s) => (
-            <button key={s} type="button" onClick={() => submit(s)} className="zm-press rounded-full border border-mint/70 bg-mint/15 px-3.5 py-1.5 text-xs font-medium text-ink hover:border-mint hover:bg-mint/35">
-              {s}
-            </button>
-          ))}
-        </div>
+      {turns.length ? (
+        <button
+          type="button"
+          className="zm-press self-end rounded-full bg-linen px-3 py-1 text-xs font-medium text-yale hover:bg-ash/40 hover:text-ink"
+          onClick={() => chatStore.set({ turns: [], error: null })}
+        >
+          New chat
+        </button>
       ) : null}
 
-      <ol className="flex flex-col gap-2.5" aria-live="polite">
+      <ol className={`flex flex-col gap-2.5 ${turns.length || pending ? "" : "hidden"}`} aria-live="polite">
         {turns.map((t, i) => (
           <li key={i} className={`animate-rise ${t.role === "user" ? "self-end max-w-[85%]" : "self-start w-full"}`}>
             {t.role === "user" ? (
@@ -135,24 +125,33 @@ export function AssistantPanel() {
       <div ref={endRef} />
 
       <form
-        className="sticky bottom-0 flex gap-2 bg-white/90 py-1.5 backdrop-blur"
+        className="sticky bottom-0 bg-white/90 py-1 backdrop-blur"
         onSubmit={(e) => {
           e.preventDefault();
           submit(draft);
         }}
       >
-        <input
-          type="text"
-          value={draft}
-          maxLength={1000}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask about activities, events or study spots"
-          aria-label="Message"
-          className="min-w-0 flex-1 rounded-full border border-ash/70 bg-linen/50 px-4 py-2.5 outline-none transition-all placeholder:text-yale/50 focus:border-ink/30 focus:bg-white focus:ring-2 focus:ring-mint/50"
-        />
-        <button type="submit" disabled={pending || !draft.trim()} className="zm-press shrink-0 rounded-full bg-gradient-to-br from-yale to-ink px-5 py-2.5 font-semibold text-white shadow-md shadow-ink/25 disabled:from-ash disabled:to-ash disabled:shadow-none">
-          Send
-        </button>
+        <div className="flex items-center gap-1 rounded-full border border-ash/70 bg-linen/50 p-1 pl-4 transition-all focus-within:border-ink/30 focus-within:bg-white focus-within:ring-2 focus-within:ring-mint/50">
+          <input
+            type="text"
+            value={draft}
+            maxLength={1000}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Ask ZooMap"
+            aria-label="Ask ZooMap"
+            className="min-w-0 flex-1 bg-transparent py-1.5 outline-none placeholder:text-yale/50"
+          />
+          <button
+            type="submit"
+            disabled={pending || !draft.trim()}
+            aria-label="Send"
+            className="zm-press flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-white disabled:bg-ash"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+          </button>
+        </div>
       </form>
     </div>
   );
