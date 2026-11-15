@@ -248,11 +248,11 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
           title={title}
           onClick={() => setExpanded(true)}
           // Bottom-right, level with the crowd legend's "Map: …" button (the legend's bottom offset).
-          className={`fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-[5] flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-md`}
+          className={`fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-[5] flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-md`}
         >
           {/* white frame with the small accent badge, like the icon in the sheet's header */}
-          <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-ink ${accentBg}`}>
-            <Icon className="h-[1.1rem] w-[1.1rem]" />
+          <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-ink ${accentBg}`}>
+            <Icon className="h-5 w-5" />
           </span>
         </button>
       ) : null}
