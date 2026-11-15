@@ -51,7 +51,7 @@ export function checkGoogleClaims(claims: GoogleClaims | null | undefined, allow
 }
 
 export interface SignInInput {
-  /** Auth.js provider id: "google", "dev", later "handoff". */
+  /** Auth.js provider id: "google", "dev", "handoff". */
   provider: string | undefined;
   /** OAuth profile (the ID token claims) for Google. */
   profile?: GoogleClaims | null;
@@ -63,7 +63,7 @@ export interface SignInInput {
   seedEmails: string[];
 }
 
-/** Default deny: a provider this function does not know is refused. The mobile stream adds "handoff" here. */
+/** Default deny: a provider this function does not know is refused. */
 export function decideSignIn(input: SignInInput): SignInDecision {
   switch (input.provider) {
     case "google":
@@ -72,6 +72,13 @@ export function decideSignIn(input: SignInInput): SignInDecision {
       if (!input.devAuthEnabled) return deny("dev-auth-disabled");
       const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
       return input.seedEmails.includes(email) ? allow : deny("unknown-dev-user");
+    }
+    case "handoff": {
+      // The person already signed in with Google (or the dev provider) in the browser; this is
+      // the same domain rule applied to the stored user, in case ALLOWED_EMAIL_DOMAINS changed.
+      const domain = emailDomain(input.email);
+      if (!domain) return deny("no-email");
+      return input.allowedDomains.map((d) => d.trim().toLowerCase()).includes(domain) ? allow : deny("wrong-email-domain");
     }
     default:
       return deny("provider-not-allowed");

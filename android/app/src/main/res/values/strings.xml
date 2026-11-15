@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ZooMap</string>
+    <string name="title_activity_main">ZooMap</string>
+    <string name="package_name">app.zoomap</string>
+    <string name="custom_url_scheme">app.zoomap</string>
+
+    <!-- @capacitor-community/background-geolocation reads these three by name. -->
+    <string name="capacitor_background_geolocation_notification_channel_name">Location sharing</string>
+    <!-- No leading "@". A raster icon needs a transparent background, so this is a vector. -->
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_tracking</string>
+    <string name="capacitor_background_geolocation_notification_color">#B71C1C</string>
+</resources>

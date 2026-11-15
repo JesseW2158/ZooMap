@@ -48,6 +48,18 @@ vi.mock("@/modules/activities", async (importOriginal) => {
   };
 });
 
+vi.mock("@/modules/density", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/density")>();
+  const { getPlaces } = await import("@/modules/campus");
+  return {
+    ...actual,
+    getDensitySnapshot: async () => actual.fixtures.densitySnapshotFixture(await getPlaces(), new Date()),
+    getSharing: async () => false,
+    setSharing: async (_userId: string, enabled: boolean) => enabled,
+    recordPing: async () => ({ placeId: null, expiresAt: new Date(Date.now() + 10 * 60_000) }),
+  };
+});
+
 vi.mock("@/modules/friends", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/friends")>();
   const f = actual.fixtures;
@@ -71,6 +83,9 @@ vi.mock("@/modules/friends", async (importOriginal) => {
   };
 });
 
+// The real `createDeviceToken` writes to the database; `src/modules/auth/device-token.db.test.ts` covers it.
+vi.mock("@/modules/mobile", () => ({ createDeviceToken: async () => ({ token: "FIXTURE-DEVICE-TOKEN" }) }));
+
 vi.mock("@/modules/schedule", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/schedule")>();
   const f = actual.fixtures;
@@ -81,6 +96,31 @@ vi.mock("@/modules/schedule", async (importOriginal) => {
     createConnection: async (_userId: string, body: { provider: "ics" | "manual" | "plan"; label: string }) => f.createdConnectionFixture(body),
     deleteConnection: async () => undefined,
     updateConnection: async (_userId: string, body: { id: string }) => ({ ...f.connectionsFixture[0], id: body.id }),
+  };
+});
+
+// Rewards routes are backed by the database. This test checks wiring and contract shape only,
+// so the module's data functions return its fixtures; src/modules/rewards/rewards.db.test.ts
+// covers real behaviour. (Other database-backed modules can follow the same pattern.)
+vi.mock("@/modules/rewards", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/modules/rewards")>();
+  return {
+    ...real,
+    getRewardsMe: async () => real.fixtures.rewardsMeFixture(120, new Date()),
+    listStoreItems: async () => real.fixtures.storeItemsFixture,
+    redeem: async (_userId: string, itemId: string) => ({
+      redemption: real.fixtures.redemptionFixture(itemId, new Date()),
+      created: true,
+    }),
+  };
+});
+
+// The chain summary reaches Solana devnet when its env vars are set; keep this test offline.
+vi.mock("@/modules/chain", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/modules/chain")>();
+  return {
+    ...real,
+    getChainSummary: async () => ({ enabled: false, address: null, balance: 0, pendingCount: 0, explorerUrl: null }),
   };
 });
 

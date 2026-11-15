@@ -87,6 +87,16 @@ describe("decideSignIn", () => {
     });
   });
 
+  it("lets a handoff sign-in through only for an allowed email domain", () => {
+    expect(decideSignIn({ ...base, provider: "handoff", email: "Student@umass.edu" })).toEqual({ allowed: true });
+    expect(decideSignIn({ ...base, provider: "handoff", email: "student@gmail.com" })).toEqual({
+      allowed: false,
+      reason: "wrong-email-domain",
+    });
+    expect(decideSignIn({ ...base, provider: "handoff", email: "student@umass.edu.evil.com" }).allowed).toBe(false);
+    expect(decideSignIn({ ...base, provider: "handoff", email: null })).toEqual({ allowed: false, reason: "no-email" });
+  });
+
   it("refuses providers it does not know", () => {
     expect(decideSignIn({ ...base, provider: "github", profile: good })).toEqual({
       allowed: false,
