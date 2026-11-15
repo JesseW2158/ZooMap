@@ -135,6 +135,8 @@ export function RecommendPanel() {
         maxLength={280}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
+          // Enter confirms an IME (Chinese, Japanese, Korean) candidate; 229 covers Safari.
+          if (e.nativeEvent.isComposing || e.keyCode === 229) return;
           if (e.key === "Enter" && !loading) void find();
         }}
         placeholder="Anything else? e.g. outlets, near coffee"

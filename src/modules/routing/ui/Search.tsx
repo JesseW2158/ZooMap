@@ -117,6 +117,8 @@ export function RoutingSearch() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => {
+            // Enter confirms an IME (Chinese, Japanese, Korean) candidate; 229 covers Safari.
+            if (e.nativeEvent.isComposing || e.keyCode === 229) return;
             if (e.key === "Enter" && shown[0]) directions(shown[0]);
             if (e.key === "Escape") clearQuery();
           }}
