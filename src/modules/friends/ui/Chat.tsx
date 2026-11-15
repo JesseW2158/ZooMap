@@ -21,7 +21,7 @@ function merge(prev: Message[], next: Message[]): Message[] {
   return [...byId.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
 }
 
-/** Full-screen direct messages with one friend. Portalled to <body>, like "My code". */
+/** Full-screen direct messages with one friend. Portalled to <body>, like the friend code screen. */
 export function ChatOverlay({
   friend,
   onClose,

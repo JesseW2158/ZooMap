@@ -6,14 +6,25 @@ import QRCode from "qrcode";
 import { FriendCode, type Profile } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import { errorText } from "./feed";
-import { CloseIcon } from "./icons";
+import { CloseIcon, QrIcon, ScanIcon } from "./icons";
 import { Avatar } from "./parts";
 
 /**
- * Full-screen layer used by "My code", "Scan" and a friend's profile. Portalled to <body>: the bottom sheet is its
+ * Full-screen layer used by the friend code screen and a friend's profile. Portalled to <body>: the bottom sheet is its
  * own stacking context, so anything rendered inside it can't cover the invite banner or map controls.
  */
-export function Overlay({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+export function Overlay({
+  title,
+  onClose,
+  footer,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  /** Pinned to the bottom of the screen, under the scrolling content. */
+  footer?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -27,19 +38,51 @@ export function Overlay({ title, onClose, children }: { title: string; onClose: 
           <CloseIcon className="h-5 w-5" />
         </button>
       </div>
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div
+        className={`flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-6 ${footer ? "" : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"}`}
+      >
         {children}
       </div>
+      {footer ? (
+        <div className="flex shrink-0 justify-center border-t border-ash/50 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{footer}</div>
+      ) : null}
     </div>,
     document.body,
   );
 }
 
 /**
- * "My code": a fresh code each time it opens (only its hash is stored, so the previous code
- * stops working), shown as a large QR that another phone's camera or Scan button can read.
+ * Your friend code and the scanner on one screen: your QR on top and a Scan button pinned to the
+ * bottom, which swaps the QR for the camera. Opening it issues a fresh code (only its hash is
+ * stored, so the previous code stops working); the QR stays mounted while scanning so switching
+ * back doesn't issue another.
  */
-export function MyCodeOverlay({ me, onClose }: { me: Profile | null; onClose: () => void }) {
+export function FriendCodeOverlay({ me, onClose }: { me: Profile | null; onClose: () => void }) {
+  const [scanning, setScanning] = useState(false);
+  return (
+    <Overlay
+      title={scanning ? "Scan a Friend's Code" : "My Friend Code"}
+      onClose={onClose}
+      footer={
+        <button
+          type="button"
+          onClick={() => setScanning((x) => !x)}
+          className="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 font-semibold text-ivory hover:bg-yale"
+        >
+          {scanning ? <QrIcon className="h-5 w-5" /> : <ScanIcon className="h-5 w-5" />}
+          {scanning ? "Show My Code" : "Scan a Friend's Code"}
+        </button>
+      }
+    >
+      <div hidden={scanning} className="flex w-full flex-col items-center gap-4">
+        <MyCode me={me} />
+      </div>
+      {scanning ? <Scanner /> : null}
+    </Overlay>
+  );
+}
+
+function MyCode({ me }: { me: Profile | null }) {
   const [code, setCode] = useState<FriendCode | null>(null);
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +107,7 @@ export function MyCodeOverlay({ me, onClose }: { me: Profile | null; onClose: ()
   }, []);
 
   return (
-    <Overlay title="My friend code" onClose={onClose}>
+    <>
       {me ? (
         <div className="flex items-center gap-3">
           <Avatar person={me} size={48} />
@@ -82,10 +125,10 @@ export function MyCodeOverlay({ me, onClose }: { me: Profile | null; onClose: ()
       ) : null}
       {code ? <p className="font-mono text-sm tracking-wider text-neutral-500">{code.code}</p> : null}
       <p className="max-w-xs text-center text-sm text-neutral-600">
-        Let a friend scan this with their camera or the Scan button in ZooMap. Opening your code again makes a new one, and
-        this one stops working.
+        Let a friend scan this with their camera or with Scan in ZooMap. Opening your code again makes a new one, and this
+        one stops working.
       </p>
-    </Overlay>
+    </>
   );
 }
 
@@ -114,8 +157,8 @@ export function addPathFromScan(raw: string): string | null {
   return /^[A-Za-z0-9-]{20,29}$/.test(text) ? `/add/${text.replaceAll("-", "")}` : null;
 }
 
-/** "Scan": the camera with the built-in barcode reader where it exists, otherwise how to use the camera app. */
-export function ScanOverlay({ onClose }: { onClose: () => void }) {
+/** The camera with the built-in barcode reader where it exists, otherwise how to use the camera app. */
+function Scanner() {
   const video = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<string | null>(canScanInApp() ? "Starting the camera…" : null);
 
@@ -159,7 +202,7 @@ export function ScanOverlay({ onClose }: { onClose: () => void }) {
   }, []);
 
   return (
-    <Overlay title="Scan a friend code" onClose={onClose}>
+    <>
       {canScanInApp() ? (
         <>
           <video ref={video} muted playsInline className="aspect-square w-full max-w-sm rounded-2xl bg-neutral-900 object-cover" />
@@ -174,6 +217,6 @@ export function ScanOverlay({ onClose }: { onClose: () => void }) {
           </p>
         </div>
       )}
-    </Overlay>
+    </>
   );
 }

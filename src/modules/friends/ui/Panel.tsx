@@ -6,12 +6,12 @@ import { apiFetch } from "@/shared/http/client";
 import { errorText, refreshFriends, setMyProfile, useFriendsFeed } from "./feed";
 import { ChatOverlay } from "./Chat";
 import { closeChat, openChat, useConversations } from "./messages-feed";
-import { MyCodeOverlay, Overlay, ScanOverlay } from "./overlays";
-import { ChatIcon, CheckIcon, HeartIcon, MailIcon, PencilIcon, QrIcon, ScanIcon, SendIcon, UserMinusIcon, UserPlusIcon } from "./icons";
+import { FriendCodeOverlay, Overlay } from "./overlays";
+import { ChatIcon, CheckIcon, HeartIcon, MailIcon, PencilIcon, QrAddIcon, SendIcon, UserMinusIcon, UserPlusIcon } from "./icons";
 import { Avatar, ContactButtons, InviteCard } from "./parts";
 
 /**
- * Chat: you (with your code, Scan and Edit as symbols), pending invites, and every friend in one
+ * Chat: you (with your friend code and Edit as symbols), pending invites, and every friend in one
  * list, most recent conversation first. Tapping a friend opens your chat with them; tapping their
  * avatar (or their name in the chat) opens their profile. There is no search: the only way to add
  * someone is their code.
@@ -19,7 +19,7 @@ import { Avatar, ContactButtons, InviteCard } from "./parts";
 export function FriendsPanel() {
   const { me, friends, invites, current, error } = useFriendsFeed();
   const { conversations, openWith } = useConversations();
-  const [overlay, setOverlay] = useState<"code" | "scan" | null>(null);
+  const [overlay, setOverlay] = useState<"code" | null>(null);
   const [editing, setEditing] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const profile = profileId ? (friends?.find((f) => f.userId === profileId) ?? null) : null;
@@ -45,11 +45,8 @@ export function FriendsPanel() {
             <p className="truncate text-base font-bold">{me?.name ?? " "}</p>
             <p className="truncate text-yale">{me?.pronouns ?? (me ? "Add pronouns" : "")}</p>
           </div>
-          <RoundButton label="My code" onClick={() => setOverlay("code")} primary>
-            <QrIcon className="h-5 w-5" />
-          </RoundButton>
-          <RoundButton label="Scan" onClick={() => setOverlay("scan")}>
-            <ScanIcon className="h-5 w-5" />
+          <RoundButton label="Friend code: show yours or scan a friend's" onClick={() => setOverlay("code")} primary>
+            <QrAddIcon className="h-5 w-5" />
           </RoundButton>
           {me ? (
             <RoundButton label="Edit" onClick={() => setEditing(true)}>
@@ -75,7 +72,6 @@ export function FriendsPanel() {
         conversations={conversations}
         current={current?.participation ? current.activity : null}
         onAdd={() => setOverlay("code")}
-        onScan={() => setOverlay("scan")}
         onProfile={setProfileId}
       />
 
@@ -98,8 +94,7 @@ export function FriendsPanel() {
         />
       ) : null}
 
-      {overlay === "code" ? <MyCodeOverlay me={me} onClose={() => setOverlay(null)} /> : null}
-      {overlay === "scan" ? <ScanOverlay onClose={() => setOverlay(null)} /> : null}
+      {overlay ? <FriendCodeOverlay me={me} onClose={() => setOverlay(null)} /> : null}
     </div>
   );
 }
@@ -188,14 +183,12 @@ function FriendsList({
   conversations,
   current,
   onAdd,
-  onScan,
   onProfile,
 }: {
   friends: Friend[] | null;
   conversations: Conversation[] | null;
   current: { id: string; title: string } | null;
   onAdd: () => void;
-  onScan: () => void;
   onProfile: (userId: string) => void;
 }) {
   const [selecting, setSelecting] = useState(false);
@@ -280,14 +273,9 @@ function FriendsList({
           </span>
           <p className="font-semibold">Add your first friend</p>
           <p className="text-yale">Swap codes with a friend, then chat with them here.</p>
-          <div className="flex gap-2">
-            <button type="button" onClick={onAdd} className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 font-semibold text-ivory">
-              <QrIcon className="h-4 w-4" /> My code
-            </button>
-            <button type="button" onClick={onScan} className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 font-semibold">
-              <ScanIcon className="h-4 w-4" /> Scan
-            </button>
-          </div>
+          <button type="button" onClick={onAdd} className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 font-semibold text-ivory">
+            <QrAddIcon className="h-4 w-4" /> Friend Code
+          </button>
         </div>
       ) : null}
 
