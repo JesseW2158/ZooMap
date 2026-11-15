@@ -503,7 +503,7 @@ function AccountButton({ user }: { user: ShellUser }) {
         aria-label="Account"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="zm-press flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-yale to-ink text-sm font-bold text-ivory shadow-md ring-2 ring-ivory/80 hover:ring-jasmine"
+        className="zm-press relative flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-yale to-ink text-sm font-bold text-ivory shadow-md ring-2 ring-ivory/80 before:absolute before:-inset-0.5 before:content-[''] hover:ring-jasmine"
       >
         {initial}
       </button>
@@ -524,7 +524,7 @@ function AccountButton({ user }: { user: ShellUser }) {
               setOpen(false);
               setSettings(true);
             }}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-linen px-3 py-2.5 font-semibold text-ink hover:bg-ash/40"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-linen px-3 py-2.5 font-semibold text-ink hover:bg-ash/40 max-md:min-h-11"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
@@ -535,7 +535,7 @@ function AccountButton({ user }: { user: ShellUser }) {
           <form action={signOutAction} className="mt-2">
             <button
               type="submit"
-              className="w-full rounded-full bg-ink px-3 py-2.5 font-semibold text-ivory hover:bg-yale"
+              className="w-full rounded-full bg-ink px-3 py-2.5 font-semibold text-ivory hover:bg-yale max-md:min-h-11"
             >
               Sign out
             </button>

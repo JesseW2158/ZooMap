@@ -237,14 +237,14 @@ export function RewardsPanel() {
             </p>
           </div>
           <div className="mt-3 flex gap-2">
-            <button type="button" onClick={() => setConfirm(null)} disabled={busy} className="flex-1 rounded-full bg-ivory/10 py-2.5 font-semibold">
+            <button type="button" onClick={() => setConfirm(null)} disabled={busy} className="flex-1 rounded-full bg-ivory/10 py-2.5 font-semibold max-md:min-h-11">
               Cancel
             </button>
             <button
               type="button"
               onClick={() => void doRedeem()}
               disabled={busy}
-              className="flex-1 rounded-full bg-sand py-2.5 font-bold text-ink disabled:opacity-60"
+              className="flex-1 rounded-full bg-sand py-2.5 font-bold text-ink disabled:opacity-60 max-md:min-h-11"
             >
               {busy ? "Redeeming…" : "Redeem"}
             </button>
@@ -279,7 +279,7 @@ export function RewardsPanel() {
           {chain.data.explorerUrl ? (
             <>
               {" · "}
-              <a href={chain.data.explorerUrl} target="_blank" rel="noreferrer" className="underline">
+              <a href={chain.data.explorerUrl} target="_blank" rel="noreferrer" className="underline max-md:inline-flex max-md:min-h-11 max-md:items-center">
                 receipt
               </a>
             </>
