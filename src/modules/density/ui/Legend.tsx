@@ -27,7 +27,11 @@ export function Legend({ snapshot, overlay = false }: { snapshot: DensityRespons
   if (!overlay) return key ? <div className="rounded-lg bg-neutral-50 px-2 py-1.5">{key}</div> : null;
 
   return (
-    <div className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] left-3 z-[5] flex flex-col items-start gap-1.5">
+    // Absolute in the map area (which already ends above the tab bar and the home indicator), so
+    // no inset is needed. It sits one row above the attribution row (the credit's clearance from
+    // the map edge, --map-attrib-clear in globals.css, plus its 10px margin and 24px height, plus
+    // a gap) so a long mode label and the expanded credit can never share a row.
+    <div className="pointer-events-none absolute bottom-[calc(var(--map-attrib-clear,1.5rem)+2.75rem)] left-3 z-[5] flex flex-col items-start gap-1.5">
       {key ? <div className="rounded-lg bg-white/90 px-2 py-1.5 shadow-sm">{key}</div> : null}
       {open ? (
         <div className="pointer-events-auto w-56 rounded-xl bg-white/95 p-2 shadow-lg">
