@@ -2,34 +2,38 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { Marker, Popup } from "maplibre-gl";
+import type { Popup } from "maplibre-gl";
 import type { PlannedEvent } from "@/shared/contracts";
 import { isDevPickingNow } from "@/shared/platform";
-import { useMap } from "@/shared/ui";
+import { createPinLayer, pinTopM, screenHeightPx, useMap, type PinLayer, type PinSpec } from "@/shared/ui";
 import { usePlannedFeed, usePlannedPoller } from "./feed";
 import { EventCard } from "./Panel";
 
 /**
- * Planned events on the map: a labelled pin for each event in the next week (HTML markers,
- * since the map has no text glyphs). Tapping one opens the same card as the Events tab, with
- * "I'm going" and a route. Also owns the events poller, since the layer is always mounted.
+ * Planned events on the map: a 3D pin standing on the place for each event in the next week
+ * (the map has no text glyphs, so colour and size carry the meaning: maroon if you are going,
+ * amber and taller for a big event, slate otherwise). Tapping one opens the same card as the
+ * Events tab, with "I'm going" and a route. Also owns the events poller, since the layer is
+ * always mounted.
  */
 
 const WEEK_MS = 7 * 24 * 3_600_000;
 type MapLibre = typeof import("maplibre-gl");
 
-/** "Now", "Today 7pm", "Fri 7pm". */
-function shortWhen(e: PlannedEvent, now: number): string {
-  const start = new Date(e.startsAt);
-  if (start.getTime() <= now) return "Now";
-  const hour = start.toLocaleTimeString([], { hour: "numeric", minute: start.getMinutes() ? "2-digit" : undefined }).replace(" ", "").toLowerCase();
-  const today = new Date(now).toDateString() === start.toDateString();
-  return `${today ? "Today" : start.toLocaleDateString([], { weekday: "short" })} ${hour}`;
-}
+const PIN_GOING = "#881c1c";
+const PIN_BIG = "#f59e0b";
+const PIN_PLAIN = "#475569";
+/** Planned pins stand a little south of a place's centre, so an activity pin there stays visible. */
+const SOUTH_M = -14;
 
-function pinClass(e: PlannedEvent): string {
-  const tone = e.going ? "border-[#881c1c] bg-[#881c1c] text-white" : e.big ? "border-amber-400 bg-amber-50 text-amber-950" : "border-neutral-300 bg-white text-neutral-800";
-  return `flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-full border-2 px-2 py-0.5 text-[11px] font-semibold shadow-md ${tone}`;
+function pinFor(e: PlannedEvent): PinSpec {
+  return {
+    id: e.id,
+    at: e.placeCenter!,
+    color: e.going ? PIN_GOING : e.big ? PIN_BIG : PIN_PLAIN,
+    scale: e.big ? 1.25 : 1,
+    dyM: SOUTH_M,
+  };
 }
 
 export function PlannedEventsLayer() {
@@ -40,7 +44,7 @@ export function PlannedEventsLayer() {
   const [selected, setSelected] = useState<string | null>(null);
   // the pop-up's content is a React portal into this element (created only in the browser)
   const [container] = useState(() => (typeof document === "undefined" ? null : document.createElement("div")));
-  const markers = useRef(new Map<string, { marker: Marker; el: HTMLButtonElement }>());
+  const pins = useRef<PinLayer | null>(null);
   const popup = useRef<Popup | null>(null);
 
   useEffect(() => {
@@ -53,64 +57,50 @@ export function PlannedEventsLayer() {
     };
   }, []);
 
-  // keep one marker per event in the next week
+  // the 3D pin layer lives as long as the map
   useEffect(() => {
-    if (!map || !lib) return;
-    const now = Date.now();
-    const shown = (events ?? []).filter((e) => e.placeCenter && new Date(e.startsAt).getTime() <= now + WEEK_MS);
-    const keep = new Set(shown.map((e) => e.id));
-    for (const [id, { marker }] of markers.current) {
-      if (!keep.has(id)) {
-        marker.remove();
-        markers.current.delete(id);
-      }
-    }
-    for (const e of shown) {
-      let entry = markers.current.get(e.id);
-      if (!entry) {
-        const el = document.createElement("button");
-        el.type = "button";
-        el.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          if (!isDevPickingNow()) setSelected(el.dataset.id ?? null);
-        });
-        const marker = new lib.Marker({ element: el, anchor: "bottom" }).setLngLat([e.placeCenter!.lng, e.placeCenter!.lat]).addTo(map);
-        entry = { marker, el };
-        markers.current.set(e.id, entry);
-      }
-      entry.el.dataset.id = e.id;
-      entry.el.className = pinClass(e);
-      entry.el.textContent = `${e.big ? "🎉" : "📅"} ${shortWhen(e, now)}`;
-      entry.el.title = `${e.title} · ${e.placeName ?? ""}`;
-      entry.el.setAttribute("aria-label", `Event: ${e.title}, ${shortWhen(e, now)}`);
-    }
-  }, [map, lib, events]);
-
-  // remove every marker when the map goes away
-  useEffect(() => {
-    const current = markers.current;
+    if (!map) return;
+    const layer = createPinLayer(map, "planned", (props) => {
+      if (!isDevPickingNow() && typeof props.id === "string") setSelected(props.id);
+    });
+    pins.current = layer;
     return () => {
-      for (const { marker } of current.values()) marker.remove();
-      current.clear();
+      layer.remove();
+      pins.current = null;
     };
   }, [map]);
 
+  // one pin per event in the next week
+  useEffect(() => {
+    const now = Date.now();
+    const shown = (events ?? []).filter((e) => e.placeCenter && new Date(e.startsAt).getTime() <= now + WEEK_MS);
+    pins.current?.setPins(shown.map(pinFor));
+  }, [map, events]);
+
   const event = events?.find((e) => e.id === selected) ?? null;
   const center = event?.placeCenter;
+  const selectedScale = event?.big ? 1.25 : 1;
 
   // the pop-up follows the selected event
   useEffect(() => {
     if (!map || !lib || !container || !center) return;
-    const p = new lib.Popup({ closeButton: true, closeOnClick: true, maxWidth: "300px", offset: 30, className: "planned-popup" })
-      .setLngLat([center.lng, center.lat])
+    // the pop-up sits on the pin's head, which is a height in metres, so its pixel offset follows zoom and pitch
+    const headPx = () => screenHeightPx(map, pinTopM(selectedScale) + 4);
+    const p = new lib.Popup({ closeButton: true, closeOnClick: true, maxWidth: "300px", anchor: "bottom", offset: [0, -headPx()], className: "planned-popup" })
+      .setLngLat([center.lng, center.lat + SOUTH_M / 111_320])
       .setDOMContent(container)
       .addTo(map);
+    const follow = () => p.setOffset([0, -headPx()]);
+    map.on("zoom", follow);
+    map.on("pitch", follow);
     const onClose = () => setSelected(null);
     p.on("close", onClose);
     popup.current = p;
     return () => {
       // switching to another event removes this pop-up; that must not clear the new selection
       p.off("close", onClose);
+      map.off("zoom", follow);
+      map.off("pitch", follow);
       popup.current = null;
       p.remove();
     };

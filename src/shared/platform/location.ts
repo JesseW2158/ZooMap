@@ -13,6 +13,8 @@ import { createStore, useStore } from "@/shared/ui/store";
 
 export interface UserPosition extends LatLng {
   accuracyM?: number;
+  /** Direction of travel in degrees clockwise from north, when the device reports one. */
+  heading?: number;
   /** Epoch milliseconds when the fix was taken. */
   at: number;
 }
@@ -64,7 +66,13 @@ function startBrowserWatch() {
   watchId = navigator.geolocation.watchPosition(
     (p) => {
       store.set({
-        browser: { lat: p.coords.latitude, lng: p.coords.longitude, accuracyM: p.coords.accuracy, at: p.timestamp },
+        browser: {
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+          accuracyM: p.coords.accuracy,
+          ...(p.coords.heading !== null && Number.isFinite(p.coords.heading) ? { heading: p.coords.heading } : {}),
+          at: p.timestamp,
+        },
         status: "active",
       });
     },

@@ -13,6 +13,7 @@ import {
 import type { LayerSpecification, Map as MapLibreMap, StyleSpecification } from "maplibre-gl";
 import { isDevPickingNow, setDevLocation, useUserLocation } from "@/shared/platform/location";
 import { useMapStore } from "./map-store";
+import { SelfMarker } from "./SelfMarker";
 
 export const CAMPUS_CENTER = { lat: 42.3868, lng: -72.5301 } as const;
 
@@ -65,9 +66,6 @@ export function removeLayersAndSources(map: MapLibreMap, layerIds: string[], sou
   for (const id of layerIds) if (map.getLayer(id)) map.removeLayer(id);
   for (const id of sourceIds) if (map.getSource(id)) map.removeSource(id);
 }
-
-const USER_SOURCE = "user-location";
-const USER_LAYER = "user-location-dot";
 
 export function MapProvider({ children }: { children?: ReactNode }) {
   const container = useRef<HTMLDivElement>(null);
@@ -138,10 +136,10 @@ export function MapProvider({ children }: { children?: ReactNode }) {
   );
 }
 
-/** Camera requests, the user's location dot and the dev location picker. */
+/** Camera requests, the user's own marker (SelfMarker) and the dev location picker. */
 function MapBehaviours({ map }: { map: MapLibreMap }) {
   const { flyRequest } = useMapStore();
-  const { position, isDevPicking } = useUserLocation();
+  const { isDevPicking } = useUserLocation();
 
   // fly requests from panels
   useEffect(() => {
@@ -154,35 +152,6 @@ function MapBehaviours({ map }: { map: MapLibreMap }) {
       essential: true,
     });
   }, [map, flyRequest]);
-
-  // the user's location dot
-  useEffect(() => {
-    map.addSource(USER_SOURCE, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-    map.addLayer({
-      id: USER_LAYER,
-      type: "circle",
-      source: USER_SOURCE,
-      paint: {
-        "circle-radius": 8,
-        "circle-color": "#2563eb",
-        "circle-stroke-width": 3,
-        "circle-stroke-color": "#ffffff",
-        "circle-pitch-alignment": "map",
-      },
-    });
-    return () => removeLayersAndSources(map, [USER_LAYER], [USER_SOURCE]);
-  }, [map]);
-
-  useEffect(() => {
-    const source = map.getSource(USER_SOURCE);
-    if (!source || !("setData" in source)) return;
-    (source as { setData(data: GeoJSON.FeatureCollection): void }).setData({
-      type: "FeatureCollection",
-      features: position
-        ? [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [position.lng, position.lat] } }]
-        : [],
-    });
-  }, [map, position]);
 
   // dev location picker: the next click sets the user's location
   useEffect(() => {
@@ -198,5 +167,5 @@ function MapBehaviours({ map }: { map: MapLibreMap }) {
     };
   }, [map, isDevPicking]);
 
-  return null;
+  return <SelfMarker />;
 }

@@ -10,3 +10,5 @@ export { StubPanel } from "./StubPanel";
 export type { AppRegistry, PanelEntry, RegistryEntry } from "./registry-types";
 export { MapProvider, useMap, useMapEffect, addLayerToSlot, removeLayersAndSources, SLOTS, CAMPUS_CENTER } from "./MapProvider";
 export type { Slot } from "./MapProvider";
+export { createPinLayer, pinFeatures, pinTopM, screenHeightPx, PIN_HEIGHT_M } from "./pins3d";
+export type { PinLayer, PinSpec } from "./pins3d";
