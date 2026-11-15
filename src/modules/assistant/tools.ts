@@ -1,4 +1,5 @@
-import type { Activity, ActivityCategory, ChatCard, DensityResponse, LatLng, Place, RecommendBody, RecommendPrefs } from "@/shared/contracts";
+import type { Activity, ActivityCategory, ChatCard, DensityResponse, LatLng, Place, PlannedEvent, RecommendBody, RecommendPrefs } from "@/shared/contracts";
+import { clampRange, formatCampus } from "./time";
 
 /**
  * The assistant's tools. Each one returns plain data for Gemini (no user ids, emails or host
@@ -23,6 +24,8 @@ export interface AssistantDeps {
   searchPlaces: (q: string) => Promise<Place[]>;
   getDensity: () => Promise<DensityResponse>;
   pickStudySpots: (input: RecommendBody) => Promise<{ pick: { placeId: string; reason: string }; spots: StudySpotFacts[] }>;
+  /** Planned events that have not ended and start by `to`, soonest first. */
+  listPlannedEvents: (to: Date) => Promise<PlannedEvent[]>;
 }
 
 export const LEVEL_WORDS = ["empty", "quiet", "moderately busy", "busy", "packed"] as const;
@@ -54,7 +57,7 @@ const CATEGORY_WORDS: Record<ActivityCategory, string[]> = {
 };
 
 const STOPWORDS = new Set(
-  "a an and any are can could do does for i if im i'm in is it me my near of on or play some something the there to up wanna want what where which who with would you activity activities going happening now right today campus".split(" "),
+  "a an and any are can could do does for i if im i'm in is it me my near of on or play some something the there to up wanna want what where which who with would you activity activities going happening now right today campus this weekend tonight tomorrow week next event events fun things thing umass at during coming upcoming later friday saturday sunday".split(" "),
 );
 
 export const tokens = (s: string) =>
@@ -83,13 +86,20 @@ export function categoryFor(query: string): ActivityCategory | undefined {
   return undefined;
 }
 
+interface Matchable {
+  title: string;
+  description?: string;
+  category: ActivityCategory;
+}
+
 /**
- * Activities matching the query words (with synonyms) in the title or description; when no
- * word matches, those in the category. Best match first, then the most people.
+ * Items matching the query words (with synonyms) in the title or description; when no word
+ * matches, those in the category; everything when the query has no real words. Best match
+ * first, then by `rank`.
  */
-export function matchActivities(activities: Activity[], query: string, category?: ActivityCategory): Activity[] {
+export function matchItems<T extends Matchable>(items: T[], query: string, category: ActivityCategory | undefined, rank: (a: T, b: T) => number): T[] {
   const words = expand(tokens(query).filter((w) => !STOPWORDS.has(w)));
-  const scored = activities.map((a) => {
+  const scored = items.map((a) => {
     const title = new Set(tokens(a.title));
     const desc = new Set(tokens(a.description ?? ""));
     let s = 0;
@@ -101,7 +111,12 @@ export function matchActivities(activities: Activity[], query: string, category?
   });
   const byWord = scored.filter((x) => x.s > 0);
   const pool = byWord.length ? byWord : category ? scored.filter((x) => x.a.category === category) : words.size ? [] : scored;
-  return pool.sort((x, y) => y.s - x.s || y.a.participantCount - x.a.participantCount).map((x) => x.a);
+  return pool.sort((x, y) => y.s - x.s || rank(x.a, y.a)).map((x) => x.a);
+}
+
+/** Activities happening now that match; the busiest first among equal matches. */
+export function matchActivities(activities: Activity[], query: string, category?: ActivityCategory): Activity[] {
+  return matchItems(activities, query, category, (a, b) => b.participantCount - a.participantCount);
 }
 
 const minutesBetween = (a: Date, b: Date) => Math.round((b.getTime() - a.getTime()) / 60_000);
@@ -112,7 +127,7 @@ export class CardCollector {
   private readonly cards = new Map<string, ChatCard>();
 
   add(card: ChatCard) {
-    const key = card.kind === "activity" ? `a:${card.activity.id}` : `p:${card.placeId}`;
+    const key = card.kind === "activity" ? `a:${card.activity.id}` : card.kind === "event" ? `e:${card.event.id}` : `p:${card.placeId}`;
     if (!this.cards.has(key)) this.cards.set(key, card);
   }
 
@@ -120,7 +135,8 @@ export class CardCollector {
   pick(reply: string): ChatCard[] {
     const all = [...this.cards.values()];
     const text = reply.toLowerCase();
-    const named = all.filter((c) => text.includes((c.kind === "activity" ? c.activity.title : c.name).toLowerCase()));
+    const nameOf = (c: ChatCard) => (c.kind === "activity" ? c.activity.title : c.kind === "event" ? c.event.title : c.name);
+    const named = all.filter((c) => text.includes(nameOf(c).toLowerCase()));
     return (named.length ? named : all.slice(0, 3)).slice(0, 4);
   }
 }
@@ -148,6 +164,34 @@ export async function searchActivitiesTool(ctx: ToolContext, args: { query?: str
       spotsLeft: a.capacity !== undefined ? Math.max(0, a.capacity - a.participantCount) : "no limit",
       startedMinutesAgo: Math.max(0, minutesBetween(new Date(a.startedAt), now)),
       endsInMinutes: a.endsAt ? minutesBetween(now, new Date(a.endsAt)) : undefined,
+    })),
+  };
+}
+
+/** Planned events overlapping the range Gemini asked for (clamped), matching the query; soonest first. */
+export async function searchEventsTool(ctx: ToolContext, args: { query?: string; category?: ActivityCategory; from?: unknown; to?: unknown }) {
+  const range = clampRange(ctx.deps.now(), args.from, args.to);
+  const query = args.query ?? "";
+  const category = args.category ?? categoryFor(query);
+  const inRange = (await ctx.deps.listPlannedEvents(range.to)).filter(
+    (e) => Date.parse(e.startsAt) < range.to.getTime() && Date.parse(e.endsAt) > range.from.getTime(),
+  );
+  const found = matchItems(inRange, query, category, (a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)).slice(0, 6);
+  for (const event of found) ctx.cards.add({ kind: "event", event });
+  return {
+    searched: range.label,
+    matched: found.length,
+    events: found.map((e) => ({
+      title: e.title,
+      description: clip(e.description, 200),
+      category: e.category,
+      place: e.placeName ?? "a campus building",
+      starts: formatCampus(new Date(e.startsAt)),
+      ends: formatCampus(new Date(e.endsAt)),
+      going: e.goingCount,
+      spotsLeft: e.capacity !== undefined ? Math.max(0, e.capacity - e.goingCount) : "no limit",
+      studentIsGoing: e.going,
+      studentIsHosting: e.hosting,
     })),
   };
 }
