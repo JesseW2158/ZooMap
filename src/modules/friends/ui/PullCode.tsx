@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { FRIEND_CODE_HELP, canScanInApp, useFriendCode, useQrScanner } from "./overlays";
-import { ChevronDownIcon, ChevronUpIcon, CloseIcon, QrIcon, ScanIcon } from "./icons";
+import { ChevronDownIcon, CloseIcon, QrIcon, ScanIcon } from "./icons";
 
 /** Phones: below the shell's 768 px desktop breakpoint. */
 const PHONE_QUERY = "(max-width: 767px)";
@@ -21,11 +21,14 @@ const PULL_DAMPING = 0.5;
 /** Pull distance (after damping) that opens the code on release, and the most it can stretch. */
 const PULL_THRESHOLD = 80;
 const PULL_MAX = 200;
-/** A swipe on the code or scanner screens that counts on release (px). */
+/** A swipe down on the code screen that goes back to Friends on release (px). */
 const SWIPE_THRESHOLD = 80;
 /** Length of the open and close slides. */
 const SLIDE_MS = 320;
 const EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+/** A transparent 1x1 GIF: without a poster, Android's WebView shows a grey placeholder picture
+ *  in a video until its first frame. */
+const BLANK_POSTER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 /** Extra navy (px) above the card on the Friends page, room for the pull cue... */
 const CUE_ROOM = 44;
 /** ...which is this tall (icon disc and arrow), sitting this far above the card. */
@@ -41,38 +44,31 @@ export function scrollParent(el: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
-/**
- * closed: the Friends page. opening/closing: sliding between it and the code. open: your code
- * fills the screen. scan: the scanner has slid up over the code.
- */
-type Mode = "closed" | "opening" | "open" | "scan" | "closing";
+/** closed: the Friends page. opening/closing: sliding between it and the code. open: your code fills the screen. */
+type Mode = "closed" | "opening" | "open" | "closing";
 
 export interface PullCodeState {
   mode: Mode;
   /** closed: how far the page is pulled down (px). */
   pull: number;
-  /** open/scan: the finger's travel since it touched, up negative (px). */
+  /** open: how far the finger has swiped down since it touched (px). */
   drag: number;
   /** A finger is moving things, so they follow it without easing. */
   dragging: boolean;
-  /** Closing from the scanner: it stays where it was let go while Friends slides back over it. */
-  scanExit: number | null;
   open: () => void;
   close: () => void;
 }
 
 /**
- * The pull-down friend code on the page that `scroller` scrolls, and the scanner beyond it.
- * Friends: drag down at the top of the page; letting go past the threshold opens your code.
- * Code: swipe up for the scanner, swipe down for Friends. Scanner: swipe down for Friends.
- * Nothing scrolls under the code or scanner. Touch only.
+ * The pull-down friend code on the page that `scroller` scrolls. Friends: drag down at the top
+ * of the page; letting go past the threshold opens your code. Code: swipe down for Friends, and
+ * nothing scrolls under it. Touch only.
  */
 export function usePullCode(scroller: HTMLElement | null, enabled: boolean): PullCodeState {
   const [mode, setMode] = useState<Mode>("closed");
   const [pull, setPull] = useState(0);
   const [drag, setDrag] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [scanExit, setScanExit] = useState<number | null>(null);
   const modeRef = useRef(mode);
   useEffect(() => {
     modeRef.current = mode;
@@ -94,10 +90,7 @@ export function usePullCode(scroller: HTMLElement | null, enabled: boolean): Pul
   // unmount once the close slide has finished
   useEffect(() => {
     if (mode !== "closing") return;
-    const timer = setTimeout(() => {
-      setMode("closed");
-      setScanExit(null);
-    }, SLIDE_MS + 40);
+    const timer = setTimeout(() => setMode("closed"), SLIDE_MS + 40);
     return () => clearTimeout(timer);
   }, [mode]);
 
@@ -115,7 +108,7 @@ export function usePullCode(scroller: HTMLElement | null, enabled: boolean): Pul
         const inField = e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]");
         startY = scroller.scrollTop <= 0 && !inField ? e.touches[0].clientY : null;
       } else {
-        startY = m === "open" || m === "scan" ? e.touches[0].clientY : null;
+        startY = m === "open" ? e.touches[0].clientY : null;
       }
     };
     const move = (e: TouchEvent) => {
@@ -131,8 +124,8 @@ export function usePullCode(scroller: HTMLElement | null, enabled: boolean): Pul
         current = Math.min(PULL_MAX, Math.max(0, dy) * PULL_DAMPING);
         setPull(current);
       } else {
-        if (e.cancelable) e.preventDefault(); // nothing scrolls under the code or scanner
-        current = m === "scan" ? Math.max(0, dy) : dy; // the scanner only goes down
+        if (e.cancelable) e.preventDefault(); // nothing scrolls under the code
+        current = Math.max(0, dy); // only a swipe down means anything here
         setDrag(current);
       }
       setDragging(true);
@@ -143,11 +136,7 @@ export function usePullCode(scroller: HTMLElement | null, enabled: boolean): Pul
         if (m === "closed") {
           if (current >= PULL_THRESHOLD) setMode("open");
           else if (current > 0) setMode("closing"); // short pull: ease back up
-        } else if (m === "open") {
-          if (current <= -SWIPE_THRESHOLD) setMode("scan");
-          else if (current >= SWIPE_THRESHOLD) setMode("closing");
-        } else if (m === "scan" && current >= SWIPE_THRESHOLD) {
-          setScanExit(current);
+        } else if (m === "open" && current >= SWIPE_THRESHOLD) {
           setMode("closing");
         }
       }
@@ -177,15 +166,11 @@ export function usePullCode(scroller: HTMLElement | null, enabled: boolean): Pul
     pull,
     drag,
     dragging,
-    scanExit,
     open: () => {
       scroller?.scrollTo({ top: 0 });
       setMode((m) => (m === "closed" || m === "closing" ? "opening" : m));
     },
-    close: () => {
-      if (modeRef.current === "scan") setScanExit(0);
-      setMode("closing");
-    },
+    close: () => setMode("closing"),
   };
 }
 
@@ -226,40 +211,29 @@ function clearMotion(el: HTMLElement) {
 /**
  * The pull-down code on the Friends page. The navy header stays put while its row (title,
  * bell, account) fades upward; the page body (white card and the light background) falls,
- * uncovering your code on the bubble backdrop behind it. Open, the body has fallen off screen,
- * and the scanner waits below the screen to be swiped up.
+ * uncovering your code on the bubble backdrop behind it. Open, the body has fallen off screen.
  *
  * The shell's page tags its header row `data-page-hero` and its body `data-page-body`; this
  * moves them with inline styles and clears them when closed. Everything else is portalled into
- * the page's scroll container, under the moved parts, bottom to top: backdrop, code, scanner,
- * the falling light background.
+ * the page's scroll container, under the moved parts, bottom to top: backdrop, code, the
+ * falling light background.
  */
 export function PullDownLayer({ scroller, state }: { scroller: HTMLElement | null; state: PullCodeState }) {
-  const { mode, pull, drag, dragging, scanExit, close } = state;
+  const { mode, pull, drag, dragging, close } = state;
   const { screen, header, bodyTop } = usePageMetrics(scroller);
   const active = !(mode === "closed" && pull <= 0);
-  const shown = mode === "open" || mode === "scan";
+  const shown = mode === "open";
 
   /** How far the page body has fallen (px). */
   const fall = mode === "closed" ? pull : shown ? screen : 0;
   /** How far the header row has faded out, 0 to 1. */
   const fade = mode === "closed" ? Math.min(1, pull / PULL_THRESHOLD) : shown ? 1 : 0;
-  /** The code screen's title, close button and cue: gone as soon as a swipe starts. */
-  const chrome = mode === "open" ? Math.max(0, 1 - Math.abs(drag) / SWIPE_THRESHOLD) : 0;
+  /** The code screen's title, close button and Scan button: gone as a swipe down starts. */
+  const chrome = mode === "open" ? Math.max(0, 1 - drag / SWIPE_THRESHOLD) : 0;
   /** Swiping down on the code: it sinks a little, saying Friends is coming back. */
-  const sink = mode === "open" ? Math.max(0, drag) * 0.35 : 0;
-  /** Where the scanner's top edge is (px down from the top of the screen). */
-  const scanY =
-    mode === "scan"
-      ? Math.max(0, drag)
-      : mode === "open"
-        ? Math.max(0, screen + Math.min(0, drag))
-        : mode === "closing" && scanExit !== null
-          ? scanExit
-          : screen;
-  const scanMounted = active && (mode !== "closing" || scanExit !== null);
-  /** Going back to Friends: the code and scanner fade while the page slides back over them, so
-   *  the real header is what remains under the returning header row. */
+  const sink = mode === "open" ? drag * 0.35 : 0;
+  /** Going back to Friends: the code fades while the page slides back over it, so the real
+   *  header is what remains under the returning header row. */
   const leaving = mode === "closing";
 
   const transition = (props: string[]) =>
@@ -334,19 +308,6 @@ export function PullDownLayer({ scroller, state }: { scroller: HTMLElement | nul
           >
             <PulledCode open={mode === "open"} chrome={chrome} chromeTransition={transition(["opacity"])} onClose={close} />
           </div>
-          {scanMounted ? (
-            <div
-              className={`absolute inset-x-0 top-0 overflow-hidden text-ivory ${mode === "scan" ? "" : "pointer-events-none"}`}
-              style={{
-                height: screen,
-                transform: `translateY(${scanY}px)`,
-                opacity: leaving ? 0 : 1,
-                transition: transition(["transform", "opacity"]),
-              }}
-            >
-              <ScanScreen height={screen} scanning={mode === "scan"} onClose={close} />
-            </div>
-          ) : null}
           {/* the light background, falling with the body: the body itself is see-through
               between and below its cards, and the code must stay hidden behind it */}
           <div
@@ -447,7 +408,8 @@ function ScreenTitle({
 
 /**
  * Your friend code: one screen tall, behind the page body, so the body uncovers it as it falls.
- * The title, close button and swipe-up-to-scan cue appear once it is open. A fresh code each time.
+ * The title, close button and Scan button appear once it is open. Scan turns the QR tile into
+ * the camera, reading a friend's code; the button then turns it back. A fresh code each open.
  */
 function PulledCode({
   open,
@@ -461,88 +423,83 @@ function PulledCode({
   onClose: () => void;
 }) {
   const { svg, error } = useFriendCode();
+  const [camera, setCamera] = useState(false);
+  /** The camera's first frame is showing; until then the tile stays black. */
+  const [live, setLive] = useState(false);
+  const { video, status } = useQrScanner(open && camera);
+  const inApp = canScanInApp();
   const chromeStyle = { opacity: chrome, transition: chromeTransition };
+  const toggle = () => {
+    setLive(false);
+    setCamera((c) => !c);
+  };
   return (
     <section
-      aria-label="My friend code"
-      className="mx-auto flex h-full max-w-2xl flex-col px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))]"
+      aria-label={camera ? "Scan a friend code" : "My friend code"}
+      className="mx-auto flex h-full max-w-2xl flex-col px-4 pb-6 pt-[max(1rem,env(safe-area-inset-top))]"
     >
       <div style={chromeStyle}>
-        <ScreenTitle Icon={QrIcon} label="My friend code" onClose={onClose} focusable={open} />
+        <ScreenTitle
+          Icon={camera ? ScanIcon : QrIcon}
+          label={camera ? "Scan a friend code" : "My friend code"}
+          onClose={onClose}
+          focusable={open}
+        />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5">
-        {error ? <p className="text-red-300">{error}</p> : null}
-        {svg ? (
-          // The SVG comes from the qrcode library, generated here from our own URL. The white
-          // tile keeps the dark-on-light contrast scanners need.
-          <div
-            className="w-full max-w-[16rem] overflow-hidden rounded-3xl bg-white p-2 shadow-xl shadow-black/40 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-        ) : !error ? (
-          <div aria-label="Making your code…" className="aspect-square w-full max-w-[16rem] animate-pulse rounded-3xl bg-ivory/10" />
-        ) : null}
-        <p className="max-w-xs text-center text-sm text-ivory/70">{FRIEND_CODE_HELP}</p>
-      </div>
-
-      {/* swipe up for the scanner: an arrow above the scan symbol */}
-      <div aria-hidden className="flex flex-col items-center gap-1 text-xs font-semibold text-ivory" style={chromeStyle}>
-        <ChevronUpIcon className="-mb-0.5 h-5 w-5 animate-bounce" />
-        <CueDisc>
-          <ScanIcon className="h-[18px] w-[18px]" />
-        </CueDisc>
-        <span className="text-ivory/70">Swipe up to scan</span>
-      </div>
-    </section>
-  );
-}
-
-/**
- * The scanner, slid up over your code: the camera (once fully up) reading a friend's code, on
- * the same bubble backdrop. Swipe down or close to go back to Friends.
- */
-function ScanScreen({ height, scanning, onClose }: { height: number; scanning: boolean; onClose: () => void }) {
-  const { video, status } = useQrScanner(scanning);
-  const inApp = canScanInApp();
-  return (
-    <div className="relative h-full shadow-[0_-12px_32px_rgba(0,0,0,0.35)]">
-      <Bubbles top={0} height={height} />
-      <section
-        aria-label="Scan a friend code"
-        className="relative mx-auto flex h-full max-w-2xl flex-col px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))]"
-      >
-        <ScreenTitle Icon={ScanIcon} label="Scan a friend code" onClose={onClose} focusable={scanning} />
-
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5">
-          {inApp ? (
-            <>
-              <video
-                ref={video}
-                muted
-                playsInline
-                className="aspect-square w-full max-w-[16rem] rounded-3xl bg-black/40 object-cover shadow-xl shadow-black/40 ring-2 ring-ivory/20"
-              />
-              <p className="max-w-xs text-center text-sm text-ivory/70">
-                {status ?? "Point the camera at a friend's ZooMap code."}
-              </p>
-            </>
-          ) : (
-            <div className="max-w-xs space-y-3 text-center">
-              <p className="text-lg font-semibold">Use your camera app</p>
-              <p className="text-sm text-ivory/70">
-                This browser can&apos;t scan inside ZooMap. Open your phone&apos;s camera, point it at your friend&apos;s
-                code and tap the link that appears. It opens ZooMap to add them.
-              </p>
+        {/* the tile: your QR, or the camera */}
+        <div className="aspect-square w-full max-w-[16rem] overflow-hidden rounded-3xl shadow-xl shadow-black/40">
+          {camera ? (
+            <div className="relative h-full w-full bg-black">
+              {inApp ? (
+                <video
+                  ref={video}
+                  muted
+                  playsInline
+                  poster={BLANK_POSTER}
+                  onPlaying={() => setLive(true)}
+                  className={`h-full w-full object-cover transition-opacity duration-200 ${live ? "opacity-100" : "opacity-0"}`}
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-2 p-5 text-center">
+                  <p className="font-semibold">Use your camera app</p>
+                  <p className="text-xs text-ivory/70">
+                    This browser can&apos;t scan inside ZooMap. Point your phone&apos;s camera at your friend&apos;s code and tap
+                    the link that appears.
+                  </p>
+                </div>
+              )}
             </div>
+          ) : svg ? (
+            // The SVG comes from the qrcode library, generated here from our own URL. The white
+            // tile keeps the dark-on-light contrast scanners need.
+            <div
+              className="h-full w-full bg-white p-2 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+          ) : error ? (
+            <div className="flex h-full items-center justify-center bg-ivory/10 p-4 text-center text-red-300">{error}</div>
+          ) : (
+            <div aria-label="Making your code…" className="h-full w-full animate-pulse bg-ivory/10" />
           )}
         </div>
+        <p className="min-h-[3.75rem] max-w-xs text-center text-sm text-ivory/70">
+          {camera ? (inApp ? (status ?? "Point the camera at a friend's ZooMap code.") : null) : FRIEND_CODE_HELP}
+        </p>
+      </div>
 
-        <div aria-hidden className="flex flex-col items-center gap-0.5 text-xs font-semibold text-ivory/70">
-          Swipe down to go back
-          <ChevronDownIcon className="h-5 w-5 animate-bounce text-ivory" />
-        </div>
-      </section>
-    </div>
+      <div className="flex justify-center" style={chromeStyle}>
+        <button
+          type="button"
+          onClick={toggle}
+          tabIndex={open ? 0 : -1}
+          className="zm-press flex items-center gap-2 rounded-full bg-ivory px-6 py-3 text-sm font-semibold text-ink shadow-lg shadow-black/30 transition-colors hover:bg-white"
+        >
+          {camera ? <QrIcon className="h-5 w-5" /> : <ScanIcon className="h-5 w-5" />}
+          {camera ? "My code" : "Scan"}
+        </button>
+      </div>
+    </section>
   );
 }

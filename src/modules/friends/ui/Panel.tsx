@@ -48,10 +48,11 @@ export function FriendsPanel() {
             <p className="truncate text-base font-bold">{me?.name ?? " "}</p>
             <p className="truncate text-yale">{me?.pronouns ?? (me ? "Add pronouns" : "")}</p>
           </div>
-          <RoundButton label="My code" onClick={showCode} primary>
+          {/* phones: no code or scan buttons here; the code pulls down from the top of the page */}
+          <RoundButton label="My code" onClick={showCode} primary desktopOnly>
             <QrIcon className="h-5 w-5" />
           </RoundButton>
-          <RoundButton label="Scan" onClick={() => setOverlay("scan")}>
+          <RoundButton label="Scan" onClick={() => setOverlay("scan")} desktopOnly>
             <ScanIcon className="h-5 w-5" />
           </RoundButton>
           {me ? (
@@ -86,7 +87,20 @@ export function FriendsPanel() {
   );
 }
 
-function RoundButton({ label, onClick, primary = false, children }: { label: string; onClick: () => void; primary?: boolean; children: ReactNode }) {
+function RoundButton({
+  label,
+  onClick,
+  primary = false,
+  desktopOnly = false,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  primary?: boolean;
+  /** Hidden below the 768 px desktop breakpoint (in CSS, so it never flashes on phones). */
+  desktopOnly?: boolean;
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"
@@ -95,7 +109,7 @@ function RoundButton({ label, onClick, primary = false, children }: { label: str
       title={label}
       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
         primary ? "bg-ink text-ivory hover:bg-yale" : "bg-linen text-ink hover:bg-ash/50"
-      }`}
+      } ${desktopOnly ? "max-md:hidden" : ""}`}
     >
       {children}
     </button>
