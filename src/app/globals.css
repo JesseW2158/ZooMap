@@ -129,3 +129,27 @@ html.dark .maplibregl-ctrl-attrib a {
 html.dark .maplibregl-ctrl-attrib-button {
   filter: invert(1);
 }
+
+/* Map popups (e.g. the building name on hover): MapLibre's own CSS makes the box white while the
+   text inherits the page colour, which is light in dark mode. Match the map buttons instead. */
+html.dark .maplibregl-popup-content {
+  background-color: #2f3338;
+  color: #eef0f2;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+}
+html.dark .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+html.dark .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+html.dark .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: #2f3338;
+}
+html.dark .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+html.dark .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+html.dark .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: #2f3338;
+}
+html.dark .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: #2f3338;
+}
+html.dark .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: #2f3338;
+}
