@@ -24,7 +24,7 @@ const PIN_GOING = "#881c1c";
 const PIN_BIG = "#f59e0b";
 const PIN_PLAIN = "#475569";
 /** Planned pins stand a little south of a place's centre, so an activity pin there stays visible. */
-const SOUTH_M = -14;
+const SOUTH_M = -9;
 
 function pinFor(e: PlannedEvent): PinSpec {
   return {

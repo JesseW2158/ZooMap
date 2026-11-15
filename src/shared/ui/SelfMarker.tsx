@@ -89,7 +89,7 @@ export function SelfMarker() {
       { id: PULSE_LAYER, type: "line", source: PULSE_SRC, paint: { "line-color": BLUE, "line-width": 3, "line-opacity": 0.6 } },
       "slot-lines",
     );
-    pins.current = createPinLayer(map, "self");
+    pins.current = createPinLayer(map, "self", undefined, 0);
     return () => {
       pins.current?.remove();
       pins.current = null;

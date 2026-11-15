@@ -15,8 +15,8 @@ describe("3D pins", () => {
 
   it("has a thin tip, a wide head and a rounded top", () => {
     expect(pinRadiusAt(0)).toBeLessThan(1);
-    expect(pinRadiusAt(27.5)).toBeCloseTo(8, 5);
-    expect(pinRadiusAt(35.4)).toBeLessThan(3);
+    expect(pinRadiusAt(19)).toBeCloseTo(5.5, 5);
+    expect(pinRadiusAt(24.4)).toBeLessThan(3);
   });
 
   it("scales every dimension with the pin", () => {

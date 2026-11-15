@@ -14,12 +14,17 @@ import { addLayerToSlot, removeLayersAndSources } from "./MapProvider";
  */
 
 /** Height in metres of a pin at scale 1. */
-export const PIN_HEIGHT_M = 36;
-const HEAD_R = 8;
-const HEAD_CENTER_Z = 27.5;
-const TIP_R = 0.6;
-const SLICE_M = 1.5;
-const SIDES = 10;
+export const PIN_HEIGHT_M = 25;
+const HEAD_R = 5.5;
+const HEAD_CENTER_Z = 19;
+const TIP_R = 0.35;
+const SLICE_M = 0.8;
+const SIDES = 16;
+/** The top of the head is painted white, like the hole of a map pin. */
+const CAP_COLOR = "#ffffff";
+const CAP_FROM = 0.72;
+/** Below this zoom pins would only be specks and clutter the overview, so they are hidden. */
+export const PIN_MIN_ZOOM = 15.5;
 
 export interface PinSpec {
   /** Feature id, echoed back in `onPick`. */
@@ -89,7 +94,7 @@ export function pinFeatures(pins: PinSpec[]): GeoJSON.FeatureCollection<GeoJSON.
       const r = Math.max(pinRadiusAt((z0 + z1) / 2) * s, 0.3);
       features.push({
         type: "Feature",
-        properties: { id: pin.id, color: pin.color, bottom: z0 * s, top: z1 * s, ...pin.props },
+        properties: { id: pin.id, color: z0 >= (HEAD_CENTER_Z + CAP_FROM * HEAD_R) ? CAP_COLOR : pin.color, bottom: z0 * s, top: z1 * s, ...pin.props },
         geometry: disc(base, r),
       });
     }
@@ -119,6 +124,7 @@ export function createPinLayer(
   map: MapLibreMap,
   prefix: string,
   onPick?: (properties: Record<string, unknown>) => void,
+  minZoom = PIN_MIN_ZOOM,
 ): PinLayer {
   const pinSrc = `${prefix}-pins`;
   const shadowSrc = `${prefix}-pin-shadows`;
@@ -129,7 +135,7 @@ export function createPinLayer(
   map.addSource(pinSrc, { type: "geojson", data: EMPTY });
   addLayerToSlot(
     map,
-    { id: shadowLayer, type: "fill", source: shadowSrc, paint: { "fill-color": "#0f172a", "fill-opacity": 0.22 } },
+    { id: shadowLayer, type: "fill", source: shadowSrc, minzoom: minZoom, paint: { "fill-color": "#0f172a", "fill-opacity": 0.22 } },
     "slot-lines",
   );
   addLayerToSlot(
@@ -138,6 +144,7 @@ export function createPinLayer(
       id: pinLayer,
       type: "fill-extrusion",
       source: pinSrc,
+      minzoom: minZoom,
       paint: {
         "fill-extrusion-color": ["get", "color"],
         "fill-extrusion-base": ["get", "bottom"],
