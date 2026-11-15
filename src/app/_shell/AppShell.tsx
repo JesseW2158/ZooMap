@@ -80,7 +80,7 @@ const TABS: Tab[] = [
     label: "Map",
     Icon: MapIcon,
     // shown on the map itself, in the sidebar (desktop) or swipe-up sheet (phone)
-    panelIds: ["density"],
+    panelIds: ["location-status", "density"],
     accent: {
       bg: "bg-jasmine",
       text: "text-jasmine",
