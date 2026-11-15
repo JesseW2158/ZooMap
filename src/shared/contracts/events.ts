@@ -75,6 +75,18 @@ export const EVENT_SCHEMAS = {
     toUserId: Id,
     at: z.date(),
   }),
+  /**
+   * planned -> notifications: a host cancelled a planned event. `goingIds` are the people who
+   * had said they were going (not the host); it stays in-process and is never stored elsewhere.
+   */
+  "planned.cancelled": z.object({
+    eventId: Id,
+    hostId: Id,
+    title: z.string(),
+    startsAt: z.date(),
+    goingIds: z.array(Id),
+    at: z.date(),
+  }),
 } as const;
 
 export type EventType = keyof typeof EVENT_SCHEMAS;

@@ -9,7 +9,10 @@ import type {
   DeviceTokenDoc,
   HandoffCodeDoc,
   LedgerDoc,
+  NotificationDoc,
+  NotificationSettingsDoc,
   ParticipationDoc,
+  PlannedEventDoc,
   PresenceDoc,
   RedemptionDoc,
   ScheduleConnectionDoc,
@@ -35,6 +38,9 @@ export interface CollectionMap {
   friendships: FriendshipDoc;
   activity_invites: ActivityInviteDoc;
   rate_limits: RateLimitDoc;
+  notifications: NotificationDoc;
+  notification_settings: NotificationSettingsDoc;
+  planned_events: PlannedEventDoc;
 }
 
 export type CollectionName = keyof CollectionMap;
@@ -55,6 +61,9 @@ export const COLLECTION_NAMES: CollectionName[] = [
   "friendships",
   "activity_invites",
   "rate_limits",
+  "notifications",
+  "notification_settings",
+  "planned_events",
 ];
 
 export type Collections = { [K in CollectionName]: Collection<CollectionMap[K]> };
@@ -77,6 +86,9 @@ export function collectionsOf(db: Db): Collections {
     friendships: db.collection("friendships"),
     activity_invites: db.collection("activity_invites"),
     rate_limits: db.collection("rate_limits"),
+    notifications: db.collection("notifications"),
+    notification_settings: db.collection("notification_settings"),
+    planned_events: db.collection("planned_events"),
   } as Collections;
 }
 

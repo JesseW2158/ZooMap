@@ -16,6 +16,9 @@ import { DensityPanel } from "@/modules/density/ui/Panel";
 import { FriendsInviteBanner } from "@/modules/friends/ui/InviteBanner";
 import { FriendsPanel } from "@/modules/friends/ui/Panel";
 import { MobileBridge } from "@/modules/mobile/ui/Bridge";
+import { AlertsCenter } from "@/modules/notifications/ui/Alerts";
+import { PlannedEventsLayer } from "@/modules/planned/ui/Layer";
+import { PlannedEventsPanel } from "@/modules/planned/ui/Panel";
 import { RecommendPanel } from "@/modules/recommend/ui/Panel";
 import { RewardsPanel } from "@/modules/rewards/ui/Panel";
 import { RoutingLayer } from "@/modules/routing/ui/Layer";
@@ -28,11 +31,13 @@ export const registry: AppRegistry = {
     { id: "density", Component: DensityLayer },
     { id: "routing", Component: RoutingLayer },
     { id: "activities", Component: ActivitiesLayer },
+    { id: "planned", Component: PlannedEventsLayer },
   ],
   panels: [
     { id: "density", title: "Crowds", Component: DensityPanel },
     { id: "activities", title: "Activities", Component: ActivitiesPanel },
     { id: "schedule", title: "Schedule", Component: SchedulePanel },
+    { id: "events", title: "Events", Component: PlannedEventsPanel },
     { id: "recommend", title: "Study", Component: RecommendPanel },
     { id: "rewards", title: "Points", Component: RewardsPanel },
     { id: "friends", title: "Friends", Component: FriendsPanel },
@@ -41,5 +46,6 @@ export const registry: AppRegistry = {
   headless: [
     { id: "mobile-bridge", Component: MobileBridge },
     { id: "friends-invite-banner", Component: FriendsInviteBanner },
+    { id: "notifications", Component: AlertsCenter },
   ],
 };
