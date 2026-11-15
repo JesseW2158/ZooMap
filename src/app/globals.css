@@ -20,6 +20,85 @@
   --color-sand: #cec288;     /* Points */
   --color-mint: #9fd3b4;     /* Ask; success fills (points earned) */
   --color-rose: #f2a7c6;     /* Friends */
+
+  /*
+   * Motion. Short, soft entrances so the app feels alive without slowing anyone down. Use as
+   * Tailwind classes: animate-rise, animate-pop, animate-fade, animate-drift. Entrances fill
+   * `backwards` only, so nothing keeps a transform (and a stacking context) once it has played.
+   */
+  --animate-rise: zm-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  --animate-pop: zm-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  --animate-fade: zm-fade 300ms ease-out backwards;
+  --animate-drift: zm-drift 14s ease-in-out infinite alternate;
+  --animate-glow: zm-glow 2.4s ease-in-out infinite;
+
+  @keyframes zm-rise {
+    from { opacity: 0; transform: translateY(14px); }
+  }
+  @keyframes zm-pop {
+    from { opacity: 0; transform: scale(0.85); }
+  }
+  @keyframes zm-fade {
+    from { opacity: 0; }
+  }
+  @keyframes zm-drift {
+    from { transform: translate3d(0, 0, 0) scale(1); }
+    to { transform: translate3d(-28px, 18px, 0) scale(1.08); }
+  }
+  /* An outline, not a box-shadow, so it leaves Tailwind's ring and shadow on the element alone.
+     The offset puts it just outside a ring-4. */
+  @keyframes zm-glow {
+    0% { outline: 0 solid rgb(255 227 129 / 0.6); outline-offset: 4px; }
+    70%, 100% { outline: 10px solid rgb(255 227 129 / 0); outline-offset: 4px; }
+  }
+}
+
+/* App helpers, in the components layer so Tailwind utilities on the same element still win. */
+@layer components {
+  /* Children of .zm-stagger rise one after another. */
+  .zm-stagger > * {
+    animation: var(--animate-rise);
+  }
+  .zm-stagger > *:nth-child(2) { animation-delay: 70ms; }
+  .zm-stagger > *:nth-child(3) { animation-delay: 140ms; }
+  .zm-stagger > *:nth-child(4) { animation-delay: 210ms; }
+  .zm-stagger > *:nth-child(n + 5) { animation-delay: 260ms; }
+
+  /* A faint dot grid, like map paper, for large empty backgrounds. */
+  .zm-dots {
+    background-image: radial-gradient(rgb(21 50 67 / 0.07) 1px, transparent 1.2px);
+    background-size: 18px 18px;
+  }
+
+  /* Buttons and links that shrink a touch when pressed. */
+  .zm-press {
+    transition: transform 120ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease;
+  }
+  .zm-press:active {
+    transform: scale(0.96);
+  }
+}
+
+::selection {
+  background: rgb(255 227 129 / 0.8);
+  color: #153243;
+}
+
+/* Thin, quiet scrollbars inside panels. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(40 75 99 / 0.35) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
 }
 
 /*
