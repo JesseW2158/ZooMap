@@ -1,5 +1,9 @@
 import type { RecommendBody, RecommendResponse } from "@/shared/contracts";
+import { rateLimit } from "@/modules/friends";
 import { defaultDeps, pickStudySpotsWith, recommendWith } from "./service";
+
+/** Requests per user per minute to POST /api/recommend. */
+export const RECOMMEND_PER_MINUTE = 10;
 
 export type { Candidate as StudySpot } from "./candidates";
 
@@ -10,6 +14,8 @@ export type { Candidate as StudySpot } from "./candidates";
  * `source` says which.
  */
 export async function recommendStudySpot(userId: string, input: RecommendBody): Promise<RecommendResponse> {
+  // Each call can cost a Gemini request, so cap them per user (RATE_LIMITED, 429).
+  await rateLimit("recommend", userId, RECOMMEND_PER_MINUTE, 60_000);
   return recommendWith(defaultDeps(), userId, input);
 }
 
