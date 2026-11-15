@@ -48,9 +48,15 @@ body {
 
 /*
  * MapLibre's attribution and logo sit at the bottom of the map, where the raised map button
- * in the tab bar pokes up over them. Lift them clear of it.
+ * in the tab bar pokes up over them. Lift them clear of it. The map area already ends above
+ * the tab bar and the home indicator, so this needs no safe-area term. Anything else that
+ * lives in the bottom corners (the density legend) stacks above this row using the variable.
  */
+:root {
+  --map-attrib-clear: 1.5rem;
+}
+
 .maplibregl-ctrl-bottom-right,
 .maplibregl-ctrl-bottom-left {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--map-attrib-clear);
 }
