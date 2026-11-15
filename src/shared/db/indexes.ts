@@ -69,6 +69,10 @@ export const INDEXES: IndexDefinition[] = [
   { collection: "notifications", key: { userId: 1, at: -1 }, options: { name: "userId_at" } },
   { collection: "notifications", key: { userId: 1, kind: 1, at: -1 }, options: { name: "userId_kind_at" } },
   { collection: "notifications", key: { expiresAt: 1 }, options: { name: "expires_ttl", expireAfterSeconds: 0 } },
+
+  // Planned events: upcoming ones by start time; a host's own.
+  { collection: "planned_events", key: { startsAt: 1 }, options: { name: "startsAt" } },
+  { collection: "planned_events", key: { hostId: 1, startsAt: 1 }, options: { name: "hostId_startsAt" } },
 ];
 
 export async function ensureIndexes(db: Db): Promise<void> {
