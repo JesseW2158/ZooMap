@@ -27,12 +27,11 @@ body {
 /* The sheet and panels are light surfaces on top of the map in either colour scheme. */
 
 /*
- * Dark theme: muted grays, with the menu (the sidebar on a computer, the bottom sheet on a
- * phone) in teal #063847. Panels use Tailwind's light utilities (bg-white, text-neutral-900,
+ * Dark theme: muted grays; the menu (the sidebar on a computer, the bottom sheet on a phone)
+ * matches the map buttons. Panels use Tailwind's light utilities (bg-white, text-neutral-900,
  * ...), so rather than editing every module this flips the colour variables those utilities
  * read: the neutral scale is inverted to soft grays and the light tints (emerald/red/amber/blue
- * 50-300) become dark ones, while the text shades (700-900) become light. Inside the menu the
- * surface shades are re-tinted teal. Backgrounds that carry white text (bg-neutral-900,
+ * 50-300) become dark ones, while the text shades (700-900) become light. Backgrounds that carry white text (bg-neutral-900,
  * bg-red-600) are pinned so their text stays readable. Utilities live in @layer, so these
  * unlayered rules win.
  */
@@ -92,19 +91,16 @@ html.dark .bg-white\/90 {
   background-color: rgb(47 51 56 / 0.95);
 }
 
-/* The menu: teal #063847, with cards and inputs a lighter teal and its subtle shades re-tinted. */
+/* The menu (sidebar on a computer, sheet on a phone): the same gray as the map buttons, with
+   cards and inputs one step lighter so they stand out. */
 html.dark section[aria-label="Panels"] {
-  background-color: #063847;
-  --color-neutral-50: #0e4b5c;
-  --color-neutral-100: #115266;
-  --color-neutral-200: #1b6074;
-  --color-neutral-300: #2a7085;
+  background-color: #2f3338;
 }
 html.dark section[aria-label="Panels"] .bg-white,
 html.dark section[aria-label="Panels"] .bg-white\/95,
 html.dark section[aria-label="Panels"] .bg-white\/90,
 html.dark section[aria-label="Panels"] .bg-white\/80 {
-  background-color: #0b4a5c;
+  background-color: #383d43;
 }
 
 /* Buttons that keep white text keep a dark background. */
