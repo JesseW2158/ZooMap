@@ -1,9 +1,28 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ChainMe, IDEMPOTENCY_HEADER, Redemption, RewardsMe, StoreItemList, type StoreItem } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { useApi } from "@/shared/ui";
+import {
+  BagIcon,
+  BallIcon,
+  BookIcon,
+  ClockIcon,
+  CoinIcon,
+  CupIcon,
+  DropIcon,
+  FlameIcon,
+  GiftIcon,
+  HistoryIcon,
+  IdCardIcon,
+  LinkIcon,
+  LockIcon,
+  ShirtIcon,
+  SparkleIcon,
+  TicketIcon,
+  UtensilsIcon,
+} from "./icons";
 
 const POLL_MS = 10_000;
 
@@ -24,7 +43,29 @@ function errorText(error: unknown): string {
   return "Something went wrong. Try again.";
 }
 
-/** The Points tab: balance, history in plain words, the store and your claim codes. */
+/** A symbol for each store item, picked from its name. */
+type IconC = (p: { className?: string }) => ReactNode;
+const ITEM_ICONS: [RegExp, IconC][] = [
+  [/sticker/i, SparkleIcon],
+  [/coffee|tea/i, CupIcon],
+  [/lanyard/i, IdCardIcon],
+  [/dining|food|meal/i, UtensilsIcon],
+  [/room|booking|study/i, BookIcon],
+  [/bottle/i, DropIcon],
+  [/hoodie|shirt/i, ShirtIcon],
+  [/ticket/i, TicketIcon],
+];
+/** A symbol for each store item, picked from its name. */
+const itemIcon = (name: string): IconC => ITEM_ICONS.find(([re]) => re.test(name))?.[1] ?? GiftIcon;
+const entryIcon = (delta: number, reason: string): IconC =>
+  delta < 0 ? BagIcon : /study/i.test(reason) ? BookIcon : /basketball|sport|frisbee/i.test(reason) ? BallIcon : /game|social/i.test(reason) ? SparkleIcon : ClockIcon;
+
+function ItemIcon({ name, className }: { name: string; className?: string }) {
+  // the icons are plain stateless functions, so calling one directly is safe
+  return itemIcon(name)({ className });
+}
+
+/** The Points tab: balance with progress to the next reward, history, the store and claim codes. */
 export function RewardsPanel() {
   const me = useApi<RewardsMe>("/api/rewards/me", { pollMs: POLL_MS, schema: RewardsMe });
   const items = useApi<StoreItem[]>("/api/store/items", { schema: StoreItemList });
@@ -67,54 +108,66 @@ export function RewardsPanel() {
     }
   }
 
+  const storeItems = items.data ?? [];
+  const nextGoal = storeItems.filter((i) => i.stock !== 0 && i.cost > balance).sort((a, b) => a.cost - b.cost)[0];
+  const progress = nextGoal ? Math.min(1, balance / nextGoal.cost) : 1;
+
   return (
     // The sheet is always white, but body text turns light in dark mode, so set the colour here.
-    <div className="space-y-4 text-sm text-neutral-900">
-      <section className="flex items-baseline justify-between">
-        <div>
-          <p className="text-neutral-500">Your points</p>
-          <p className="text-3xl font-semibold tabular-nums" aria-live="polite">
-            {me.loading && !me.data ? "…" : balance.toLocaleString()}
-          </p>
-        </div>
-        <p className="max-w-[12rem] text-right text-xs text-neutral-500">Earn points for verified time at activities.</p>
+    <div className="space-y-5 text-sm text-ink">
+      <section className="relative overflow-hidden rounded-3xl bg-ink p-5 text-ivory">
+        <CoinIcon className="pointer-events-none absolute -right-6 -top-6 h-36 w-36 text-sand opacity-15" />
+        <p className="text-xs font-bold uppercase tracking-wider text-sand">Your points</p>
+        <p className="mt-1 text-5xl font-bold tabular-nums" aria-live="polite">
+          {me.loading && !me.data ? "…" : balance.toLocaleString()}
+        </p>
+        {nextGoal ? (
+          <div className="mt-4">
+            <div className="h-2 overflow-hidden rounded-full bg-ivory/15">
+              <div className="h-full rounded-full bg-sand transition-[width]" style={{ width: `${progress * 100}%` }} />
+            </div>
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-ivory/70">
+              <ItemIcon name={nextGoal.name} className="h-3.5 w-3.5" /> {(nextGoal.cost - balance).toLocaleString()} to {nextGoal.name}
+            </p>
+          </div>
+        ) : storeItems.length ? (
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-ivory/70"><SparkleIcon className="h-3.5 w-3.5" />You can get anything in the store</p>
+        ) : null}
       </section>
 
-      {chain.data?.enabled ? (
-        <section className="rounded-lg bg-neutral-50 p-2 text-xs text-neutral-600">
-          <p>
-            On Solana devnet: <strong className="tabular-nums text-neutral-900">{chain.data.balance}</strong> ZooMap tokens
-            {chain.data.pendingCount > 0 ? ` · ${chain.data.pendingCount} syncing` : " · in sync"}
-          </p>
-          {chain.data.explorerUrl ? (
-            <a href={chain.data.explorerUrl} target="_blank" rel="noreferrer" className="text-[#881c1c] underline">
-              View on the Solana explorer
-            </a>
-          ) : null}
-          <p className="mt-0.5 text-neutral-500">A public receipt of your points on a test network. Your points balance above is the real one.</p>
-        </section>
-      ) : null}
-
-      {me.error ? <p className="rounded-lg bg-red-50 p-2 text-red-700">{me.error.message}</p> : null}
+      {me.error ? <p className="rounded-xl bg-red-50 p-2.5 text-red-700">{me.error.message}</p> : null}
       {message ? (
-        <p className={`rounded-lg p-2 ${message.kind === "ok" ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`} role="status">
+        <p className={`rounded-xl p-2.5 ${message.kind === "ok" ? "bg-mint/40 text-ink" : "bg-red-50 text-red-700"}`} role="status">
           {message.text}
         </p>
       ) : null}
 
       <section>
-        <h3 className="mb-1 font-semibold">Recent</h3>
+        <SectionLabel Icon={HistoryIcon} text="Recent" />
         {me.data && me.data.entries.length === 0 ? (
-          <p className="text-neutral-500">Nothing yet. Join an activity and stay a while.</p>
+          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-linen p-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-yale" aria-hidden>
+              <ClockIcon className="h-5 w-5" />
+            </span>
+            <p className="text-yale">Join an activity and stay a while to earn.</p>
+          </div>
         ) : (
-          <ul className="divide-y divide-neutral-100">
-            {(me.data?.entries ?? []).slice(0, 8).map((e) => (
-              <li key={e.id} className="flex items-center justify-between gap-3 py-1.5">
-                <span className="min-w-0">
-                  <span className="block truncate">{e.reason}</span>
-                  <span className="text-xs text-neutral-500">{timeAgo(e.createdAt)}</span>
+          <ul className="mt-1">
+            {(me.data?.entries ?? []).slice(0, 6).map((e) => (
+              <li key={e.id} className="flex items-center gap-3 py-2">
+                <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linen text-ink">
+                  {(() => {
+                    const Icon = entryIcon(e.delta, e.reason);
+                    return <Icon className="h-5 w-5" />;
+                  })()}
                 </span>
-                <span className={`shrink-0 font-medium tabular-nums ${e.delta > 0 ? "text-emerald-700" : "text-red-700"}`}>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{e.reason}</span>
+                  <span className="text-xs text-yale">{timeAgo(e.createdAt)}</span>
+                </span>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ${e.delta > 0 ? "bg-mint/50 text-ink" : "bg-red-50 text-red-700"}`}
+                >
                   {e.delta > 0 ? `+${e.delta}` : e.delta}
                 </span>
               </li>
@@ -124,31 +177,45 @@ export function RewardsPanel() {
       </section>
 
       <section>
-        <h3 className="mb-1 font-semibold">Store</h3>
+        <SectionLabel Icon={BagIcon} text="Store" />
         {items.error ? <p className="text-red-700">{items.error.message}</p> : null}
-        <ul className="space-y-2">
-          {(items.data ?? []).map((item) => {
+        <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {storeItems.map((item) => {
             const soldOut = item.stock === 0;
             const affordable = balance >= item.cost;
+            const locked = soldOut || !affordable;
             return (
-              <li key={item.id} className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 p-2">
-                <span className="min-w-0">
-                  <span className="block font-medium">{item.name}</span>
-                  <span className="block text-xs text-neutral-500">
-                    {item.description}
-                    {item.stock !== undefined ? ` · ${item.stock} left` : ""}
-                  </span>
-                </span>
+              <li key={item.id}>
                 <button
                   type="button"
-                  disabled={soldOut || !affordable || busy}
+                  disabled={locked || busy}
+                  title={item.description}
                   onClick={() => {
                     setMessage(null);
                     setConfirm({ item, key: crypto.randomUUID() });
                   }}
-                  className="shrink-0 rounded-full bg-[#881c1c] px-3 py-1 text-xs font-semibold text-white disabled:bg-neutral-300 disabled:text-neutral-600"
+                  className={`flex h-full w-full flex-col items-center gap-1.5 rounded-2xl p-3 text-center ring-1 ring-ink/10 transition ${
+                    locked ? "bg-linen/60" : "bg-white shadow-sm hover:-translate-y-0.5 hover:shadow-md"
+                  }`}
                 >
-                  {soldOut ? "Sold out" : `${item.cost} pts`}
+                  <span
+                    aria-hidden
+                    className={`flex h-14 w-14 items-center justify-center rounded-full ${locked ? "bg-white text-yale/50" : "bg-sand/40 text-ink"}`}
+                  >
+                    <ItemIcon name={item.name} className="h-7 w-7" />
+                  </span>
+                  <span className="line-clamp-2 text-xs font-semibold leading-tight">{item.name}</span>
+                  {item.stock !== undefined && item.stock > 0 && item.stock <= 10 ? (
+                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-coral"><FlameIcon className="h-3 w-3" />{item.stock} left</span>
+                  ) : null}
+                  <span
+                    className={`mt-auto flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ${
+                      soldOut ? "bg-ash/40 text-yale" : affordable ? "bg-ink text-ivory" : "bg-white text-yale"
+                    }`}
+                  >
+                    {!soldOut && !affordable ? <LockIcon className="h-3 w-3" /> : null}
+                    {soldOut ? "Sold out" : item.cost.toLocaleString()}
+                  </span>
                 </button>
               </li>
             );
@@ -157,20 +224,27 @@ export function RewardsPanel() {
       </section>
 
       {confirm ? (
-        <div role="dialog" aria-label="Confirm redemption" className="rounded-lg border border-neutral-300 bg-white p-3 shadow-sm">
-          <p>
-            Spend <strong>{confirm.item.cost}</strong> points on <strong>{confirm.item.name}</strong>? You will have{" "}
-            {balance - confirm.item.cost} left.
-          </p>
-          <div className="mt-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setConfirm(null)} disabled={busy} className="rounded-full px-3 py-1 text-neutral-700">
+        <div role="dialog" aria-label="Confirm redemption" className="sticky bottom-2 rounded-3xl bg-ink p-4 text-ivory shadow-xl">
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sand text-ink">
+              <ItemIcon name={confirm.item.name} className="h-6 w-6" />
+            </span>
+            <p className="min-w-0 flex-1">
+              <span className="block font-bold">{confirm.item.name}</span>
+              <span className="text-xs text-ivory/70">
+                −{confirm.item.cost} · {balance - confirm.item.cost} left after
+              </span>
+            </p>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button type="button" onClick={() => setConfirm(null)} disabled={busy} className="flex-1 rounded-full bg-ivory/10 py-2.5 font-semibold">
               Cancel
             </button>
             <button
               type="button"
               onClick={() => void doRedeem()}
               disabled={busy}
-              className="rounded-full bg-[#881c1c] px-3 py-1 font-semibold text-white disabled:opacity-60"
+              className="flex-1 rounded-full bg-sand py-2.5 font-bold text-ink disabled:opacity-60"
             >
               {busy ? "Redeeming…" : "Redeem"}
             </button>
@@ -180,20 +254,47 @@ export function RewardsPanel() {
 
       {me.data && me.data.redemptions.length > 0 ? (
         <section>
-          <h3 className="mb-1 font-semibold">Your claim codes</h3>
-          <ul className="space-y-1">
+          <SectionLabel Icon={TicketIcon} text="Your codes" />
+          <ul className="mt-2 space-y-2">
             {me.data.redemptions.map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-3">
-                <span className="min-w-0 truncate">
-                  {itemName(r.itemId)} <span className="text-xs text-neutral-500">· {timeAgo(r.createdAt)}</span>
+              <li key={r.id} className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-sand p-2.5">
+                <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand/40 text-ink">
+                  <ItemIcon name={itemName(r.itemId)} className="h-5 w-5" />
                 </span>
-                <code className="shrink-0 rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs">{r.code}</code>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{itemName(r.itemId)}</span>
+                  <span className="text-xs text-yale">{timeAgo(r.createdAt)}</span>
+                </span>
+                <code className="shrink-0 rounded-lg bg-linen px-2 py-1 font-mono text-xs font-bold">{r.code}</code>
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-xs text-neutral-500">Mock store for the demo. Codes are not redeemable at the real Campus Store.</p>
+          <p className="mt-1.5 text-[11px] text-yale">Demo store: codes don&apos;t work at the real Campus Store.</p>
         </section>
       ) : null}
+
+      {chain.data?.enabled ? (
+        <p className="flex items-center justify-center gap-1 text-[11px] text-yale">
+          <LinkIcon className="h-3 w-3" /> {chain.data.balance} on Solana devnet{chain.data.pendingCount > 0 ? ` · ${chain.data.pendingCount} syncing` : ""}
+          {chain.data.explorerUrl ? (
+            <>
+              {" · "}
+              <a href={chain.data.explorerUrl} target="_blank" rel="noreferrer" className="underline">
+                receipt
+              </a>
+            </>
+          ) : null}
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+function SectionLabel({ Icon, text }: { Icon: IconC; text: string }) {
+  return (
+    <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-yale">
+      <Icon className="h-4 w-4" />
+      {text}
+    </h3>
   );
 }

@@ -6,7 +6,7 @@ const base = {
   viewBox: "0 0 24 24",
   fill: "none",
   stroke: "currentColor",
-  strokeWidth: 1.8,
+  strokeWidth: 2.1,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
   "aria-hidden": true,
@@ -44,6 +44,18 @@ export function CrowdIcon({ className }: IconProps) {
   );
 }
 
+/** Two people, one in front of the other: your friends (Crowd has three side by side). */
+export function FriendsIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 20v-1a6 6 0 0 1 12 0v1" />
+      <path d="M15.2 4.9a3.2 3.2 0 0 1 0 6.2" />
+      <path d="M17.5 14.2A6 6 0 0 1 21 19.6v.4" />
+    </svg>
+  );
+}
+
 /** A map pin. */
 export function MapIcon({ className }: IconProps) {
   return (
@@ -60,7 +72,7 @@ export function CalendarIcon({ className }: IconProps) {
     <svg {...base} className={className}>
       <rect x="4" y="5" width="16" height="16" rx="2.5" />
       <path d="M4 10h16M8.5 3v4M15.5 3v4" />
-      <path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01" strokeWidth={2.4} />
+      <path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01M16 17.5h.01"strokeWidth={2.4} />
     </svg>
   );
 }
@@ -85,13 +97,12 @@ export function AskIcon({ className }: IconProps) {
   );
 }
 
-/** Two people, one in front of the other. */
-export function FriendsIcon({ className }: IconProps) {
+/** An open book: studying. */
+export function StudyIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>
-      <circle cx="9" cy="8" r="3.2" />
-      <path d="M3 19.5c.6-3.4 3-5.3 6-5.3s5.4 1.9 6 5.3" />
-      <path d="M15.5 4.9a3.2 3.2 0 0 1 0 6.2M17.6 14.6c1.8.7 3 2.4 3.4 4.9" />
+      <path d="M12 6.5C10.2 5.2 7.6 4.6 3.5 4.8v13.4c4.1-.2 6.7.4 8.5 1.8 1.8-1.4 4.4-2 8.5-1.8V4.8c-4.1-.2-6.7.4-8.5 1.7z" />
+      <path d="M12 6.5V20" />
     </svg>
   );
 }

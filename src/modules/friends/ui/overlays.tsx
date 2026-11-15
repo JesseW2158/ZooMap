@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import { FriendCode, type Profile } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import { errorText } from "./feed";
+import { CloseIcon } from "./icons";
 import { Avatar } from "./parts";
 
 /**
@@ -19,11 +20,11 @@ function Overlay({ title, onClose, children }: { title: string; onClose: () => v
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={title} className="fixed inset-0 z-50 flex flex-col bg-white text-neutral-900">
+    <div role="dialog" aria-modal="true" aria-label={title} className="fixed inset-0 z-50 flex flex-col bg-white text-ink">
       <div className="flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))]">
         <h2 className="text-lg font-semibold">{title}</h2>
-        <button type="button" onClick={onClose} className="rounded-lg border border-neutral-300 px-3 py-1.5 font-medium">
-          Close
+        <button type="button" onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full bg-linen text-ink">
+          <CloseIcon className="h-5 w-5" />
         </button>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
