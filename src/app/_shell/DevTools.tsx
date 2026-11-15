@@ -11,11 +11,11 @@ export function DevTools() {
   return (
     <div
       className={
-        // Phones (below 768 px, the shell's desktop breakpoint): bottom-right, level with the crowd
-        // legend's "Map: …" button (the legend's bottom offset), in two short lines so it fits
-        // beside the legend; z-[5] like the legend, so the map sheet (z-[8]) covers it when pulled up.
+        // Phones (below 768 px, the shell's desktop breakpoint): bottom-right, just above the map
+        // sheet's square button (which sits level with the legend's "Map: …" button), in two short
+        // lines; z-[5] like the legend, so the map sheet (z-[8]) covers it when pulled up.
         // Larger screens: top-left of the map, beside the sidebar, on one line.
-        "fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 " +
+        "fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_5.75rem),calc(env(safe-area-inset-bottom)_+_9rem_+_var(--map-inset-bottom,0px)))] right-3 " +
         "md:absolute md:bottom-auto md:right-auto md:left-[calc(var(--map-inset-left,0px)+0.75rem)] md:top-16 " +
         "z-[5] md:z-10 flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2 " +
         "rounded-xl bg-amber-100/95 px-2 py-2 md:px-3 text-xs text-amber-900 shadow-md"

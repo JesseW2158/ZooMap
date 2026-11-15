@@ -42,7 +42,8 @@ export function useIsDesktop(): boolean {
 export function mapInsetVars(isDesktop: boolean, open: boolean): CSSProperties {
   return {
     "--map-inset-left": isDesktop && open ? "20.75rem" : "0px",
-    "--map-inset-bottom": isDesktop ? "0px" : `${PEEK_PX}px`,
+    // Phones: the closed sheet is fully hidden (opened by its square button), so no peek to clear.
+    "--map-inset-bottom": "0px",
   } as CSSProperties;
 }
 
@@ -167,7 +168,7 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
     const onStart = (e: TouchEvent) => {
       startY = e.touches[0]!.clientY;
       atTopAtStart = el.scrollTop <= 0;
-      travel = Math.max(0, (sheet.current?.offsetHeight ?? 0) - PEEK_PX);
+      travel = sheet.current?.offsetHeight ?? 0;
       pulling = false;
       pulled = 0;
     };
@@ -202,7 +203,7 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     const height = sheet.current?.offsetHeight ?? 0;
-    start.current = { y: e.clientY, travel: Math.max(0, height - PEEK_PX) };
+    start.current = { y: e.clientY, travel: height };
     e.currentTarget.setPointerCapture(e.pointerId);
     setDrag(0);
   };
@@ -233,17 +234,34 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
     }
   };
 
-  const base = expanded ? "0px" : `calc(100% - ${PEEK_PX}px)`;
+  // Closed, the sheet sits entirely below the map; only its square button (below) opens it.
+  const base = expanded ? "0px" : "100%";
   const transform = `translateY(calc(${base} + ${drag ?? 0}px))`;
+  const shown = expanded || drag !== null;
 
   return (
+    <>
+      {!expanded && !hidden ? (
+        <button
+          type="button"
+          aria-label={`Open ${title}`}
+          title={title}
+          onClick={() => setExpanded(true)}
+          // Bottom-right, level with the crowd legend's "Map: …" button (the legend's bottom offset).
+          className={`fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-[5] flex h-10 w-10 items-center justify-center rounded-xl text-ink shadow-md ${accentBg}`}
+        >
+          <Icon className="h-5 w-5" />
+        </button>
+      ) : null}
     <div
       ref={sheet}
       hidden={hidden}
       aria-label={title}
       role="region"
       style={{ transform, transition: drag === null ? "transform 260ms cubic-bezier(.2,.8,.2,1)" : "none" }}
-      className="absolute inset-x-0 bottom-0 z-[8] flex h-[80%] flex-col rounded-t-3xl bg-white text-ink shadow-[0_-8px_24px_rgba(21,50,67,0.25)]"
+      className={`absolute inset-x-0 bottom-0 z-[8] flex h-[80%] flex-col rounded-t-3xl bg-white text-ink ${
+        shown ? "shadow-[0_-8px_24px_rgba(21,50,67,0.25)]" : ""
+      }`}
     >
       <div
         role="button"
@@ -271,6 +289,7 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
         {children}
       </div>
     </div>
+    </>
   );
 }
 
