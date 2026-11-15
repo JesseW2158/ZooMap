@@ -3,13 +3,13 @@
 import { publicEnv } from "@/shared/config/public-env";
 import { useUserLocation } from "@/shared/platform";
 
-/** Click-to-set-location override, in the bottom-right of the map above its attribution. Renders nothing unless NEXT_PUBLIC_DEV_TOOLS=1. */
+/** Click-to-set-location override. Renders nothing unless NEXT_PUBLIC_DEV_TOOLS=1. */
 export function DevTools() {
   const { position, source, isDevPicking, setDevPicking, setDevLocation } = useUserLocation();
   if (!publicEnv.devTools) return null;
 
   return (
-    <div className="absolute bottom-16 right-3 z-10 flex items-center gap-2 rounded-xl bg-amber-100/95 px-3 py-2 text-xs text-amber-900 shadow-md">
+    <div className="absolute left-[calc(var(--map-inset-left,0px)+0.75rem)] top-16 z-10 flex items-center gap-2 rounded-xl bg-amber-100/95 px-3 py-2 text-xs text-amber-900 shadow-md">
       <span className="font-semibold">DEV</span>
       <button
         type="button"

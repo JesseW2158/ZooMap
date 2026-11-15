@@ -166,18 +166,18 @@ export function AlertsCenter() {
         aria-label={unread ? `Alerts, ${unread} new` : "Alerts"}
         aria-expanded={open}
         title="Alerts"
-        className="pointer-events-auto absolute right-16 top-[max(0.75rem,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white/95 text-neutral-800 shadow-md hover:bg-neutral-100"
+        className="pointer-events-auto absolute right-[3.75rem] top-[max(0.75rem,env(safe-area-inset-top))] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-md ring-2 ring-ivory/80 hover:bg-ivory"
       >
         <BellIcon />
         {unread > 0 ? (
-          <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-[#881c1c] px-1 text-center text-[11px] font-bold leading-5 text-white">
+          <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-coral px-1 text-center text-[11px] font-bold leading-5 text-ink ring-2 ring-white">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}
       </button>
 
       {open ? (
-        <div ref={panelRef} className="pointer-events-auto absolute right-2 top-[calc(max(0.75rem,env(safe-area-inset-top))+2.9rem)] z-30 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-xl">
+        <div ref={panelRef} className="pointer-events-auto absolute right-3 top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)] z-40 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-xl">
           <div className="flex items-center gap-1 border-b border-neutral-100 px-3 py-2">
             <h2 className="flex-1 text-sm font-semibold">{view === "inbox" ? "Alerts" : "Alert settings"}</h2>
             <button
@@ -204,7 +204,7 @@ export function AlertsCenter() {
       ) : null}
 
       {toasts.length ? (
-        <div className="pointer-events-none absolute left-3 right-14 top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)] z-20 flex flex-col items-start gap-2">
+        <div className="pointer-events-none absolute left-3 right-16 top-[calc(max(0.75rem,env(safe-area-inset-top))+3.5rem)] z-30 flex flex-col items-start gap-2">
           {toasts.map((t) => (
             <div key={t.id} role="status" className="pointer-events-auto flex w-full max-w-md items-start gap-2 rounded-xl border border-neutral-200 bg-white p-3 text-neutral-900 shadow-lg">
               <span className="text-lg leading-none" aria-hidden>{KIND[t.kind].icon}</span>
