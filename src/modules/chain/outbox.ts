@@ -51,8 +51,16 @@ function claimable(row: ChainOutboxDoc, now: Date): boolean {
  * about that signature first and only re-sends when it never landed and its blockhash has
  * expired (the lease is longer than a blockhash lives).
  */
-export async function drainOutbox(client: ChainClient, opts: { userId?: string; now?: () => Date } = {}): Promise<DrainResult> {
+export async function drainOutbox(
+  client: ChainClient,
+  opts: { userId?: string; now?: () => Date; budgetMs?: number } = {},
+): Promise<DrainResult> {
   const clock = opts.now ?? (() => new Date());
+  // Wall-clock budget (not `clock`, which tests move forward to expire leases): a drain runs
+  // inside a serverless request and must end before the function's time limit.
+  const startedAt = Date.now();
+  const budgetMs = opts.budgetMs ?? OUTBOX.drainBudgetMs;
+  const remainingMs = () => budgetMs - (Date.now() - startedAt);
   const { chain_outbox } = await getCollections();
   const rows = await chain_outbox
     .find({ status: "pending", ...(opts.userId ? { userId: opts.userId } : {}) })
@@ -65,6 +73,12 @@ export async function drainOutbox(client: ChainClient, opts: { userId?: string; 
 
   for (const row of rows) {
     if (blocked.has(row.userId)) {
+      result.deferred++;
+      continue;
+    }
+    if (remainingMs() < OUTBOX.minRowBudgetMs) {
+      // Out of time. Nothing is claimed, so the row stays pending and the next drain takes it.
+      blocked.add(row.userId);
       result.deferred++;
       continue;
     }
@@ -85,7 +99,7 @@ export async function drainOutbox(client: ChainClient, opts: { userId?: string; 
       continue;
     }
 
-    const outcome = await processRow(client, claimed);
+    const outcome = await processRow(client, claimed, remainingMs);
     if (outcome === "done") {
       result.done++;
       continue;
@@ -97,7 +111,7 @@ export async function drainOutbox(client: ChainClient, opts: { userId?: string; 
   return result;
 }
 
-async function processRow(client: ChainClient, row: ChainOutboxDoc): Promise<"done" | "failed" | "pending"> {
+async function processRow(client: ChainClient, row: ChainOutboxDoc, remainingMs: () => number): Promise<"done" | "failed" | "pending"> {
   const { chain_outbox } = await getCollections();
   const set = (fields: Partial<ChainOutboxDoc>) => chain_outbox.updateOne({ _id: row._id }, { $set: fields });
 
@@ -116,7 +130,11 @@ async function processRow(client: ChainClient, row: ChainOutboxDoc): Promise<"do
     await set({ signature: prepared.signature });
     await prepared.send();
 
-    const status = await client.confirm(prepared.signature, OUTBOX.confirmTimeoutMs);
+    // Bounded by what is left of the drain budget. An unconfirmed row keeps its saved
+    // signature and stays pending: the next drain asks the chain about it before sending
+    // anything, so a timeout can neither lose the mint nor mint twice.
+    const confirmMs = Math.min(OUTBOX.confirmTimeoutMs, Math.max(OUTBOX.minConfirmMs, remainingMs()));
+    const status = await client.confirm(prepared.signature, confirmMs);
     if (status === "confirmed") {
       await set({ status: "done" });
       return "done";
