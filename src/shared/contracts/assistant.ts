@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Id, LatLng } from "./common";
 import { Activity } from "./activities";
 import { DensityLevel } from "./density";
+import { PlannedEvent } from "./planned";
 
 /**
  * Added after Phase 0 (assistant module): the campus chatbot. Stateless: the client sends the
@@ -27,6 +28,8 @@ export type ChatBody = z.infer<typeof ChatBody>;
 /** Something the reply refers to, shown as a tappable card under it. */
 export const ChatCard = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("activity"), activity: Activity }),
+  /** Added later (additive): a planned event announced ahead of time. */
+  z.object({ kind: z.literal("event"), event: PlannedEvent }),
   z.object({
     kind: z.literal("place"),
     placeId: Id,
