@@ -5,6 +5,7 @@ import { ChatResponse, PlannedEvent, type Activity, type ChatBody, type ChatCard
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { useUserLocation } from "@/shared/platform";
 import { createStore, useMapStore, useStore } from "@/shared/ui";
+import { examplesFor } from "./examples";
 
 /**
  * "Ask ZooMap": a campus chatbot at the top of the Activities page. The shell's section heading
@@ -59,6 +60,7 @@ export function AssistantPanel() {
   const { position } = useUserLocation();
   const { selectedPlaceId } = useMapStore();
   const endRef = useRef<HTMLDivElement>(null);
+  const example = useCyclingExample(!draft);
 
   const origin: ChatBody["origin"] = position ? { lat: position.lat, lng: position.lng } : selectedPlaceId ? { placeId: selectedPlaceId } : undefined;
 
@@ -132,15 +134,22 @@ export function AssistantPanel() {
         }}
       >
         <div className="flex items-center gap-1 rounded-full border border-ash/70 bg-linen/50 p-1 pl-4 transition-all focus-within:border-ink/30 focus-within:bg-white focus-within:ring-2 focus-within:ring-mint/50">
-          <input
-            type="text"
-            value={draft}
-            maxLength={1000}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Ask ZooMap"
-            aria-label="Ask ZooMap"
-            className="min-w-0 flex-1 bg-transparent py-1.5 outline-none placeholder:text-yale/50"
-          />
+          <span className="relative min-w-0 flex-1">
+            <input
+              type="text"
+              value={draft}
+              maxLength={1000}
+              onChange={(e) => setDraft(e.target.value)}
+              aria-label="Ask ZooMap"
+              className="w-full bg-transparent py-1.5 outline-none"
+            />
+            {/* the placeholder, drawn by hand so each example can fade in */}
+            {draft ? null : (
+              <span key={example} aria-hidden className="animate-fade pointer-events-none absolute inset-0 truncate py-1.5 text-yale/50">
+                Ask ZooMap: {example}
+              </span>
+            )}
+          </span>
           <button
             type="submit"
             disabled={pending || !draft.trim()}
@@ -155,6 +164,24 @@ export function AssistantPanel() {
       </form>
     </div>
   );
+}
+
+const EXAMPLE_MS = 3_500;
+
+/** One example question for the time of day, changing every few seconds while `running`. */
+function useCyclingExample(running: boolean): string {
+  const [tick, setTick] = useState(0);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setTick((n) => n + 1);
+      setNow(new Date()); // so the list follows the clock past a boundary (morning → midday)
+    }, EXAMPLE_MS);
+    return () => clearInterval(id);
+  }, [running]);
+  const list = examplesFor(now);
+  return list[tick % list.length];
 }
 
 function Card({ card }: { card: ChatCard }) {
