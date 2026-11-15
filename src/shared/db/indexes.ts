@@ -73,6 +73,10 @@ export const INDEXES: IndexDefinition[] = [
   // Planned events: upcoming ones by start time; a host's own.
   { collection: "planned_events", key: { startsAt: 1 }, options: { name: "startsAt" } },
   { collection: "planned_events", key: { hostId: 1, startsAt: 1 }, options: { name: "hostId_startsAt" } },
+
+  // Direct messages: a conversation newest first (also the inbox's last message); a user's unread.
+  { collection: "messages", key: { conversationId: 1, createdAt: -1 }, options: { name: "conversationId_createdAt" } },
+  { collection: "messages", key: { toUserId: 1, readAt: 1 }, options: { name: "toUserId_readAt" } },
 ];
 
 export async function ensureIndexes(db: Db): Promise<void> {
