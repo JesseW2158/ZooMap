@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import type { Marker, Popup } from "maplibre-gl";
 import type { PlannedEvent } from "@/shared/contracts";
 import { isDevPickingNow } from "@/shared/platform";
-import { PIN_MIN_ZOOM, useMap } from "@/shared/ui";
+import { hideTip, PIN_MIN_ZOOM, showTip, useMap } from "@/shared/ui";
 import { usePlannedFeed, usePlannedPoller } from "./feed";
 import { EventCard } from "./Panel";
 
@@ -40,6 +40,7 @@ export function PlannedEventsLayer() {
   const [selected, setSelected] = useState<string | null>(null);
   // the pop-up's content is a React portal into this element (created only in the browser)
   const [container] = useState(() => (typeof document === "undefined" ? null : document.createElement("div")));
+  const eventsRef = useRef<PlannedEvent[]>([]);
   const markers = useRef(new Map<string, { marker: Marker; el: HTMLButtonElement }>());
   const popup = useRef<Popup | null>(null);
 
@@ -55,6 +56,7 @@ export function PlannedEventsLayer() {
 
   // keep one marker per event in the next week
   useEffect(() => {
+    eventsRef.current = events ?? [];
     if (!map || !lib) return;
     const now = Date.now();
     const shown = (events ?? []).filter((e) => e.placeCenter && new Date(e.startsAt).getTime() <= now + WEEK_MS);
@@ -72,8 +74,17 @@ export function PlannedEventsLayer() {
         el.type = "button";
         el.addEventListener("click", (ev) => {
           ev.stopPropagation();
+          hideTip(map);
           if (!isDevPickingNow()) setSelected(el.dataset.id ?? null);
         });
+        // hovering shows what the event is, without opening the card
+        el.addEventListener("mouseenter", () => {
+          const e = eventsRef.current.find((x) => x.id === el.dataset.id);
+          if (!e?.placeCenter) return;
+          const going = e.goingCount === 1 ? "1 going" : `${e.goingCount} going`;
+          void showTip(map, e.placeCenter, { title: e.title, meta: [shortWhen(e, Date.now()), e.placeName, going].filter(Boolean).join(" · "), body: e.description }, el.offsetHeight + 6);
+        });
+        el.addEventListener("mouseleave", () => hideTip(map));
         const marker = new lib.Marker({ element: el, anchor: "bottom" }).setLngLat([e.placeCenter!.lng, e.placeCenter!.lat]).addTo(map);
         entry = { marker, el };
         markers.current.set(e.id, entry);
@@ -81,7 +92,6 @@ export function PlannedEventsLayer() {
       entry.el.dataset.id = e.id;
       entry.el.className = pinClass(e);
       entry.el.textContent = `${e.big ? "🎉" : "📅"} ${shortWhen(e, now)}`;
-      entry.el.title = `${e.title} · ${e.placeName ?? ""}`;
       entry.el.setAttribute("aria-label", `Event: ${e.title}, ${shortWhen(e, now)}`);
     }
   }, [map, lib, events]);
@@ -104,6 +114,7 @@ export function PlannedEventsLayer() {
     return () => {
       for (const { marker } of current.values()) marker.remove();
       current.clear();
+      if (map) hideTip(map);
     };
   }, [map]);
 

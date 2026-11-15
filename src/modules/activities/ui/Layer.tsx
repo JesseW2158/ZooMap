@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import type { ExpressionSpecification, GeoJSONSource, MapLayerMouseEvent } from "maplibre-gl";
 import { offsetM } from "@/shared/geo";
-import { addLayerToSlot, PIN_MIN_ZOOM, removeLayersAndSources, useMap, useMapEffect, useMapStore } from "@/shared/ui";
+import { addLayerToSlot, hideTip, PIN_MIN_ZOOM, removeLayersAndSources, showTip, useMap, useMapEffect, useMapStore } from "@/shared/ui";
 import { isDevPickingNow } from "@/shared/platform";
 import { GEOFENCE_M } from "../rules";
-import { CATEGORY_COLORS, useActivitiesFeed, useActivitiesPoller } from "./feed";
+import { CATEGORY_COLORS, CATEGORY_LABELS, useActivitiesFeed, useActivitiesPoller } from "./feed";
 
 /**
  * Markers for active activities (in `slot-markers`), sized by participant count and coloured
@@ -106,13 +106,40 @@ export function ActivitiesLayer() {
       const placeId = e.features?.[0]?.properties?.placeId;
       if (typeof placeId === "string") selectPlace(placeId);
     };
-    const pointer = () => (m.getCanvas().style.cursor = "pointer");
-    const unpointer = () => (m.getCanvas().style.cursor = "");
-    m.on("click", DOT_LAYER, onClick);
+    // hovering shows what the activity is; the tip sits above the circle
+    const pointer = (e: MapLayerMouseEvent) => {
+      m.getCanvas().style.cursor = "pointer";
+      const f = e.features?.[0];
+      const p = f?.properties;
+      if (!f || !p || f.geometry.type !== "Point") return;
+      const [lng, lat] = f.geometry.coordinates as [number, number];
+      const count = Number(p.count);
+      const category = CATEGORY_LABELS[p.category as keyof typeof CATEGORY_LABELS] ?? "";
+      void showTip(
+        m,
+        { lat, lng },
+        {
+          title: String(p.title),
+          meta: [category, p.placeName, count === 1 ? "1 here" : `${count} here`].filter(Boolean).join(" · "),
+          body: typeof p.description === "string" ? p.description : undefined,
+        },
+        8 + 1.5 * Math.min(count, 10) + 8,
+      );
+    };
+    const unpointer = () => {
+      m.getCanvas().style.cursor = "";
+      hideTip(m);
+    };
+    const click = (e: MapLayerMouseEvent) => {
+      hideTip(m);
+      onClick(e);
+    };
+    m.on("click", DOT_LAYER, click);
     m.on("mouseenter", DOT_LAYER, pointer);
     m.on("mouseleave", DOT_LAYER, unpointer);
     return () => {
-      m.off("click", DOT_LAYER, onClick);
+      hideTip(m);
+      m.off("click", DOT_LAYER, click);
       m.off("mouseenter", DOT_LAYER, pointer);
       m.off("mouseleave", DOT_LAYER, unpointer);
       removeLayersAndSources(m, [DOT_LAYER, HALO_LAYER, FENCE_LINE, FENCE_FILL], [MARKER_SRC, FENCE_SRC]);
@@ -132,6 +159,9 @@ export function ActivitiesLayer() {
           properties: {
             id: a.id,
             placeId: a.placeId,
+            title: a.title,
+            description: a.description ?? "",
+            placeName: a.placeName ?? "",
             category: a.category,
             count: a.participantCount,
             mine: a.id === myActivityId,

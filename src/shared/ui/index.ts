@@ -11,3 +11,5 @@ export type { AppRegistry, PanelEntry, RegistryEntry } from "./registry-types";
 export { MapProvider, useMap, useMapEffect, addLayerToSlot, removeLayersAndSources, SLOTS, CAMPUS_CENTER } from "./MapProvider";
 export type { Slot } from "./MapProvider";
 export { PIN_MIN_ZOOM } from "./zoom";
+export { showTip, hideTip } from "./hover-tip";
+export type { TipContent } from "./hover-tip";
