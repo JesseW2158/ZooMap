@@ -28,6 +28,8 @@ export interface ShellUser {
 }
 
 const MAP_TAB = "map";
+/** Fired on window when the Map tab button is tapped. Keep in step with routing/ui/PlaceSheet.tsx. */
+const MAP_TAB_TAPPED_EVENT = "zoomap:map-tab-tapped";
 
 interface Tab {
   id: string;
@@ -148,11 +150,23 @@ export function AppShell({ user }: { user: ShellUser }) {
     if (id === MAP_TAB) setSheetCloseSignal((n) => n + 1);
     setActiveId(id);
   };
+  // a tap on the Map button (not a swipe onto the map) also tells the map's sheets to come down;
+  // the routing module's building sheet listens for it (it can't import the shell)
+  const tapTab = (id: string) => {
+    if (id === MAP_TAB) window.dispatchEvent(new Event(MAP_TAB_TAPPED_EVENT));
+    selectTab(id);
+  };
   const active = TABS.find((t) => t.id === activeId) ?? TABS.find((t) => t.id === MAP_TAB)!;
   const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
   const isDesktop = useIsDesktop();
-  const keyboardOpen = useVirtualKeyboardOpen();
+  const keyboard = useVirtualKeyboard();
+  const keyboardOpen = !isDesktop && keyboard.open;
+  // Phones, keyboard up on the map (the "Where to?" search): keep the app its full height, so
+  // the map doesn't shrink and re-centre and nothing pinned to its bottom (tab bar, map sheet,
+  // map controls) rides up above the keyboard; the keyboard simply covers them. Other tabs
+  // shrink above the keyboard instead, so a focused field on them stays in view.
+  const freezeHeight = keyboardOpen && onMap ? keyboard.fullHeight : null;
   // desktop "Map update" sidebar starts collapsed; its open button sits left of the search bar
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const mapTab = TABS.find((t) => t.id === MAP_TAB)!;
@@ -190,7 +204,11 @@ export function AppShell({ user }: { user: ShellUser }) {
   }, []);
 
   return (
-    <main ref={mainRef} className="relative flex h-dvh w-full flex-col overflow-hidden bg-linen">
+    <main
+      ref={mainRef}
+      className="relative flex h-dvh w-full flex-col overflow-hidden bg-linen"
+      style={freezeHeight ? { height: freezeHeight } : undefined}
+    >
       <div
         className="relative min-h-0 flex-1"
         style={mapInsetVars(isDesktop, mapPanels.length > 0 && sidebarOpen)}
@@ -292,12 +310,13 @@ export function AppShell({ user }: { user: ShellUser }) {
         )}
       </div>
 
-      {/* phones: hidden while the on-screen keyboard is up, so it doesn't ride up above it */}
+      {/* phones: hidden while the on-screen keyboard is up, so it doesn't ride up above it (on the
+          map the app keeps its height instead, so the bar stays put under the keyboard) */}
       <TabBar
         activeId={active.id}
-        onSelect={selectTab}
+        onSelect={tapTab}
         badges={{ friends: unread }}
-        hidden={!isDesktop && keyboardOpen}
+        hidden={keyboardOpen && !onMap}
       />
     </main>
   );
@@ -318,13 +337,26 @@ function isTextField(el: Element | null): boolean {
 }
 
 /**
- * Whether the on-screen keyboard is up: a text field has focus and the visible viewport is
- * well short of its full height. Covers both the Android WebView (which resizes the page) and
- * mobile browsers (which shrink only the visual viewport). The full height is the largest seen
- * at the current width, so it resets on rotation.
+ * The on-screen keyboard: `open` when a text field has focus and the visible viewport is well
+ * short of its full height, and that full height (px). Covers both the Android WebView (which
+ * resizes the page) and mobile browsers (which shrink only the visual viewport). The full height
+ * is the largest seen at the current width, so it resets on rotation.
+ *
+ * While open it also marks `<html data-keyboard="open">`, so anything can react in CSS
+ * (globals.css hides `[data-hide-with-keyboard]` on phones) without importing the shell.
  */
-function useVirtualKeyboardOpen(): boolean {
-  const [open, setOpen] = useState(false);
+/** The current `env(safe-area-inset-bottom)` in px, read from a throwaway element. */
+function restingSafeBottom(): number {
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:fixed;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)";
+  document.body.appendChild(probe);
+  const px = parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+  probe.remove();
+  return px;
+}
+
+function useVirtualKeyboard(): { open: boolean; fullHeight: number } {
+  const [state, setState] = useState({ open: false, fullHeight: 0 });
   useEffect(() => {
     const vv = window.visualViewport;
     const height = () => vv?.height ?? window.innerHeight;
@@ -336,7 +368,17 @@ function useVirtualKeyboardOpen(): boolean {
         full = height();
       }
       full = Math.max(full, height());
-      setOpen(isTextField(document.activeElement) && full - height() > KEYBOARD_MIN_PX);
+      const open = isTextField(document.activeElement) && full - height() > KEYBOARD_MIN_PX;
+      setState((s) => (s.open === open && s.fullHeight === full ? s : { open, fullHeight: full }));
+      const root = document.documentElement;
+      if (open) {
+        root.dataset.keyboard = "open";
+      } else {
+        delete root.dataset.keyboard;
+        // the bottom safe-area inset at rest: Android drops it to 0 while the keyboard is up,
+        // which would shrink the tab bar (and so resize the map) under the keyboard
+        root.style.setProperty("--safe-bottom-at-rest", `${restingSafeBottom()}px`);
+      }
     };
     // on focusout the next field isn't focused yet; wait a frame so moving between fields doesn't flicker
     let frame = 0;
@@ -344,6 +386,7 @@ function useVirtualKeyboardOpen(): boolean {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(update);
     };
+    updateNextFrame();
     vv?.addEventListener("resize", update);
     window.addEventListener("resize", update);
     document.addEventListener("focusin", updateNextFrame);
@@ -354,9 +397,10 @@ function useVirtualKeyboardOpen(): boolean {
       window.removeEventListener("resize", update);
       document.removeEventListener("focusin", updateNextFrame);
       document.removeEventListener("focusout", updateNextFrame);
+      delete document.documentElement.dataset.keyboard;
     };
   }, []);
-  return open;
+  return state;
 }
 
 function Page({
@@ -473,6 +517,10 @@ function TabBar({
 }) {
   return (
     <nav
+      // a sideways swipe anywhere on the bar switches tabs, on the map too (see swipe.ts)
+      data-swipe-anywhere
+      // keyboard up: keep its resting height (globals.css), so the map above doesn't resize
+      data-tab-bar
       aria-label="Sections"
       hidden={hidden}
       className="relative z-30 bg-ink bg-gradient-to-b from-yale/40 to-ink pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] shadow-[0_-4px_16px_rgba(21,50,67,0.35)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-ivory/25 before:to-transparent"

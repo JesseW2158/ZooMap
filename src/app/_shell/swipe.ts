@@ -7,7 +7,8 @@ import { useEffect, useRef, type RefObject } from "react";
  * slides in beside it, and on release it either snaps to that tab or springs back. Past the
  * first or last tab the page resists and bounces back.
  *
- * On the map, where a drag pans the map, only a swipe that starts at the screen's edge counts.
+ * On the map, where a drag pans the map, only a swipe that starts at the screen's edge counts,
+ * or one that starts on something marked `data-swipe-anywhere` (the tab bar), which is never map.
  * A touch inside an input, a sideways scroller or anything marked `data-no-swipe` is left alone.
  * Overlays (chat, friend code) are portalled outside the shell, so they never see these listeners.
  *
@@ -124,7 +125,8 @@ export function useTabSwipe(rootRef: RefObject<HTMLElement | null>, opts: TabSwi
       const { activeId, mapId } = live.current;
       const w = width();
       const edge = t.clientX < EDGE_PX || t.clientX > w - EDGE_PX;
-      if (activeId === mapId && !edge) return reset();
+      const anywhere = e.target instanceof Element && e.target.closest("[data-swipe-anywhere]") !== null;
+      if (activeId === mapId && !edge && !anywhere) return reset();
       if (inNoSwipeZone(e.target, root)) return reset();
       start = { x: t.clientX, y: t.clientY, t: performance.now(), edge };
       axis = null;
