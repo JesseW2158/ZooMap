@@ -42,7 +42,8 @@ export function useIsDesktop(): boolean {
 export function mapInsetVars(isDesktop: boolean, open: boolean): CSSProperties {
   return {
     "--map-inset-left": isDesktop && open ? "20.75rem" : "0px",
-    "--map-inset-bottom": isDesktop ? "0px" : `${PEEK_PX}px`,
+    // Phones: the closed sheet is fully hidden (opened by its square button), so no peek to clear.
+    "--map-inset-bottom": "0px",
   } as CSSProperties;
 }
 
@@ -56,6 +57,8 @@ export interface MapSheetProps {
   onSidebarOpenChange: (open: boolean) => void;
   isDesktop: boolean;
   hidden?: boolean;
+  /** Phone only: the bottom sheet closes whenever this number changes (the Map tab was tapped). */
+  closeSignal?: number;
   children: ReactNode;
 }
 
@@ -119,11 +122,20 @@ function Sidebar({ title, Icon, accentBg, sidebarOpen, onSidebarOpenChange, hidd
   );
 }
 
-function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps) {
+function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children }: MapSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [drag, setDrag] = useState<number | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   const start = useRef<{ y: number; travel: number } | null>(null);
+
+  // tapping the Map tab button brings the sheet down (skips the first render)
+  const lastCloseSignal = useRef(closeSignal);
+  useEffect(() => {
+    if (closeSignal === lastCloseSignal.current) return;
+    lastCloseSignal.current = closeSignal;
+    setExpanded(false);
+  }, [closeSignal]);
 
   // anything that asks the map to show something closes the sheet so the map is visible
   useEffect(() => {
@@ -141,9 +153,57 @@ function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps)
     });
   }, []);
 
+  // Swiping down on the open sheet's content drags the sheet down like the header does, and closes
+  // it past SWIPE_PX, but only for a swipe that starts with the content scrolled to the top: a
+  // swipe that begins mid-list just scrolls, even if it reaches the top on the way.
+  // Native listeners: touchmove must be non-passive to stop the browser's own overscroll.
+  useEffect(() => {
+    const el = content.current;
+    if (!el || !expanded) return;
+    let startY = 0;
+    let travel = 0;
+    let pulling = false;
+    let pulled = 0;
+    let atTopAtStart = false;
+    const onStart = (e: TouchEvent) => {
+      startY = e.touches[0]!.clientY;
+      atTopAtStart = el.scrollTop <= 0;
+      travel = sheet.current?.offsetHeight ?? 0;
+      pulling = false;
+      pulled = 0;
+    };
+    const onMove = (e: TouchEvent) => {
+      const dy = e.touches[0]!.clientY - startY;
+      if (!pulling) {
+        if (!atTopAtStart || dy <= TAP_PX || el.scrollTop > 0) return;
+        pulling = true;
+        startY = e.touches[0]!.clientY; // start the drag from here, so the sheet does not jump
+      }
+      e.preventDefault();
+      pulled = Math.min(Math.max(e.touches[0]!.clientY - startY, 0), travel);
+      setDrag(pulled);
+    };
+    const onEnd = () => {
+      if (!pulling) return;
+      pulling = false;
+      setDrag(null);
+      if (pulled > SWIPE_PX) setExpanded(false);
+    };
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    el.addEventListener("touchcancel", onEnd);
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+    };
+  }, [expanded]);
+
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     const height = sheet.current?.offsetHeight ?? 0;
-    start.current = { y: e.clientY, travel: Math.max(0, height - PEEK_PX) };
+    start.current = { y: e.clientY, travel: height };
     e.currentTarget.setPointerCapture(e.pointerId);
     setDrag(0);
   };
@@ -174,17 +234,37 @@ function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps)
     }
   };
 
-  const base = expanded ? "0px" : `calc(100% - ${PEEK_PX}px)`;
+  // Closed, the sheet sits entirely below the map; only its square button (below) opens it.
+  const base = expanded ? "0px" : "100%";
   const transform = `translateY(calc(${base} + ${drag ?? 0}px))`;
+  const shown = expanded || drag !== null;
 
   return (
+    <>
+      {!expanded && !hidden ? (
+        <button
+          type="button"
+          aria-label={`Open ${title}`}
+          title={title}
+          onClick={() => setExpanded(true)}
+          // Bottom-right, level with the crowd legend's "Map: …" button (the legend's bottom offset).
+          className={`fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-[5] flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-md`}
+        >
+          {/* white frame with the small accent badge, like the icon in the sheet's header */}
+          <span className={`flex h-9 w-9 items-center justify-center rounded-xl text-ink ${accentBg}`}>
+            <Icon className="h-5 w-5" />
+          </span>
+        </button>
+      ) : null}
     <div
       ref={sheet}
       hidden={hidden}
       aria-label={title}
       role="region"
       style={{ transform, transition: drag === null ? "transform 260ms cubic-bezier(.2,.8,.2,1)" : "none" }}
-      className="absolute inset-x-0 bottom-0 z-[8] flex h-[80%] flex-col rounded-t-3xl bg-white text-ink shadow-[0_-8px_24px_rgba(21,50,67,0.25)]"
+      className={`absolute inset-x-0 bottom-0 z-[8] flex h-[80%] flex-col rounded-t-3xl bg-white text-ink ${
+        shown ? "shadow-[0_-8px_24px_rgba(21,50,67,0.25)]" : ""
+      }`}
     >
       <div
         role="button"
@@ -205,12 +285,14 @@ function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps)
         </SheetHeader>
       </div>
       <div
+        ref={content}
         inert={!expanded}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
       >
         {children}
       </div>
     </div>
+    </>
   );
 }
 

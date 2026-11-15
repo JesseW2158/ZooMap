@@ -5,9 +5,7 @@ import {
   acceptDisclosure,
   controllerStore,
   declineDisclosure,
-  fixProblem,
   openBackgroundSettings,
-  setSharing,
   skipBackgroundStep,
 } from "./controller";
 
@@ -17,16 +15,12 @@ const primary = "w-full rounded-xl bg-neutral-900 px-4 py-3 font-medium text-whi
 const secondary = "w-full rounded-xl bg-neutral-100 px-4 py-3 font-medium text-neutral-800";
 
 /**
- * The disclosure shown before Android's first location prompt, the follow-up about "Allow all
- * the time", and the small status pill that is the always-visible way to turn sharing off.
+ * The disclosure shown before Android's first location prompt and the follow-up about "Allow all
+ * the time". Sharing is turned on and off with the "Share my location" toggle in the map sheet.
  */
 export function LocationConsent() {
   const disclosureOpen = useStore(controllerStore, (s) => s.disclosureOpen);
   const backgroundOpen = useStore(controllerStore, (s) => s.backgroundOpen);
-  const sharing = useStore(controllerStore, (s) => s.sharing);
-  const mode = useStore(controllerStore, (s) => s.mode);
-  const problem = useStore(controllerStore, (s) => s.problem);
-
   return (
     <>
       {disclosureOpen ? (
@@ -46,7 +40,7 @@ export function LocationConsent() {
                 joined so you earn points.
               </li>
               <li>
-                <strong>How to turn it off:</strong> use the &quot;Sharing location&quot; button at the top of the map,
+                <strong>How to turn it off:</strong> use the &quot;Share my location&quot; toggle in the Map update sheet on the map,
                 or switch sharing off in the app. Android also lets you revoke location in Settings.
               </li>
             </ul>
@@ -89,45 +83,6 @@ export function LocationConsent() {
         </div>
       ) : null}
 
-      {mode === "sharing" || problem ? (
-        <div className="fixed right-3 top-[calc(env(safe-area-inset-top)+3.75rem)] z-40 flex max-w-[16rem] items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-neutral-900 shadow-md">
-          {problem === "permission-denied" ? (
-            <>
-              <span>Location is blocked.</span>
-              <button type="button" className="font-semibold underline" onClick={() => void fixProblem()}>
-                Settings
-              </button>
-            </>
-          ) : problem === "needs-permission" ? (
-            <>
-              <span>Location needs permission.</span>
-              <button type="button" className="font-semibold underline" onClick={() => void fixProblem()}>
-                Allow
-              </button>
-            </>
-          ) : problem === "no-token" || problem === "error" ? (
-            <>
-              <span>Sharing paused.</span>
-              <button type="button" className="font-semibold underline" onClick={() => void fixProblem()}>
-                Retry
-              </button>
-            </>
-          ) : (
-            <>
-              <span aria-hidden className="size-2 rounded-full bg-red-600" />
-              <span>Sharing location</span>
-              <button
-                type="button"
-                className="font-semibold underline"
-                disabled={sharing === false}
-                onClick={() => void setSharing(false)}
-              >
-                Turn off
-              </button>
-            </>
-          )}
-        </div>
-      ) : null}
     </>
   );
 }

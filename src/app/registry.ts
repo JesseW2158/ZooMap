@@ -18,6 +18,7 @@ import { FriendsInviteBanner } from "@/modules/friends/ui/InviteBanner";
 import { MessagesPanel } from "@/modules/friends/ui/Messages";
 import { FriendsPanel } from "@/modules/friends/ui/Panel";
 import { MobileBridge } from "@/modules/mobile/ui/Bridge";
+import { LocationStatus } from "@/modules/mobile/ui/LocationStatus";
 import { AlertsBell, AlertsCenter } from "@/modules/notifications/ui/Alerts";
 import { PlannedEventsLayer } from "@/modules/planned/ui/Layer";
 import { PlannedEventsPanel } from "@/modules/planned/ui/Panel";
@@ -36,6 +37,8 @@ export const registry: AppRegistry = {
     { id: "planned", Component: PlannedEventsLayer },
   ],
   panels: [
+    // Android app only: location problems as a banner at the top of the map sheet.
+    { id: "location-status", title: "Location", Component: LocationStatus },
     { id: "density", title: "Crowds", Component: DensityPanel },
     { id: "activities", title: "Activities", Component: ActivitiesPanel },
     { id: "schedule", title: "Schedule", Component: SchedulePanel },

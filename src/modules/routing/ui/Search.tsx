@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { Place } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import { useUserLocation } from "@/shared/platform";
 import { useMapStore } from "@/shared/ui";
+import { PlaceSheet } from "./PlaceSheet";
 import { BallIcon, BookIcon, BuildingIcon, CloseIcon, GoIcon, HomeIcon, PinIcon, SearchIcon, SparkleIcon, UtensilsIcon } from "./icons";
 
 const CATEGORY_LABEL: Record<Place["category"], string> = {
@@ -40,12 +41,25 @@ function PlaceIcon({ category, className }: { category: Place["category"]; class
  * selects the place and flies to it; tapping a building on the map selects it too. The card
  * hides while a route is shown (the route card takes over).
  */
+/** Phones: below the shell's 768 px desktop breakpoint, where a tapped building gets a bottom sheet. */
+const PHONE_QUERY = "(max-width: 767px)";
+function subscribePhone(onChange: () => void) {
+  const mq = window.matchMedia(PHONE_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+function useIsPhone(): boolean {
+  return useSyncExternalStore(subscribePhone, () => window.matchMedia(PHONE_QUERY).matches, () => false);
+}
+
 export function RoutingSearch() {
   const { selectedPlaceId, routeRequest, selectPlace, flyTo, requestRoute } = useMapStore();
   const { position, start: startLocation, status } = useUserLocation();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Place[]>([]);
   const [selected, setSelected] = useState<Place | null>(null);
+  const isPhone = useIsPhone();
+  const closeCard = useCallback(() => selectPlace(null), [selectPlace]);
 
   useEffect(() => {
     if (!q.trim()) return;
@@ -159,7 +173,19 @@ export function RoutingSearch() {
         </ul>
       ) : null}
 
-      {card && !shown.length ? (
+      {/* phones: the building gets a bottom sheet instead of the card under the search bar */}
+      {card && !shown.length && isPhone ? (
+        <PlaceSheet
+          key={card.id}
+          place={card}
+          categoryLabel={CATEGORY_LABEL[card.category]}
+          icon={<PlaceIcon category={card.category} className="h-5 w-5" />}
+          onGo={() => directions(card)}
+          onClose={closeCard}
+        />
+      ) : null}
+
+      {card && !shown.length && !isPhone ? (
         <div className="animate-rise mt-2 flex items-center gap-3 rounded-2xl bg-white p-3 text-ink shadow-xl shadow-ink/20 ring-1 ring-ink/5">
           <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-jasmine to-sand text-ink shadow-sm">
             <PlaceIcon category={card.category} className="h-5 w-5" />

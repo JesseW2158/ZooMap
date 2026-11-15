@@ -80,7 +80,7 @@ const TABS: Tab[] = [
     label: "Map",
     Icon: MapIcon,
     // shown on the map itself, in the sidebar (desktop) or swipe-up sheet (phone)
-    panelIds: ["density"],
+    panelIds: ["location-status", "density"],
     accent: {
       bg: "bg-jasmine",
       text: "text-jasmine",
@@ -158,6 +158,12 @@ function panelsFor(tab: Tab): PanelEntry[] {
  */
 export function AppShell({ user }: { user: ShellUser }) {
   const [activeId, setActiveId] = useState<string>(MAP_TAB);
+  // Bumped whenever the Map tab button is tapped; the phone's map sheet closes on each bump.
+  const [sheetCloseSignal, setSheetCloseSignal] = useState(0);
+  const selectTab = (id: string) => {
+    if (id === MAP_TAB) setSheetCloseSignal((n) => n + 1);
+    setActiveId(id);
+  };
   const active = TABS.find((t) => t.id === activeId) ?? TABS.find((t) => t.id === MAP_TAB)!;
   const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
@@ -238,6 +244,7 @@ export function AppShell({ user }: { user: ShellUser }) {
             sidebarOpen={sidebarOpen}
             onSidebarOpenChange={setSidebarOpen}
             hidden={!onMap}
+            closeSignal={sheetCloseSignal}
           >
             <div className="space-y-6">
               {mapPanels.map(({ id, Component }) => (
@@ -270,7 +277,7 @@ export function AppShell({ user }: { user: ShellUser }) {
         ) : null}
       </div>
 
-      <TabBar activeId={active.id} onSelect={setActiveId} badges={{ messages: unread }} />
+      <TabBar activeId={active.id} onSelect={selectTab} badges={{ messages: unread }} />
     </main>
   );
 }
