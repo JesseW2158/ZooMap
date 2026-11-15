@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   Activity as ActivitySchema,
   ActivityCategory,
@@ -460,7 +460,7 @@ const DURATIONS = [
 
 function HostForm({ initialCategory, onDone }: { initialCategory: Activity["category"]; onDone: () => void }) {
   const { position } = useUserLocation();
-  const { selectedPlaceId, flyTo } = useMapStore();
+  const { selectedPlaceId, flyTo, selectPlace } = useMapStore();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Activity["category"]>(initialCategory);
@@ -472,10 +472,30 @@ function HostForm({ initialCategory, onDone }: { initialCategory: Activity["cate
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  // The chosen place and the map's selection are one choice: tapping a chip selects it on the
+  // map, and tapping a building on the map picks it here.
+  const placesRef = useRef<Place[] | null>(null);
+  const placeIdRef = useRef<string | null>(null);
+  /** The query the shown list was fetched for ("" = nearby suggestions). */
+  const listQueryRef = useRef<string | null>(null);
+  useEffect(() => {
+    placesRef.current = places;
+    placeIdRef.current = placeId;
+  });
+  const pickPlace = (id: string) => {
+    setPlaceId(id);
+    selectPlace(id);
+  };
+
   // Suggestions: the place selected on the map first, then the nearest. Typing searches by name.
   const lat = position?.lat;
   const lng = position?.lng;
   useEffect(() => {
+    // A chip tap selects that place on the map; it is already listed, so keep the list as it is.
+    if (!query.trim() && listQueryRef.current === "" && selectedPlaceId && placesRef.current?.some((p) => p.id === selectedPlaceId)) {
+      setPlaceId(selectedPlaceId);
+      return;
+    }
     const controller = new AbortController();
     const timer = setTimeout(
       async () => {
@@ -495,8 +515,15 @@ function HostForm({ initialCategory, onDone }: { initialCategory: Activity["cate
         }
         try {
           const result = await apiFetch(path, { schema: PlaceList, signal: controller.signal });
-          setPlaces(result);
-          setPlaceId((current) => (current && result.some((p) => p.id === current) ? current : (result[0]?.id ?? null)));
+          const current = placeIdRef.current;
+          const listed = (id: string | null) => !!id && result.some((p) => p.id === id);
+          // keep the user's pick in a refreshed suggestion list even if it would drop out
+          const kept = current && !q && !listed(current) ? placesRef.current?.find((p) => p.id === current) : undefined;
+          const list = kept ? [kept, ...result] : result;
+          listQueryRef.current = q;
+          setPlaces(list);
+          // the map's selection wins when it is listed; then the user's pick; then the first suggestion
+          setPlaceId(!q && selectedPlaceId && listed(selectedPlaceId) ? selectedPlaceId : current && list.some((p) => p.id === current) ? current : (list[0]?.id ?? null));
         } catch (cause) {
           if (!controller.signal.aborted) setMessage(errorText(cause));
         }
@@ -590,7 +617,7 @@ function HostForm({ initialCategory, onDone }: { initialCategory: Activity["cate
           {places === null ? <span className="text-yale">Loading…</span> : null}
           {places?.length === 0 ? <span className="text-yale">No places match.</span> : null}
           {places?.map((p) => (
-            <button key={p.id} type="button" aria-pressed={p.id === placeId} onClick={() => setPlaceId(p.id)} className={chip(p.id === placeId)}>
+            <button key={p.id} type="button" aria-pressed={p.id === placeId} onClick={() => pickPlace(p.id)} className={chip(p.id === placeId)}>
               <span className="inline-flex items-center gap-1">
                 {p.id === selectedPlaceId ? <PinIcon className="h-3.5 w-3.5" /> : null}
                 {p.name}
