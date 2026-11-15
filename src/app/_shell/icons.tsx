@@ -87,8 +87,22 @@ export function PointsIcon({ className }: IconProps) {
   );
 }
 
-/** A speech bubble. */
+/** A robot head with an antenna: the campus assistant. */
 export function AskIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="4" y="8" width="16" height="12" rx="3" />
+      <path d="M12 8V4.5" />
+      <circle cx="12" cy="3.5" r="1" />
+      <path d="M2 13v3M22 13v3" />
+      <path d="M9 13h.01M15 13h.01" strokeWidth={2.8} />
+      <path d="M9.5 16.5h5" />
+    </svg>
+  );
+}
+
+/** A speech bubble with dots: direct messages with friends. */
+export function MessagesIcon({ className }: IconProps) {
   return (
     <svg {...base} className={className}>
       <path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-4.5 3.5V17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
