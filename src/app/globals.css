@@ -60,3 +60,19 @@ body {
 .maplibregl-ctrl-bottom-left {
   margin-bottom: var(--map-attrib-clear);
 }
+
+/*
+ * Phones (below the shell's 768 px desktop breakpoint): the OpenStreetMap attribution sits in the
+ * strip between the map sheet's square button (bottom-right, level with the legend) and the tab
+ * bar: 4 px above the bar, right-aligned with the button (right-3 = 0.75rem).
+ */
+@media (max-width: 767px) {
+  .maplibregl-ctrl-bottom-right {
+    margin-bottom: 0;
+  }
+  /* one class more specific than MapLibre's own `.maplibregl-ctrl-bottom-right .maplibregl-ctrl`,
+     whose stylesheet loads after this one */
+  .maplibregl-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib {
+    margin: 0 0.75rem 4px 0;
+  }
+}
