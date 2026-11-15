@@ -60,7 +60,7 @@ function systemNotify(t: Toast, settings: AlertSettings | undefined) {
   if (isNativeShell() || typeof Notification === "undefined" || Notification.permission !== "granted") return;
   try {
     const hide = settings?.hideDetails;
-    const n = new Notification(hide ? "ZooMap" : t.title, { body: hide ? `${KIND[t.kind].label} reminder` : t.body, tag: t.id });
+    const n = new Notification(hide ? "MinuteMap" : t.title, { body: hide ? `${KIND[t.kind].label} reminder` : t.body, tag: t.id });
     n.onclick = () => {
       window.focus();
       if (t.placeId) mapActions.requestRoute(t.placeId);
@@ -487,11 +487,11 @@ function Settings({ settings }: { settings: AlertSettings }) {
       {!isNativeShell() ? (
         <Group title="This device">
           {permission === "granted" ? (
-            <p className="text-xs text-emerald-700">Pop-up notifications are on for this browser. They work while ZooMap is open in a tab.</p>
+            <p className="text-xs text-emerald-700">Pop-up notifications are on for this browser. They work while MinuteMap is open in a tab.</p>
           ) : permission === "denied" ? (
             <p className="text-xs text-neutral-600">Notifications are blocked for this site. Allow them in the browser&apos;s site settings to get pop-ups outside the tab.</p>
           ) : permission === "unsupported" ? (
-            <p className="text-xs text-neutral-600">This browser cannot show notifications; alerts appear inside ZooMap.</p>
+            <p className="text-xs text-neutral-600">This browser cannot show notifications; alerts appear inside MinuteMap.</p>
           ) : (
             <button
               type="button"

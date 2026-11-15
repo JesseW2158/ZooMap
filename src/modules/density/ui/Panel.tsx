@@ -48,7 +48,7 @@ export function DensityPanel() {
           <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-lavender/30 blur-xl" />
           <h2 className="relative text-base font-bold tracking-tight">Help show how busy campus is</h2>
           <p className="relative leading-relaxed text-yale">
-            If you share your location, ZooMap records which building you are near, about every minute, and counts you in the crowd
+            If you share your location, MinuteMap records which building you are near, about every minute, and counts you in the crowd
             map. It keeps only that building and an approximate area, never your exact position, and never a history. It forgets you
             ten minutes after your last update, or at once when you switch sharing off. Other people see only totals per building.
           </p>

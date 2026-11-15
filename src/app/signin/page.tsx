@@ -5,7 +5,7 @@ import { getSessionUser, seedUsers, signIn } from "@/modules/auth";
 // eslint-disable-next-line no-restricted-imports -- client-only component; the module index is server code
 import { ShellSignIn } from "@/modules/mobile/ui/ShellSignIn";
 
-export const metadata = { title: "Sign in · ZooMap" };
+export const metadata = { title: "Sign in · MinuteMap" };
 
 const ERRORS: Record<string, string> = {
   AccessDenied: "That account is not allowed. Sign in with your UMass Google account.",

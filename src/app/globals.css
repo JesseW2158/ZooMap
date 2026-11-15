@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * ZooMap palette. Calm navy and warm off-whites so the map's own colours (heatmap,
+ * MinuteMap palette. Calm navy and warm off-whites so the map's own colours (heatmap,
  * maroon selection, blue route) stay the loudest thing on screen. Use as Tailwind
  * classes: bg-ink, text-yale, border-ash, bg-ivory, bg-linen.
  */
