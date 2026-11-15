@@ -153,7 +153,9 @@ export function AppShell({ user }: { user: ShellUser }) {
   const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
   const isDesktop = useIsDesktop();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const keyboardOpen = useVirtualKeyboardOpen();
+  // desktop "Map update" sidebar starts collapsed; its open button sits left of the search bar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const mapTab = TABS.find((t) => t.id === MAP_TAB)!;
   const mapPanels = panelsFor(mapTab);
 
@@ -291,9 +293,71 @@ export function AppShell({ user }: { user: ShellUser }) {
         )}
       </div>
 
-      <TabBar activeId={active.id} onSelect={selectTab} badges={{ friends: unread }} />
+      {/* phones: hidden while the on-screen keyboard is up, so it doesn't ride up above it */}
+      <TabBar
+        activeId={active.id}
+        onSelect={selectTab}
+        badges={{ friends: unread }}
+        hidden={!isDesktop && keyboardOpen}
+      />
     </main>
   );
+}
+
+/** Keyboard height below which a viewport shrink is not counted as the on-screen keyboard. */
+const KEYBOARD_MIN_PX = 150;
+const NON_TEXT_INPUTS = new Set([
+  "button", "checkbox", "color", "file", "hidden", "image", "radio", "range", "reset", "submit",
+]);
+
+function isTextField(el: Element | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  if (el.isContentEditable) return true;
+  if (el instanceof HTMLTextAreaElement) return !el.readOnly;
+  if (el instanceof HTMLInputElement) return !el.readOnly && !NON_TEXT_INPUTS.has(el.type);
+  return false;
+}
+
+/**
+ * Whether the on-screen keyboard is up: a text field has focus and the visible viewport is
+ * well short of its full height. Covers both the Android WebView (which resizes the page) and
+ * mobile browsers (which shrink only the visual viewport). The full height is the largest seen
+ * at the current width, so it resets on rotation.
+ */
+function useVirtualKeyboardOpen(): boolean {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const height = () => vv?.height ?? window.innerHeight;
+    let width = window.innerWidth;
+    let full = height();
+    const update = () => {
+      if (window.innerWidth !== width) {
+        width = window.innerWidth;
+        full = height();
+      }
+      full = Math.max(full, height());
+      setOpen(isTextField(document.activeElement) && full - height() > KEYBOARD_MIN_PX);
+    };
+    // on focusout the next field isn't focused yet; wait a frame so moving between fields doesn't flicker
+    let frame = 0;
+    const updateNextFrame = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+    vv?.addEventListener("resize", update);
+    window.addEventListener("resize", update);
+    document.addEventListener("focusin", updateNextFrame);
+    document.addEventListener("focusout", updateNextFrame);
+    return () => {
+      cancelAnimationFrame(frame);
+      vv?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
+      document.removeEventListener("focusin", updateNextFrame);
+      document.removeEventListener("focusout", updateNextFrame);
+    };
+  }, []);
+  return open;
 }
 
 function Page({
@@ -324,7 +388,8 @@ function Page({
           <div className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70" />
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-ivory/20 to-transparent" />
         </div>
-        <div className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
+        {/* data-page-hero / data-page-body: a panel may move these (the friends pull-down code) */}
+        <div data-page-hero className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
           <span
             className={`animate-pop flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-ink shadow-lg shadow-black/25 ring-4 ring-ivory/15 ${accent.bg}`}
           >
@@ -337,7 +402,7 @@ function Page({
           <AccountButton user={user} />
         </div>
       </header>
-      <div className="relative mx-auto -mt-7 flex w-full max-w-2xl flex-1 flex-col gap-3 px-4 pb-8">
+      <div data-page-body className="relative mx-auto -mt-7 flex w-full max-w-2xl flex-1 flex-col gap-3 px-4 pb-8">
         {children}
       </div>
     </div>
@@ -400,14 +465,17 @@ function TabBar({
   activeId,
   onSelect,
   badges,
+  hidden,
 }: {
   activeId: string;
   onSelect: (id: string) => void;
   badges: Record<string, number>;
+  hidden: boolean;
 }) {
   return (
     <nav
       aria-label="Sections"
+      hidden={hidden}
       className="relative z-30 bg-ink bg-gradient-to-b from-yale/40 to-ink pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] shadow-[0_-4px_16px_rgba(21,50,67,0.35)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-ivory/25 before:to-transparent"
     >
       <div

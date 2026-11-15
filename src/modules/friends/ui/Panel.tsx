@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { InviteResult, Profile, type Conversation, type Friend, type Profile as ProfileT } from "@/shared/contracts";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { InviteResult, type Conversation, type Friend } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
-import { errorText, refreshFriends, setMyProfile, useFriendsFeed } from "./feed";
+import { errorText, refreshFriends, useFriendsFeed } from "./feed";
 import { ChatOverlay } from "./Chat";
 import { closeChat, openChat, useConversations } from "./messages-feed";
 import { FriendCodeOverlay, Overlay } from "./overlays";
-import { ChatIcon, CheckIcon, HeartIcon, MailIcon, PencilIcon, QrAddIcon, SendIcon, UserMinusIcon, UserPlusIcon } from "./icons";
+import { PullDownLayer, scrollParent, useIsPhone, usePullCode } from "./PullCode";
+import { ChatIcon, CheckIcon, HeartIcon, MailIcon, QrAddIcon, SendIcon, UserMinusIcon, UserPlusIcon } from "./icons";
 import { Avatar, ContactButtons, InviteCard } from "./parts";
 
 /**
- * Chat: you (with your friend code and Edit as symbols), pending invites, and every friend in one
- * list, most recent conversation first. Tapping a friend opens your chat with them; tapping their
+ * Chat: pending invites and every friend in one list (on phones your friend code pulls down from
+ * the top; your own profile is edited in Settings), most recent conversation first. Tapping a friend opens your chat with them; tapping their
  * avatar (or their name in the chat) opens their profile. There is no search: the only way to add
  * someone is their code.
  */
@@ -20,40 +21,24 @@ export function FriendsPanel() {
   const { me, friends, invites, current, error } = useFriendsFeed();
   const { conversations, openWith } = useConversations();
   const [overlay, setOverlay] = useState<"code" | null>(null);
-  const [editing, setEditing] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const profile = profileId ? (friends?.find((f) => f.userId === profileId) ?? null) : null;
+  // phones: pulling the whole page down (or the Friend Code button) opens your code full screen
+  // on a dark backdrop, with Scan on it, and swiping up goes back; elsewhere the button opens the
+  // overlay with your code and the scanner
+  const isPhone = useIsPhone();
+  const [scroller, setScroller] = useState<HTMLElement | null>(null);
+  const rootRef = useCallback((el: HTMLDivElement | null) => setScroller(el ? scrollParent(el) : null), []);
+  const pullCode = usePullCode(scroller, isPhone);
+  const showCode = () => (isPhone ? pullCode.open() : setOverlay("code"));
 
   useEffect(() => {
     void refreshFriends();
   }, []);
 
   return (
-    <div className="space-y-5 text-sm text-ink">
-      {me && editing ? (
-        <ProfileEditor me={me} onDone={() => setEditing(false)} />
-      ) : (
-        <section className="flex items-center gap-3">
-          {me ? (
-            <Avatar person={me} size={56} />
-          ) : (
-            <span className="h-14 w-14 animate-pulse rounded-full bg-linen" />
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-bold">{me?.name ?? " "}</p>
-            {me?.pronouns ? <p className="truncate text-yale">{me.pronouns}</p> : null}
-          </div>
-          <RoundButton label="Friend code: show yours or scan a friend's" onClick={() => setOverlay("code")} primary>
-            <QrAddIcon className="h-5 w-5" />
-          </RoundButton>
-          {me ? (
-            <RoundButton label="Edit" onClick={() => setEditing(true)}>
-              <PencilIcon className="h-5 w-5" />
-            </RoundButton>
-          ) : null}
-        </section>
-      )}
-
+    <div ref={rootRef} className="space-y-5 text-sm text-ink">
+      <PullDownLayer scroller={isPhone ? scroller : null} state={pullCode} />
       {error ? <p className="text-red-600">{error}</p> : null}
 
       {invites.length ? (
@@ -69,7 +54,7 @@ export function FriendsPanel() {
         friends={friends}
         conversations={conversations}
         current={current?.participation ? current.activity : null}
-        onAdd={() => setOverlay("code")}
+        onAdd={showCode}
         onProfile={setProfileId}
       />
 
@@ -94,22 +79,6 @@ export function FriendsPanel() {
 
       {overlay ? <FriendCodeOverlay me={me} onClose={() => setOverlay(null)} /> : null}
     </div>
-  );
-}
-
-function RoundButton({ label, onClick, primary = false, children }: { label: string; onClick: () => void; primary?: boolean; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
-        primary ? "bg-ink text-ivory hover:bg-yale" : "bg-linen text-ink hover:bg-ash/50"
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -230,9 +199,8 @@ function FriendsList({
 
   return (
     <section className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <SectionLabel Icon={ChatIcon} text="Chats" count={friends?.length} />
-        {current && friends?.length ? (
+      {current && friends?.length ? (
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={() => {
@@ -250,8 +218,8 @@ function FriendsList({
               </>
             )}
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {rows === null ? (
         <ul className="space-y-2">
@@ -407,65 +375,5 @@ function UnfriendButton({ friend, onDone }: { friend: Friend; onDone?: () => voi
       <UserMinusIcon className="h-4 w-4" />
       {armed ? "Tap again" : "Unfriend"}
     </button>
-  );
-}
-
-function ProfileEditor({ me, onDone }: { me: ProfileT; onDone: () => void }) {
-  const [pronouns, setPronouns] = useState(me.pronouns ?? "");
-  const [phone, setPhone] = useState(me.phone ?? "");
-  const [email, setEmail] = useState(me.email ?? "");
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setMessage(null);
-    try {
-      const saved = await apiFetch("/api/profile/me", {
-        method: "PUT",
-        schema: Profile,
-        body: {
-          pronouns: pronouns.trim() || null,
-          phone: phone.trim() || null,
-          contactEmail: email.trim() || null,
-        },
-      });
-      setMyProfile(saved);
-      onDone();
-    } catch (cause) {
-      setMessage(errorText(cause));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const input = "w-full rounded-xl border-0 bg-linen px-3 py-2.5 text-ink placeholder:text-yale/50 focus:outline-2 focus:outline-ink";
-  return (
-    <form onSubmit={save} className="space-y-3">
-      <div className="flex items-center gap-3">
-        <Avatar person={me} size={40} />
-        <p className="min-w-0 flex-1 truncate font-semibold">{me.name}</p>
-        <button type="button" onClick={onDone} className="rounded-full bg-linen px-3 py-1.5 font-medium">
-          Cancel
-        </button>
-      </div>
-      <label className="block space-y-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-yale">Pronouns</span>
-        <input maxLength={40} value={pronouns} onChange={(e) => setPronouns(e.target.value)} className={input} placeholder="she/her, they/them…" />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-yale">Phone</span>
-        <input type="tel" inputMode="tel" maxLength={30} value={phone} onChange={(e) => setPhone(e.target.value)} className={input} placeholder="(413) 555-0100" />
-      </label>
-      <label className="block space-y-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-yale">Contact email</span>
-        <input type="email" maxLength={200} value={email} onChange={(e) => setEmail(e.target.value)} className={input} placeholder="Shown to friends" />
-      </label>
-      {message ? <p className="text-red-600">{message}</p> : null}
-      <button type="submit" disabled={busy} className="w-full rounded-full bg-ink px-4 py-3 font-semibold text-ivory disabled:opacity-50">
-        {busy ? "Saving…" : "Save profile"}
-      </button>
-    </form>
   );
 }

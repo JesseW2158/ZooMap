@@ -36,6 +36,18 @@ export const CloseIcon = ({ className }: P) => (
   </svg>
 );
 
+export const ChevronUpIcon = ({ className }: P) => (
+  <svg {...base} className={className}>
+    <path d="M6 15l6-6 6 6" />
+  </svg>
+);
+
+export const ChevronDownIcon = ({ className }: P) => (
+  <svg {...base} className={className}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
+
 /** A navigation arrow: directions. */
 export const GoIcon = ({ className }: P) => (
   <svg {...solid} className={className}>
