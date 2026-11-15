@@ -6,6 +6,9 @@ import type { NextConfig } from "next";
 // build fails. See .10x/decisions.md.
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The dev-only "N" badge sat on top of a tab button in every corner (search, bell and
+  // account, Activities, Ask). Runtime errors still open Next's error overlay.
+  devIndicators: false,
 };
 
 export default nextConfig;
