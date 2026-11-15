@@ -84,27 +84,14 @@ function at(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+/**
+ * Headless (mounted once): polls the inbox, pops up new alerts and fires the ones known in
+ * advance on time. The bell itself is `AlertsBell`, which the shell places beside the account.
+ */
 export function AlertsCenter() {
   const data = useStore(store, (s) => s.data);
   const toasts = useStore(store, (s) => s.toasts);
-  const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"inbox" | "settings">("inbox");
   const seen = useRef<Set<string> | null>(null);
-  const bellRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  // The inbox drops over the same corner as the account menu, so a tap anywhere else closes it
-  // (opening the account menu therefore closes the inbox, and the two are never open together).
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: PointerEvent) => {
-      const t = e.target as Node | null;
-      if (t && (bellRef.current?.contains(t) || panelRef.current?.contains(t))) return;
-      setOpen(false);
-    };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, [open]);
 
   usePolling((signal) => load(signal), { intervalMs: POLL_MS });
 
@@ -144,6 +131,67 @@ export function AlertsCenter() {
     return () => timers.forEach(clearTimeout);
   }, [upcoming]);
 
+  if (!toasts.length) return null;
+  return (
+    <div className="pointer-events-none absolute left-3 right-3 top-[calc(max(0.75rem,env(safe-area-inset-top))+3.5rem)] z-30 flex flex-col items-center gap-2 md:items-end">
+      {toasts.map((t) => (
+        <div key={t.id} role="status" className="pointer-events-auto flex w-full max-w-md items-start gap-2 rounded-xl border border-neutral-200 bg-white p-3 text-neutral-900 shadow-lg">
+          <span className="text-lg leading-none" aria-hidden>{KIND[t.kind].icon}</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">{t.title}</p>
+            <p className="text-xs text-neutral-600">{t.body}</p>
+            {t.placeId ? (
+              <button
+                type="button"
+                onClick={() => {
+                  mapActions.requestRoute(t.placeId!);
+                  store.set((s) => ({ toasts: s.toasts.filter((x) => x.id !== t.id) }));
+                }}
+                className="mt-1 text-xs font-semibold text-[#881c1c] hover:underline"
+              >
+                Show route →
+              </button>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => store.set((s) => ({ toasts: s.toasts.filter((x) => x.id !== t.id) }))}
+            className="px-1 text-neutral-400 hover:text-neutral-700"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The bell and its inbox. The shell renders it in the top bar beside the account button, on
+ * the map and in every page header, so it lines up with the account and scrolls with the
+ * header. The inbox drops below it, aligned with the account button's right edge.
+ */
+export function AlertsBell() {
+  const data = useStore(store, (s) => s.data);
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState<"inbox" | "settings">("inbox");
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // The inbox drops over the same corner as the account menu, so a tap anywhere else closes it
+  // (opening the account menu therefore closes the inbox, and the two are never open together).
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: PointerEvent) => {
+      const t = e.target as Node | null;
+      if (t && (bellRef.current?.contains(t) || panelRef.current?.contains(t))) return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+
   const unread = data?.unread ?? 0;
 
   const openInbox = () => {
@@ -158,7 +206,7 @@ export function AlertsCenter() {
   };
 
   return (
-    <>
+    <div className="relative">
       <button
         type="button"
         ref={bellRef}
@@ -166,7 +214,7 @@ export function AlertsCenter() {
         aria-label={unread ? `Alerts, ${unread} new` : "Alerts"}
         aria-expanded={open}
         title="Alerts"
-        className="pointer-events-auto absolute right-[3.75rem] top-[max(0.75rem,env(safe-area-inset-top))] z-30 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-md ring-2 ring-ivory/80 hover:bg-ivory"
+        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-md ring-2 ring-ivory/80 hover:bg-ivory"
       >
         <BellIcon />
         {unread > 0 ? (
@@ -177,7 +225,11 @@ export function AlertsCenter() {
       </button>
 
       {open ? (
-        <div ref={panelRef} className="pointer-events-auto absolute right-3 top-[calc(max(0.75rem,env(safe-area-inset-top))+3.25rem)] z-40 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-neutral-900 shadow-xl">
+        // right edge lines up with the account button (one button and a gap to the right)
+        <div
+          ref={panelRef}
+          className="absolute -right-12 top-[calc(100%+0.5rem)] z-50 flex max-h-[70dvh] w-[min(23rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left text-neutral-900 shadow-xl"
+        >
           <div className="flex items-center gap-1 border-b border-neutral-100 px-3 py-2">
             <h2 className="flex-1 text-sm font-semibold">{view === "inbox" ? "Alerts" : "Alert settings"}</h2>
             <button
@@ -202,41 +254,7 @@ export function AlertsCenter() {
           </div>
         </div>
       ) : null}
-
-      {toasts.length ? (
-        <div className="pointer-events-none absolute left-3 right-16 top-[calc(max(0.75rem,env(safe-area-inset-top))+3.5rem)] z-30 flex flex-col items-start gap-2">
-          {toasts.map((t) => (
-            <div key={t.id} role="status" className="pointer-events-auto flex w-full max-w-md items-start gap-2 rounded-xl border border-neutral-200 bg-white p-3 text-neutral-900 shadow-lg">
-              <span className="text-lg leading-none" aria-hidden>{KIND[t.kind].icon}</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">{t.title}</p>
-                <p className="text-xs text-neutral-600">{t.body}</p>
-                {t.placeId ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      mapActions.requestRoute(t.placeId!);
-                      store.set((s) => ({ toasts: s.toasts.filter((x) => x.id !== t.id) }));
-                    }}
-                    className="mt-1 text-xs font-semibold text-[#881c1c] hover:underline"
-                  >
-                    Show route →
-                  </button>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                aria-label="Dismiss"
-                onClick={() => store.set((s) => ({ toasts: s.toasts.filter((x) => x.id !== t.id) }))}
-                className="px-1 text-neutral-400 hover:text-neutral-700"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </>
+    </div>
   );
 }
 

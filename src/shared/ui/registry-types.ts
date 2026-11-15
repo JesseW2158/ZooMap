@@ -28,4 +28,9 @@ export interface AppRegistry {
   topSlot: RegistryEntry[];
   /** Mounted once, render nothing visible (for example the Android location bridge). */
   headless: RegistryEntry[];
+  /**
+   * Added after Phase 0 (optional): small round buttons the shell places just left of the
+   * account button, in the map's top bar and in every page header (the alerts bell).
+   */
+  actions?: RegistryEntry[];
 }

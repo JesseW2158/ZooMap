@@ -196,9 +196,8 @@ export function AppShell({ user }: { user: ShellUser }) {
               <Component key={id} />
             ))}
           </div>
-          {/* room for the alerts bell (notifications, a headless entry pinned beside the account) */}
-          <div aria-hidden className="w-10 shrink-0" />
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto flex items-center gap-2">
+            <ShellActions />
             <AccountButton user={user} />
           </div>
         </div>
@@ -284,6 +283,7 @@ function Page({
           <h1 className="min-w-0 flex-1 truncate text-xl font-bold leading-tight tracking-tight">
             {label}
           </h1>
+          <ShellActions />
           <AccountButton user={user} />
         </div>
       </header>
@@ -417,6 +417,17 @@ function TabBar({
         })}
       </div>
     </nav>
+  );
+}
+
+/** The registry's small buttons (the alerts bell), left of the account button. */
+function ShellActions() {
+  return (
+    <>
+      {(registry.actions ?? []).map(({ id, Component }) => (
+        <Component key={id} />
+      ))}
+    </>
   );
 }
 
