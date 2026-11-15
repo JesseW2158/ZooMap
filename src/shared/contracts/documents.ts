@@ -233,3 +233,21 @@ export const NotificationSettingsDoc = AlertSettings.omit({ pausedUntil: true })
   updatedAt: z.date(),
 });
 export type NotificationSettingsDoc = z.infer<typeof NotificationSettingsDoc>;
+
+/** Planned events: announced ahead of time. `goingIds` is never returned, only its length. */
+export const PlannedEventDoc = z.object({
+  _id: id,
+  hostId: id,
+  hostName: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  placeId: id,
+  category: ActivityCategory,
+  startsAt: z.date(),
+  endsAt: z.date(),
+  capacity: z.number().int().positive().optional(),
+  goingIds: z.array(id),
+  createdAt: z.date(),
+  cancelledAt: z.date().optional(),
+});
+export type PlannedEventDoc = z.infer<typeof PlannedEventDoc>;

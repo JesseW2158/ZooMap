@@ -10,7 +10,8 @@ import { Id, IsoTime } from "./common";
 
 export const AlertKind = z.enum([
   "nearby", // an activity close to where you are
-  "big-event", // a large activity is on
+  "big-event", // a large activity is on, or a large planned event is coming up
+  "going", // a planned event you said you are going to
   "exam", // midterm, final, quiz from the calendar
   "project", // project, paper, presentation
   "assignment", // any other deadline
