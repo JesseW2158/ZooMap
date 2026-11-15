@@ -29,6 +29,9 @@ const CATEGORY_ICON: Record<Place["category"], IconC> = {
   other: PinIcon,
 };
 
+const placeCategoryLabel = (place: Place) => CATEGORY_LABEL[place.category];
+const placeSheetIcon = (place: Place) => <PlaceIcon category={place.category} className="h-5 w-5" />;
+
 function PlaceIcon({ category, className }: { category: Place["category"]; className?: string }) {
   const Icon = CATEGORY_ICON[category];
   return <Icon className={className} />;
@@ -174,14 +177,15 @@ export function RoutingSearch() {
         </ul>
       ) : null}
 
-      {/* phones: the building gets a bottom sheet instead of the card under the search bar */}
-      {card && !shown.length && isPhone ? (
+      {/* phones: the building gets a bottom sheet instead of the card under the search bar. It
+          stays mounted and is told which building (or none), so it can slide in and out and
+          cross-fade between buildings. */}
+      {isPhone ? (
         <PlaceSheet
-          key={card.id}
-          place={card}
-          categoryLabel={CATEGORY_LABEL[card.category]}
-          icon={<PlaceIcon category={card.category} className="h-5 w-5" />}
-          onGo={() => directions(card)}
+          place={card && !shown.length ? card : null}
+          categoryLabel={placeCategoryLabel}
+          icon={placeSheetIcon}
+          onGo={directions}
           onClose={closeCard}
         />
       ) : null}

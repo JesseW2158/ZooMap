@@ -189,3 +189,11 @@ body {
     padding-bottom: max(1.25rem, calc(var(--safe-bottom-at-rest, 0px) + 0.75rem)) !important;
   }
 }
+
+/* The building sheet's first slide up from below the screen (routing/ui/PlaceSheet.tsx); after
+   that it stays mounted and slides with a transition. */
+@keyframes zm-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
