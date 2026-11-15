@@ -17,7 +17,7 @@ import { DensityPanel } from "@/modules/density/ui/Panel";
 import { FriendsInviteBanner } from "@/modules/friends/ui/InviteBanner";
 import { FriendsPanel } from "@/modules/friends/ui/Panel";
 import { MobileBridge } from "@/modules/mobile/ui/Bridge";
-import { AlertsCenter } from "@/modules/notifications/ui/Alerts";
+import { AlertsBell, AlertsCenter } from "@/modules/notifications/ui/Alerts";
 import { PlannedEventsLayer } from "@/modules/planned/ui/Layer";
 import { PlannedEventsPanel } from "@/modules/planned/ui/Panel";
 import { RecommendPanel } from "@/modules/recommend/ui/Panel";
@@ -50,4 +50,5 @@ export const registry: AppRegistry = {
     { id: "friends-invite-banner", Component: FriendsInviteBanner },
     { id: "notifications", Component: AlertsCenter },
   ],
+  actions: [{ id: "alerts-bell", Component: AlertsBell }],
 };
