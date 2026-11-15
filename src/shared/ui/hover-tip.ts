@@ -15,21 +15,52 @@ export interface TipContent {
 }
 
 const MAX_BODY = 160;
-const tips = new WeakMap<MapLibreMap, Popup>();
-let latest = 0;
 
-export function hideTip(map: MapLibreMap): void {
-  latest++;
-  tips.get(map)?.remove();
+interface Tip {
+  priority: number;
+  key?: string;
+  popup: Popup | null;
+}
+const tips = new WeakMap<MapLibreMap, Tip>();
+
+/**
+ * Hide the tip, unless a more important one is showing. A building's name has priority 0 and
+ * an icon's tip priority 1, so the building tip never covers or replaces an icon's.
+ */
+export function hideTip(map: MapLibreMap, priority = Infinity): void {
+  const tip = tips.get(map);
+  if (!tip || tip.priority > priority) return;
+  tip.popup?.remove();
   tips.delete(map);
 }
 
+export interface ShowTipOptions {
+  /** Higher wins; a lower one is ignored while a higher one shows. Default 1. */
+  priority?: number;
+  /** The same key as the tip already showing only moves it, so following the pointer is cheap. */
+  key?: string;
+}
+
 /** `offset` is how far above the point, in pixels, the tip sits (the icon's height). */
-export async function showTip(map: MapLibreMap, at: { lat: number; lng: number }, content: TipContent, offset = 16): Promise<void> {
+export async function showTip(
+  map: MapLibreMap,
+  at: { lat: number; lng: number },
+  content: TipContent,
+  offset = 16,
+  opts: ShowTipOptions = {},
+): Promise<void> {
+  const priority = opts.priority ?? 1;
+  const current = tips.get(map);
+  if (current && current.priority > priority) return;
+  if (current && opts.key !== undefined && current.key === opts.key) {
+    current.popup?.setLngLat([at.lng, at.lat]);
+    return;
+  }
   hideTip(map);
-  const mine = latest;
+  const tip: Tip = { priority, key: opts.key, popup: null };
+  tips.set(map, tip);
   const { Popup } = await import("maplibre-gl");
-  if (mine !== latest) return; // the pointer already left
+  if (tips.get(map) !== tip) return; // the pointer already left, or a more important tip took over
 
   const el = document.createElement("div");
   el.className = "max-w-56 text-left text-neutral-900";
@@ -56,5 +87,5 @@ export async function showTip(map: MapLibreMap, at: { lat: number; lng: number }
     .setDOMContent(el)
     .addTo(map);
   popup.getElement().style.pointerEvents = "none";
-  tips.set(map, popup);
+  tip.popup = popup;
 }

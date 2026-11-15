@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ExpressionSpecification, Map as MapLibreMap, Popup } from "maplibre-gl";
+import type { ExpressionSpecification, Map as MapLibreMap } from "maplibre-gl";
 import type { BuildingCollection, GroundCollection } from "@/shared/contracts";
 import { isDevPickingNow } from "@/shared/platform";
-import { addLayerToSlot, removeLayersAndSources, useApi, useMap, useMapEffect, useMapStore } from "@/shared/ui";
+import { addLayerToSlot, hideTip, removeLayersAndSources, showTip, useApi, useMap, useMapEffect, useMapStore } from "@/shared/ui";
 import { CAMPUS_VIEW, MapControls } from "./Controls";
 import {
   BUILDING_COLOR,
@@ -457,29 +457,23 @@ export function CampusLayer() {
   useMapEffect(
     (map) => {
       if (!buildings.data || !window.matchMedia("(hover: hover)").matches) return;
-      let popup: Popup | null = null;
-      let cancelled = false;
-      void import("maplibre-gl").then(({ Popup }) => {
-        if (!cancelled) popup = new Popup({ closeButton: false, closeOnClick: false, offset: 12, className: "campus-hover" });
-      });
+      // the shared tip keeps this lowest in priority: an event or activity icon's tip wins
       const onMove = (e: { lngLat: { lng: number; lat: number }; features?: { properties?: Record<string, unknown> }[] }) => {
         const name = e.features?.[0]?.properties?.name;
         map.getCanvas().style.cursor = typeof name === "string" ? "pointer" : "";
-        if (!popup) return;
-        if (typeof name === "string") popup.setLngLat(e.lngLat).setText(name).addTo(map);
-        else popup.remove();
+        if (typeof name === "string") void showTip(map, e.lngLat, { title: name }, 12, { priority: 0, key: name });
+        else hideTip(map, 0);
       };
       const onLeave = () => {
         map.getCanvas().style.cursor = "";
-        popup?.remove();
+        hideTip(map, 0);
       };
       map.on("mousemove", BUILDING_LAYER, onMove);
       map.on("mouseleave", BUILDING_LAYER, onLeave);
       return () => {
-        cancelled = true;
         map.off("mousemove", BUILDING_LAYER, onMove);
         map.off("mouseleave", BUILDING_LAYER, onLeave);
-        popup?.remove();
+        hideTip(map, 0);
       };
     },
     [buildings.data],
