@@ -72,10 +72,16 @@ const USER_LAYER = "user-location-dot";
 export function MapProvider({ children }: { children?: ReactNode }) {
   const container = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     let instance: MapLibreMap | undefined;
+    const fail = (error: unknown) => {
+      if (cancelled) return;
+      console.error("[map] failed to start", error);
+      setFailure(error instanceof Error ? error.message : String(error));
+    };
 
     (async () => {
       const maplibregl = await import("maplibre-gl");
@@ -94,10 +100,17 @@ export function MapProvider({ children }: { children?: ReactNode }) {
         attributionControl: { compact: true, customAttribution: "© OpenStreetMap contributors" },
       });
       // on-screen controls are the campus module's MapControls (labelled, with gesture help)
+      let started = false;
       instance.on("load", () => {
+        started = true;
         if (!cancelled && instance) setMap(instance);
       });
-    })();
+      // Errors before `load` (worker, WebGL) mean the map never starts; later ones are a
+      // layer's source problem and are only logged by MapLibre.
+      instance.on("error", (e) => {
+        if (!started) fail(e.error);
+      });
+    })().catch(fail);
 
     return () => {
       cancelled = true;
@@ -108,11 +121,17 @@ export function MapProvider({ children }: { children?: ReactNode }) {
 
   return (
     <MapContext.Provider value={map}>
-      {/* MapLibre's CSS sets `.maplibregl-map { position: relative }` on the element it is given,
-          which would override `absolute` and collapse it to zero height. Size a wrapper instead. */}
+      {/* MapLibre adds `.maplibregl-map { position: relative }` to its container, and that
+          unlayered rule beats Tailwind's layered `.absolute`, collapsing the map to 0px tall.
+          So the positioning lives on a wrapper and the map's own div only fills it. */}
       <div className="absolute inset-0">
         <div ref={container} className="h-full w-full" />
       </div>
+      {failure ? (
+        <div role="alert" className="absolute inset-x-3 top-24 z-[5] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">
+          The map could not start: {failure}. Reload the page; if it keeps failing, try another browser.
+        </div>
+      ) : null}
       {map ? <MapBehaviours map={map} /> : null}
       {children}
     </MapContext.Provider>

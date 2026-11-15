@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, IsoTime } from "./common";
+import { Id, IsoTime, LatLng } from "./common";
 
 export const ActivityCategory = z.enum(["study", "social", "sports", "food", "other"]);
 export type ActivityCategory = z.infer<typeof ActivityCategory>;
@@ -14,6 +14,9 @@ export const Activity = z.object({
   title: z.string(),
   description: z.string().optional(),
   placeId: Id,
+  /** Added by activities (additive): the place's name and centre, so clients can label and draw it without a lookup. */
+  placeName: z.string().optional(),
+  placeCenter: LatLng.optional(),
   category: ActivityCategory,
   status: ActivityStatus,
   startedAt: IsoTime,
@@ -71,3 +74,14 @@ export const ParticipationResult = z.object({
   activity: Activity,
 });
 export type ParticipationResult = z.infer<typeof ParticipationResult>;
+
+/**
+ * GET /api/activities/places (added by activities): places to offer in the host form, the
+ * given `placeId` first, then the ones nearest to `lat,lng`.
+ */
+export const ActivityPlacesQuery = z.object({
+  placeId: Id.optional(),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
+});
+export type ActivityPlacesQuery = z.infer<typeof ActivityPlacesQuery>;

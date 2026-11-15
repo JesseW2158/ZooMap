@@ -33,6 +33,59 @@ vi.mock("@/modules/auth", () => ({
 
 // Route handlers that own a database are swapped for their module's fixtures here; their own
 // `*.db.test.ts` files cover the real behaviour. Same signatures, so the contract still holds.
+vi.mock("@/modules/activities", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/activities")>();
+  const f = actual.fixtures;
+  return {
+    ...actual,
+    listActiveActivities: async () => f.activitiesFixture(new Date()),
+    getActiveParticipation: async () => f.noParticipationFixture,
+    createActivity: async (user: AuthUser, body: Parameters<typeof f.createdActivityFixture>[0]) =>
+      f.createdActivityFixture(body, { id: user.id, name: user.name ?? user.email }, new Date()),
+    joinActivity: async (user: AuthUser, id: string) => f.participationResultFixture(id, user.id, new Date()),
+    leaveActivity: async (user: AuthUser, id: string) => f.leftResultFixture(id, user.id, new Date()),
+    endActivityAsHost: async (user: AuthUser, id: string) => f.endedActivityFixture(id, user.id, new Date()),
+  };
+});
+
+vi.mock("@/modules/density", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/density")>();
+  const { getPlaces } = await import("@/modules/campus");
+  return {
+    ...actual,
+    getDensitySnapshot: async () => actual.fixtures.densitySnapshotFixture(await getPlaces(), new Date()),
+    getSharing: async () => false,
+    setSharing: async (_userId: string, enabled: boolean) => enabled,
+    recordPing: async () => ({ placeId: null, expiresAt: new Date(Date.now() + 10 * 60_000) }),
+  };
+});
+
+vi.mock("@/modules/friends", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/friends")>();
+  const f = actual.fixtures;
+  return {
+    ...actual,
+    getMyProfile: async (user: AuthUser) => f.profileFixture(user.id, user.name ?? user.email),
+    updateProfile: async (user: AuthUser) => f.profileFixture(user.id, user.name ?? user.email),
+    getProfile: async (_viewerId: string, id: string) => f.profileFixture(id, "Blair Dev"),
+    listFriends: async () => [f.friendFixture()],
+    addFriend: async () => f.friendFixture(),
+    removeFriend: async () => ({ ok: true as const }),
+    issueFriendCode: async () => f.friendCodeFixture(),
+    previewFriendCode: async () => f.previewFixture(),
+    listInvites: async () => [f.inviteFixture()],
+    sendInvites: async (_user: AuthUser, body: { toUserIds: string[] }) => f.inviteResultFixture(body.toUserIds),
+    acceptInvite: async (user: AuthUser) => {
+      const { fixtures } = await import("@/modules/activities");
+      return fixtures.participationResultFixture("fixture-activity-1", user.id, new Date());
+    },
+    declineInvite: async () => ({ ok: true as const }),
+  };
+});
+
+// The real `createDeviceToken` writes to the database; `src/modules/auth/device-token.db.test.ts` covers it.
+vi.mock("@/modules/mobile", () => ({ createDeviceToken: async () => ({ token: "FIXTURE-DEVICE-TOKEN" }) }));
+
 vi.mock("@/modules/schedule", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/schedule")>();
   const f = actual.fixtures;
@@ -43,6 +96,31 @@ vi.mock("@/modules/schedule", async (importOriginal) => {
     createConnection: async (_userId: string, body: { provider: "ics" | "manual" | "plan"; label: string }) => f.createdConnectionFixture(body),
     deleteConnection: async () => undefined,
     updateConnection: async (_userId: string, body: { id: string }) => ({ ...f.connectionsFixture[0], id: body.id }),
+  };
+});
+
+// Rewards routes are backed by the database. This test checks wiring and contract shape only,
+// so the module's data functions return its fixtures; src/modules/rewards/rewards.db.test.ts
+// covers real behaviour. (Other database-backed modules can follow the same pattern.)
+vi.mock("@/modules/rewards", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/modules/rewards")>();
+  return {
+    ...real,
+    getRewardsMe: async () => real.fixtures.rewardsMeFixture(120, new Date()),
+    listStoreItems: async () => real.fixtures.storeItemsFixture,
+    redeem: async (_userId: string, itemId: string) => ({
+      redemption: real.fixtures.redemptionFixture(itemId, new Date()),
+      created: true,
+    }),
+  };
+});
+
+// The chain summary reaches Solana devnet when its env vars are set; keep this test offline.
+vi.mock("@/modules/chain", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/modules/chain")>();
+  return {
+    ...real,
+    getChainSummary: async () => ({ enabled: false, address: null, balance: 0, pendingCount: 0, explorerUrl: null }),
   };
 });
 
@@ -62,6 +140,11 @@ const SAMPLES: Record<string, { query?: string; body?: unknown; headers?: Record
   scheduleConnectionsDelete: { query: "?id=fixture-connection-1" },
   scheduleConnectionsUpdate: { body: { id: "fixture-connection-1", skip: { eventId: "fixture-event-1", skipped: true } } },
   recommend: { body: { origin: { placeId: "w292876549" }, prefs: {} } },
+  profileUpdate: { body: { pronouns: "they/them" } },
+  friendsAdd: { body: { code: "ABCDEFGHJKLMNPQRSTUV" } },
+  friendPreview: { query: "?code=ABCDEFGHJKLMNPQRSTUV" },
+  invitesSend: { body: { activityId: "act-1", toUserIds: ["seed-blair"] } },
+  inviteAccept: { body: {} },
 };
 
 function routeFile(path: string): string {

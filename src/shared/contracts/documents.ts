@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ActivityCategory, ActivityStatus, ParticipationRole } from "./activities";
 import { PresenceSource } from "./density";
 import { ScheduleSource } from "./schedule";
+import { InviteStatus, SocialKind } from "./friends";
 
 /**
  * MongoDB document shapes, one per collection (see `@/shared/db/indexes.ts` for indexes).
@@ -67,6 +68,11 @@ export const ParticipationDoc = z.object({
   joinedAt: z.date(),
   leftAt: z.date().optional(),
   lastVerifiedAt: z.date().optional(),
+  /**
+   * Added by activities (additive): the latest in-range ping. Unlike `lastVerifiedAt` it is not
+   * cleared by an out-of-range ping, so settling can tell how long since the user was last there.
+   */
+  lastInRangeAt: z.date().optional(),
   verifiedSeconds: z.number().int().nonnegative(),
 });
 export type ParticipationDoc = z.infer<typeof ParticipationDoc>;
@@ -137,6 +143,8 @@ export const HandoffCodeDoc = z.object({
   /** Hash of the code. */
   _id: id,
   userId: id,
+  /** base64url(SHA-256(verifier)) sent by the app when it opened the sign-in. The `finish` step must present the verifier. */
+  challenge: z.string(),
   expiresAt: z.date(),
 });
 export type HandoffCodeDoc = z.infer<typeof HandoffCodeDoc>;
@@ -155,3 +163,46 @@ export const ChainOutboxDoc = z.object({
   updatedAt: z.date(),
 });
 export type ChainOutboxDoc = z.infer<typeof ChainOutboxDoc>;
+
+/** Friends: one per user, `_id` = userId. Name and photo stay on `users`. */
+export const ProfileDoc = z.object({
+  _id: id,
+  pronouns: z.string().optional(),
+  /** E.164. */
+  phone: z.string().optional(),
+  contactEmail: z.string().optional(),
+  socials: z.array(z.object({ kind: SocialKind, handle: z.string() })),
+  /** SHA-256 hex of the current friend code; the code itself is never stored. */
+  friendCodeHash: z.string().optional(),
+  friendCodeIssuedAt: z.date().optional(),
+  updatedAt: z.date(),
+});
+export type ProfileDoc = z.infer<typeof ProfileDoc>;
+
+/** Friends: `_id` = the two user ids sorted and joined with ":", so a pair is unique and adding is idempotent. */
+export const FriendshipDoc = z.object({
+  _id: id,
+  userIds: z.tuple([id, id]),
+  createdAt: z.date(),
+  via: z.literal("qr"),
+});
+export type FriendshipDoc = z.infer<typeof FriendshipDoc>;
+
+export const ActivityInviteDoc = z.object({
+  _id: id,
+  activityId: id,
+  fromUserId: id,
+  toUserId: id,
+  status: InviteStatus,
+  createdAt: z.date(),
+  respondedAt: z.date().optional(),
+});
+export type ActivityInviteDoc = z.infer<typeof ActivityInviteDoc>;
+
+/** Fixed-window request counter, `_id` = "<bucket>:<userId>:<window start ms>". Removed by a TTL index. */
+export const RateLimitDoc = z.object({
+  _id: id,
+  count: z.number().int().nonnegative(),
+  expiresAt: z.date(),
+});
+export type RateLimitDoc = z.infer<typeof RateLimitDoc>;

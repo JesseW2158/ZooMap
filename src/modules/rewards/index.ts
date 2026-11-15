@@ -1,12 +1,17 @@
+import { readBalance } from "./ledger";
+
 export * as fixtures from "./fixtures";
+export { applyEntry } from "./ledger";
+export type { AppliedEntry } from "./ledger";
+export { getRewardsMe } from "./me";
+export { listStoreItems, redeem } from "./store";
+export type { RedeemResult } from "./store";
+export { REWARD_RULES } from "./rules";
 
 /**
- * Rewards module (owner: rewards). FOUNDATION STUB: a made-up balance. The owning stream
- * reads `users.pointsBalance`; the signature stays. Only the stream's `applyEntry` ever
- * writes a balance.
+ * Rewards module (owner: rewards). The MongoDB ledger is the source of truth;
+ * `users.pointsBalance` is its cached sum and only `applyEntry` writes it.
  */
 export async function getBalance(userId: string): Promise<number> {
-  // FOUNDATION STUB
-  void userId;
-  return 120;
+  return readBalance(userId);
 }

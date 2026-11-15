@@ -30,7 +30,7 @@ const NO_UPWARD = [
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "android/**", "data/**", "coverage/**", ".remember/**", ".10x/**"]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "android/**", "data/**", "coverage/**", ".remember/**", ".10x/**", "public/maplibre/**"]),
 
   {
     files: ["**/*.{ts,tsx,mjs}"],

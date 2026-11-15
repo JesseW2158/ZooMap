@@ -65,3 +65,18 @@ export function participationResultFixture(activityId: string, userId: string, n
   };
   return { participation, activity };
 }
+
+/** What POST /api/activities/:id/leave returns: the participation ended with its final time. */
+export function leftResultFixture(activityId: string, userId: string, now: Date): ParticipationResult {
+  const result = participationResultFixture(activityId, userId, now);
+  return {
+    ...result,
+    participation: { ...result.participation, status: "ended", leftAt: now.toISOString(), verifying: false },
+  };
+}
+
+/** What POST /api/activities/:id/end returns. */
+export function endedActivityFixture(activityId: string, userId: string, now: Date): Activity {
+  const { activity } = participationResultFixture(activityId, userId, now);
+  return { ...activity, hostId: userId, status: "ended", endedAt: now.toISOString() };
+}
