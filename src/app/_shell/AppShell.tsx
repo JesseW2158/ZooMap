@@ -8,7 +8,7 @@ import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
-import { MapSheet, mapInsetVars, useIsDesktop } from "./MapSheet";
+import { MapSheet, SidebarOpenButton, mapInsetVars, useIsDesktop } from "./MapSheet";
 import { SettingsSheet } from "./Settings";
 import {
   ActivitiesIcon,
@@ -17,6 +17,7 @@ import {
   CrowdIcon,
   FriendsIcon,
   MapIcon,
+  MessagesIcon,
   PointsIcon,
   StudyIcon,
 } from "./icons";
@@ -42,7 +43,7 @@ interface Tab {
   };
 }
 
-/** Bottom navigation, left to right. The map sits in the middle. */
+/** Bottom navigation, left to right. The map sits in the middle: three tabs either side. */
 const TABS: Tab[] = [
   {
     id: "activities",
@@ -62,6 +63,16 @@ const TABS: Tab[] = [
     accent: {
       bg: "bg-rose",
       text: "text-rose",
+    },
+  },
+  {
+    id: "messages",
+    label: "Messages",
+    Icon: MessagesIcon,
+    panelIds: ["messages"],
+    accent: {
+      bg: "bg-lavender",
+      text: "text-lavender",
     },
   },
   {
@@ -112,11 +123,15 @@ const TABS: Tab[] = [
 const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   activities: ActivitiesIcon,
   friends: FriendsIcon,
+  messages: MessagesIcon,
   schedule: CalendarIcon,
   recommend: StudyIcon,
   rewards: PointsIcon,
   density: CrowdIcon,
 };
+
+/** Title of the map's sidebar (desktop) and swipe-up sheet (phone). */
+const MAP_SHEET_TITLE = "Map update";
 
 const panelsById = new Map(registry.panels.map((p) => [p.id, p]));
 
@@ -143,7 +158,7 @@ function panelsFor(tab: Tab): PanelEntry[] {
  */
 export function AppShell({ user }: { user: ShellUser }) {
   const [activeId, setActiveId] = useState<string>(MAP_TAB);
-  const active = TABS.find((t) => t.id === activeId) ?? TABS[2]!;
+  const active = TABS.find((t) => t.id === activeId) ?? TABS.find((t) => t.id === MAP_TAB)!;
   const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
   const isDesktop = useIsDesktop();
@@ -194,6 +209,16 @@ export function AppShell({ user }: { user: ShellUser }) {
           hidden={!onMap}
           className="pointer-events-none absolute left-[var(--map-inset-left,0px)] right-0 top-0 z-[25] flex items-start gap-2 p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
         >
+          {isDesktop && mapPanels.length > 0 && !sidebarOpen ? (
+            <div className="pointer-events-auto">
+              <SidebarOpenButton
+                title={MAP_SHEET_TITLE}
+                Icon={CrowdIcon}
+                accentBg="bg-lavender"
+                onOpen={() => setSidebarOpen(true)}
+              />
+            </div>
+          ) : null}
           <div className="pointer-events-auto min-w-0 flex-1 md:mx-auto md:max-w-md">
             {registry.topSlot.map(({ id, Component }) => (
               <Component key={id} />
@@ -209,7 +234,7 @@ export function AppShell({ user }: { user: ShellUser }) {
 
         {mapPanels.length ? (
           <MapSheet
-            title={mapPanels.map((p) => p.title).join(" · ")}
+            title={MAP_SHEET_TITLE}
             Icon={CrowdIcon}
             accentBg="bg-lavender"
             isDesktop={isDesktop}
@@ -247,7 +272,7 @@ export function AppShell({ user }: { user: ShellUser }) {
         ) : null}
       </div>
 
-      <TabBar activeId={active.id} onSelect={setActiveId} badges={{ friends: unread }} />
+      <TabBar activeId={active.id} onSelect={setActiveId} badges={{ messages: unread }} />
     </main>
   );
 }
@@ -325,7 +350,7 @@ function SectionTitle({
 const MESSAGES_CHANGED_EVENT = "zoomap:messages-changed";
 const UNREAD_POLL_MS = 20_000;
 
-/** Unread direct messages, for the Friends tab badge. */
+/** Unread direct messages, for the Messages tab badge. */
 function useUnreadMessages(): number {
   const [count, setCount] = useState(0);
   const load = async (signal?: AbortSignal) => {

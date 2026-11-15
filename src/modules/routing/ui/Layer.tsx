@@ -16,6 +16,11 @@ import { CloseIcon } from "./icons";
 const LINE_SRC = "routing-line";
 const LINE_CASING = "routing-line-casing";
 const LINE = "routing-line-main";
+/**
+ * The route drawn again above the 3D buildings, dashed. Where the solid line is in view it
+ * blends in; where a building hides it, the dashes show the path continuing behind it.
+ */
+const LINE_GHOST = "routing-line-ghost";
 const ENDS_SRC = "routing-ends";
 const ENDS = "routing-ends-dots";
 const ROUTE_COLOR = "#1663d6";
@@ -97,6 +102,16 @@ export function RoutingLayer() {
         layout: { "line-join": "round", "line-cap": "round" },
         paint: { "line-color": ROUTE_COLOR, "line-width": ["interpolate", ["linear"], ["zoom"], 15, 3.5, 19, 9] },
       }, "slot-lines");
+      addLayerToSlot(map, {
+        id: LINE_GHOST, type: "line", source: LINE_SRC,
+        layout: { "line-join": "round", "line-cap": "butt" },
+        paint: {
+          "line-color": ROUTE_COLOR,
+          "line-opacity": 0.9,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 15, 3, 19, 7],
+          "line-dasharray": [1.2, 1],
+        },
+      }, "slot-markers");
       map.addSource(ENDS_SRC, {
         type: "geojson",
         data: {
@@ -124,7 +139,7 @@ export function RoutingLayer() {
         [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
         { padding: { top: 190, bottom: Math.round(h * 0.42), left: 40, right: 60 }, maxZoom: 18, duration: 800 },
       );
-      return () => removeLayersAndSources(map, [ENDS, LINE, LINE_CASING], [ENDS_SRC, LINE_SRC]);
+      return () => removeLayersAndSources(map, [ENDS, LINE_GHOST, LINE, LINE_CASING], [ENDS_SRC, LINE_SRC]);
     },
     [result],
   );
