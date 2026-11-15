@@ -90,7 +90,7 @@ export async function fallbackReply(ctx: Omit<ToolContext, "cards">, text: strin
       const items = res.events.slice(0, 3).map((e) => `${e.title} at ${e.place}, ${e.starts}`);
       reply = `Coming up ${range.label}: ${list(items)}. Tap one to say you're going or get a route.`;
     } else {
-      reply = `I could not find any planned ${category ? `${category} ` : ""}events ${range.label}. You can announce one from Events on the Calendar tab.`;
+      reply = `I could not find any planned ${category ? `${category} ` : ""}events ${range.label}. You can announce one from Events on the Activities tab.`;
     }
   } else {
     const category = categoryFor(text);

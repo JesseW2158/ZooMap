@@ -168,7 +168,8 @@ export function DensityLayer() {
             // a hair taller than the building, so the roof wins the depth test too
             "fill-extrusion-height": ["+", ["get", "heightM"], 0.15],
             "fill-extrusion-color": ["get", "color"],
-            "fill-extrusion-opacity": 0.95,
+            // opaque, so the campus layer's colours by building type never show through the heat
+            "fill-extrusion-opacity": 1,
           },
         },
         "slot-buildings",

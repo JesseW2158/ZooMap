@@ -5,6 +5,9 @@ import { startOfDay, startOfNextDay } from "../time";
 
 export const TIME_AT_ACTIVITY = "time-at-activity";
 
+/** The ledger idempotency key for one participation's time points. */
+export const timeAtActivityKey = (participationId: string) => `participation:${participationId}:time`;
+
 /**
  * Pure: points for one participation, after both caps.
  * `alreadyToday` is what this rule has already paid the user on the same calendar day.
@@ -34,7 +37,7 @@ export const timeAtActivity: RewardRule<"participation.ended"> = {
   id: TIME_AT_ACTIVITY,
   on: "participation.ended",
   async evaluate(event, ctx): Promise<LedgerDraft[]> {
-    const idempotencyKey = `participation:${event.participationId}:time`;
+    const idempotencyKey = timeAtActivityKey(event.participationId);
     const { timeZone } = REWARDS_CONFIG;
     const dayStart = startOfDay(ctx.now, timeZone);
     const dayEnd = startOfNextDay(ctx.now, timeZone);

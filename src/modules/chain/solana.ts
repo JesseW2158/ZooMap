@@ -22,12 +22,15 @@ import {
   getMintToInstruction,
 } from "@solana-program/token";
 import type { ChainClient, PreparedTx, TxStatus } from "./client";
-import type { ChainConfig } from "./config";
+import { OUTBOX, type ChainConfig } from "./config";
 import { signerFromSecret, userSigner } from "./keys";
 
 type Rpc = ReturnType<typeof createSolanaRpc>;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Abort signal for one RPC call, so a stalled connection cannot hang the request. */
+const rpcSignal = (ms: number = OUTBOX.rpcTimeoutMs) => AbortSignal.timeout(ms);
 
 /** Solana devnet client for the points token. The mint authority pays every fee. */
 export class SolanaClient implements ChainClient {
@@ -56,7 +59,7 @@ export class SolanaClient implements ChainClient {
   async balanceOf(userId: string): Promise<number> {
     const owner = address(await this.addressOf(userId));
     try {
-      const { value } = await this.rpc.getTokenAccountBalance(await this.tokenAccount(owner)).send();
+      const { value } = await this.rpc.getTokenAccountBalance(await this.tokenAccount(owner)).send({ abortSignal: rpcSignal() });
       return Number(value.amount);
     } catch {
       return 0; // no token account yet
@@ -79,7 +82,7 @@ export class SolanaClient implements ChainClient {
         : // Only the token account's owner may burn: the user's derived key signs, the authority pays.
           [getBurnInstruction({ account: ata, mint: this.mint, authority: user, amount })];
 
-    const { value: blockhash } = await this.rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
+    const { value: blockhash } = await this.rpc.getLatestBlockhash({ commitment: "confirmed" }).send({ abortSignal: rpcSignal() });
     const message = pipe(
       createTransactionMessage({ version: 0 }),
       (m) => setTransactionMessageFeePayerSigner(authority, m),
@@ -93,26 +96,39 @@ export class SolanaClient implements ChainClient {
     return {
       signature,
       send: async () => {
-        await this.rpc.sendTransaction(wire, { encoding: "base64", preflightCommitment: "confirmed" }).send();
+        await this.rpc.sendTransaction(wire, { encoding: "base64", preflightCommitment: "confirmed" }).send({ abortSignal: rpcSignal() });
       },
     };
   }
 
-  async status(sig: string): Promise<TxStatus> {
-    const { value } = await this.rpc.getSignatureStatuses([toSignature(sig)], { searchTransactionHistory: true }).send();
+  async status(sig: string, timeoutMs: number = OUTBOX.rpcTimeoutMs): Promise<TxStatus> {
+    const { value } = await this.rpc
+      .getSignatureStatuses([toSignature(sig)], { searchTransactionHistory: true })
+      .send({ abortSignal: rpcSignal(timeoutMs) });
     const s = value[0];
     if (!s) return "not_found";
     if (s.err) return "failed";
     return s.confirmationStatus === "confirmed" || s.confirmationStatus === "finalized" ? "confirmed" : "not_found";
   }
 
+  /**
+   * Polls until the transaction is confirmed or failed, or `timeoutMs` has passed ("not_found",
+   * meaning "unknown", never "lost": the caller keeps the signature and asks again later). The
+   * deadline holds even when the RPC stalls: each poll is aborted at the deadline, and a poll
+   * that errors or times out is treated as "not yet" instead of ending the wait early.
+   */
   async confirm(sig: string, timeoutMs: number): Promise<TxStatus> {
     const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-      const s = await this.status(sig);
-      if (s !== "not_found") return s;
-      await sleep(1_000);
+    for (;;) {
+      const left = deadline - Date.now();
+      if (left <= 0) return "not_found";
+      try {
+        const s = await this.status(sig, Math.min(OUTBOX.rpcTimeoutMs, left));
+        if (s !== "not_found") return s;
+      } catch {
+        // transient RPC error or timeout: poll again until the deadline
+      }
+      await sleep(Math.min(1_000, Math.max(0, deadline - Date.now())));
     }
-    return "not_found";
   }
 }

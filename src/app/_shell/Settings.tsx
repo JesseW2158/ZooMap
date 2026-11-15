@@ -9,8 +9,9 @@ import type { ShellUser } from "./AppShell";
 /**
  * Settings, opened from the account menu. A full-screen sheet portalled to <body> so it covers
  * the tab bar and map controls. Rows marked "Soon" are the draft of what this page should grow
- * into; your friend card (pronouns, phone, contact email) and location sharing are wired today.
- * Calendar sources keep living in their own tab, and this page points there.
+ * into; your friend card (pronouns, phone, contact email) and location sharing are the live
+ * controls. Everything else either states how the app behaves today or points to where it is set
+ * (calendars in their own tab, alerts in the bell). Keep the hints true to what the app does.
  */
 export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () => void }) {
   useEffect(() => {
@@ -43,18 +44,18 @@ export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () 
 
         <Group title="Privacy and location">
           <LocationSharingRow />
-          <Row title="Background location" hint="Keep sharing while the Android app is closed" soon />
-          <Row title="Hide me from friends" hint="Count toward crowds without showing friends where you are" soon />
+          <Row title="Background location" hint="Android app only: set Minute Map's location permission to Allow all the time to keep sharing with the screen off" />
+          <Row title="Who sees where you are" hint="Nobody. Others see only how busy each building is" />
         </Group>
 
         <Group title="Friends and invites">
           <Row title="Who can invite me" hint="Friends only, or nobody" soon />
-          <Row title="Invite banner over the map" hint="Show new invites on every tab" soon />
+          <Row title="Invites" hint="A new activity invite shows over the map on every tab until you accept or decline it" />
         </Group>
 
         <Group title="Calendar">
           <Row title="Connected calendars" hint="Classes, Canvas and Google Calendar are managed in the Calendar tab" />
-          <Row title="Leave-now reminders" hint="Nudge me when it's time to walk to class" soon />
+          <Row title="Leave-now reminders" hint="Turn on Leave for class in the alerts bell" />
           <Row title="Walking pace" hint="Used for travel times between classes" soon />
         </Group>
 
@@ -64,7 +65,7 @@ export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () 
         </Group>
 
         <Group title="Points">
-          <Row title="Points wallet" hint="Your points token address on Solana devnet" soon />
+          <Row title="Points on Solana devnet" hint="When the devnet mirror is on, your balance and a receipt link show at the bottom of the Points tab" />
         </Group>
 
         <Group title="About">
@@ -196,6 +197,13 @@ function ProfileRows() {
   );
 }
 
+/**
+ * Same name as in density/ui/state.ts and activities/ui/feed.ts (the shell cannot import module
+ * code): fired after the setting changes so the Crowds panel, the map's pinger and the activity
+ * card follow, and listened to here so this row follows them.
+ */
+const SHARING_CHANGED_EVENT = "zoomap:sharing-changed";
+
 /** Location sharing: the same opt-in the Crowds panel toggles, via /api/presence/sharing. */
 function LocationSharingRow() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -206,6 +214,12 @@ function LocationSharingRow() {
     apiFetch("/api/presence/sharing", { schema: SharingState })
       .then((s) => setEnabled(s.enabled))
       .catch(() => setError(true));
+    const onChange = (e: Event) => {
+      const next = (e as CustomEvent<{ enabled?: unknown }>).detail?.enabled;
+      if (typeof next === "boolean") setEnabled(next);
+    };
+    window.addEventListener(SHARING_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(SHARING_CHANGED_EVENT, onChange);
   }, []);
 
   const toggle = async () => {
@@ -215,6 +229,7 @@ function LocationSharingRow() {
     try {
       const s = await apiFetch("/api/presence/sharing", { method: "PUT", body: { enabled: !enabled }, schema: SharingState });
       setEnabled(s.enabled);
+      window.dispatchEvent(new CustomEvent(SHARING_CHANGED_EVENT, { detail: { enabled: s.enabled } }));
     } catch {
       setError(true);
     } finally {
@@ -225,7 +240,13 @@ function LocationSharingRow() {
   return (
     <Row
       title="Share my location"
-      hint={error ? "Couldn't reach the server. Try again." : "Counts you in the crowd levels on the map. Off until you turn it on"}
+      hint={
+        error
+          ? "Couldn't reach the server. Try again."
+          : enabled
+            ? "On: you count toward crowd levels and your time at an activity counts. Switch off to stop at once"
+            : "Off: you don't count toward crowd levels, and time at an activity won't count. Off until you turn it on"
+      }
       control={
         <button
           type="button"

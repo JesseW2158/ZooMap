@@ -96,11 +96,8 @@ export function RecommendPanel() {
   };
 
   return (
-    <div className="space-y-3 p-4 text-sm text-ink">
-      <div>
-        <h2 className="text-base font-semibold">Find a study spot</h2>
-        <p className="text-xs text-yale">Picks a place for right now from crowd levels, walking time and your next class.</p>
-      </div>
+    <div className="space-y-3 text-sm text-ink">
+      <p className="text-xs text-yale">Find a study spot: picks a place for right now from crowd levels, walking time and your next class.</p>
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Preferences">
         <button type="button" aria-pressed={crowd === "quiet"} className={chip(crowd === "quiet")} onClick={() => setCrowd(crowd === "quiet" ? null : "quiet")}>
@@ -138,6 +135,8 @@ export function RecommendPanel() {
         maxLength={280}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
+          // Enter confirms an IME (Chinese, Japanese, Korean) candidate; 229 covers Safari.
+          if (e.nativeEvent.isComposing || e.keyCode === 229) return;
           if (e.key === "Enter" && !loading) void find();
         }}
         placeholder="Anything else? e.g. outlets, near coffee"
@@ -215,7 +214,7 @@ function SourceBadge({ source }: { source: RecommendResponse["source"] }) {
   return source === "gemini" ? (
     <span className="rounded-full bg-lavender/40 px-2 py-0.5 text-[11px] text-ink">Picked by Gemini</span>
   ) : (
-    <span className="rounded-full bg-sand/50 px-2 py-0.5 text-[11px] text-ink" title="Gemini was unavailable, so ZooMap's own scoring picked this.">
+    <span className="rounded-full bg-sand/50 px-2 py-0.5 text-[11px] text-ink" title="Gemini was unavailable, so Minute Map's own scoring picked this.">
       Fallback pick (no AI)
     </span>
   );

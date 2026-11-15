@@ -6,7 +6,7 @@ import { controllerStore, fixProblem, type Problem } from "./controller";
 
 const MESSAGES: Record<Exclude<Problem, null>, { text: string; action: string }> = {
   "permission-denied": { text: "Location is blocked, so your location is not being shared.", action: "Open settings" },
-  "needs-permission": { text: "ZooMap needs location permission to share your location.", action: "Allow" },
+  "needs-permission": { text: "Minute Map needs location permission to share your location.", action: "Allow" },
   "no-token": { text: "Location sharing is paused.", action: "Retry" },
   error: { text: "Location sharing is paused.", action: "Retry" },
 };

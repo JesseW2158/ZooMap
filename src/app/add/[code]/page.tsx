@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/modules/auth";
 import { AddFriendView } from "./AddFriendView";
 
-export const metadata = { title: "Add friend · ZooMap" };
+export const metadata = { title: "Add friend · Minute Map" };
 
 /**
  * What a scanned friend code opens: /add/<code>. Signed out, it goes through sign-in and

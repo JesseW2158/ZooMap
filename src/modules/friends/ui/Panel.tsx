@@ -5,7 +5,7 @@ import { InviteResult, type Conversation, type Friend } from "@/shared/contracts
 import { apiFetch } from "@/shared/http/client";
 import { errorText, refreshFriends, useFriendsFeed } from "./feed";
 import { ChatOverlay } from "./Chat";
-import { closeChat, openChat, useConversations } from "./messages-feed";
+import { closeChat, messagesChanged, openChat, refreshConversations, useConversations } from "./messages-feed";
 import { FriendCodeOverlay, Overlay } from "./overlays";
 import { PullDownLayer, scrollParent, useIsPhone, usePullCode } from "./PullCode";
 import { ChatIcon, CheckIcon, HeartIcon, MailIcon, QrAddIcon, SendIcon, UserMinusIcon, UserPlusIcon } from "./icons";
@@ -343,6 +343,7 @@ function ProfileOverlay({ friend, onMessage, onClose, onUnfriended }: { friend: 
 function UnfriendButton({ friend, onDone }: { friend: Friend; onDone?: () => void }) {
   const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -353,10 +354,15 @@ function UnfriendButton({ friend, onDone }: { friend: Friend; onDone?: () => voi
       return;
     }
     setBusy(true);
+    setError(null);
     try {
       await apiFetch(`/api/friends/${friend.userId}`, { method: "DELETE" });
-      await refreshFriends();
+      // the chat with them and any invites between you are gone too
+      await Promise.all([refreshFriends(), refreshConversations()]);
+      messagesChanged();
       onDone?.();
+    } catch (cause) {
+      setError(errorText(cause));
     } finally {
       setBusy(false);
       setArmed(false);
@@ -364,16 +370,19 @@ function UnfriendButton({ friend, onDone }: { friend: Friend; onDone?: () => voi
   };
 
   return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={tap}
-      aria-label={`Unfriend ${friend.name}`}
-      title="Unfriend"
-      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${armed ? "bg-red-600 text-white" : "text-red-700 hover:bg-red-50"}`}
-    >
-      <UserMinusIcon className="h-4 w-4" />
-      {armed ? "Tap again" : "Unfriend"}
-    </button>
+    <span className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={tap}
+        aria-label={`Unfriend ${friend.name}`}
+        title="Unfriend"
+        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${armed ? "bg-red-600 text-white" : "text-red-700 hover:bg-red-50"}`}
+      >
+        <UserMinusIcon className="h-4 w-4" />
+        {armed ? "Tap again" : "Unfriend"}
+      </button>
+      {error ? <span role="alert" className="text-xs text-red-700">{error}</span> : null}
+    </span>
   );
 }

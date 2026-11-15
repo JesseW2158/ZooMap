@@ -21,6 +21,22 @@ function merge(prev: Message[], next: Message[]): Message[] {
   return [...byId.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
 }
 
+/** The last message you sent: the one that carries the "Sent" / "Seen" line. */
+function lastSentBy(messages: Message[], friendId: string): Message | undefined {
+  return [...messages].reverse().find((m) => m.fromUserId !== friendId);
+}
+
+/**
+ * Where the next poll starts. Normally the newest message, but while your last message is still
+ * unread it starts there, so the friend reading it (which only changes `readAt`) comes back even
+ * when they have already replied and the newest message is theirs.
+ */
+function pollFrom(all: Message[], friendId: string): string | null {
+  const newest = all.at(-1)?.createdAt ?? null;
+  const mine = lastSentBy(all, friendId);
+  return mine && !mine.readAt && newest && mine.createdAt < newest ? mine.createdAt : newest;
+}
+
 /** Full-screen direct messages with one friend. Portalled to <body>, like the friend code screen. */
 export function ChatOverlay({
   friend,
@@ -55,7 +71,7 @@ export function ChatOverlay({
         const fresh = await apiFetch(`${base}${q}`, { schema: DirectMessageList, signal });
         setMessages((prev) => {
           const all = merge(prev ?? [], fresh);
-          latest.current = all.at(-1)?.createdAt ?? latest.current;
+          latest.current = pollFrom(all, friend.userId) ?? latest.current;
           return all;
         });
         // anything new from them is now read
@@ -87,7 +103,11 @@ export function ChatOverlay({
     try {
       const sent = await apiFetch(base, { method: "POST", body: { body }, schema: DirectMessage });
       setDraft("");
-      setMessages((prev) => merge(prev ?? [], [sent]));
+      setMessages((prev) => {
+        const all = merge(prev ?? [], [sent]);
+        latest.current = pollFrom(all, friend.userId) ?? latest.current;
+        return all;
+      });
       messagesChanged();
     } catch (cause) {
       if (cause instanceof ApiClientError && cause.code === "NOT_FOUND") setGone(true);
@@ -97,7 +117,7 @@ export function ChatOverlay({
     }
   };
 
-  const lastMine = [...(messages ?? [])].reverse().find((m) => m.fromUserId !== friend.userId);
+  const lastMine = lastSentBy(messages ?? [], friend.userId);
 
   return createPortal(
     <div role="dialog" aria-modal="true" aria-label={`Messages with ${friend.name}`} className="fixed inset-0 z-50 flex flex-col bg-linen text-ink">
@@ -146,7 +166,7 @@ export function ChatOverlay({
                 </div>
                 {m === lastMine ? (
                   <p className="mt-0.5 text-right text-[11px] text-yale">
-                    {m.readAt ? "Seen" : "Sent"} · {timeFmt.format(new Date(m.createdAt))}
+                    {m.readAt ? `Seen ${timeFmt.format(new Date(m.readAt))}` : `Sent ${timeFmt.format(new Date(m.createdAt))}`}
                   </p>
                 ) : null}
               </div>
@@ -163,7 +183,12 @@ export function ChatOverlay({
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              enterKeyHint="send"
               onKeyDown={(e) => {
+                // Enter confirms a candidate while an IME (Chinese, Japanese, Korean) is composing.
+                // Safari fires compositionend before keydown, so isComposing is already false
+                // there; its keyCode is still 229.
+                if (e.nativeEvent.isComposing || e.keyCode === 229) return;
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   e.currentTarget.form?.requestSubmit();

@@ -11,7 +11,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { mapStore } from "@/shared/ui";
+import { mapActions, mapStore } from "@/shared/ui";
 
 const DESKTOP_QUERY = "(min-width: 768px)";
 /** Height of the collapsed mobile sheet: the grab handle and the title row. */
@@ -152,6 +152,13 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
       ({ routeRequest, flyRequest, selectedPlaceId } = s);
     });
   }, []);
+
+  // Only one bottom sheet at a time: the building sheet (routing module) shows while a place is
+  // selected, so opening this one, by button, swipe or key, drops that selection and with it
+  // the building sheet. The reverse already holds: selecting a place closes this sheet above.
+  useEffect(() => {
+    if (expanded) mapActions.selectPlace(null);
+  }, [expanded]);
 
   // Swiping down on the open sheet's content drags the sheet down like the header does, and closes
   // it past SWIPE_PX, but only for a swipe that starts with the content scrolled to the top: a

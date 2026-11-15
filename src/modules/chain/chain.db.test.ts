@@ -153,6 +153,33 @@ describe("outbox", () => {
     expect(await t.cols.chain_outbox.findOne({ ledgerEntryId: "entry-x" })).toMatchObject({ status: "failed", attempts: OUTBOX.maxAttempts });
   });
 
+  it("an exhausted drain budget claims nothing and leaves the rows pending for the next drain", async () => {
+    enableChainEnv();
+    await applyEntry(grant(10, "i1"));
+    await applyEntry(grant(20, "i2"));
+    const chain = new FakeChain();
+    expect(await drainOutbox(chain, { budgetMs: 0 })).toMatchObject({ done: 0, deferred: 2 });
+    expect(chain.prepared).toHaveLength(0);
+    expect(await t.cols.chain_outbox.countDocuments({ status: "pending", attempts: 0 })).toBe(2);
+    expect(await drainOutbox(chain)).toMatchObject({ done: 2 });
+    expect(chain.sent).toHaveLength(2);
+  });
+
+  it("a confirm timeout keeps the signature, and the next drain settles it without minting twice", async () => {
+    enableChainEnv();
+    await applyEntry(grant(30, "j"));
+    const chain = new FakeChain();
+    chain.confirmAs = "not_found"; // confirm timed out
+    expect(await drainOutbox(chain)).toMatchObject({ done: 0, deferred: 1 });
+    const [first] = chain.prepared;
+    expect(await t.cols.chain_outbox.findOne({ userId: USER })).toMatchObject({ status: "pending", signature: first.signature });
+    chain.statuses.set(first.signature, "confirmed");
+    const later = () => new Date(Date.now() + OUTBOX.leaseMs + 1_000);
+    expect(await drainOutbox(chain, { now: later })).toMatchObject({ done: 1 });
+    expect(chain.sent).toEqual([first.signature]);
+    expect(await chain.balanceOf(USER)).toBe(30);
+  });
+
   it("the summary drains the user's rows and reports address, balance and explorer link", async () => {
     enableChainEnv();
     await applyEntry(grant(25, "h"));
