@@ -1,4 +1,4 @@
-import type { ActivityCategory, ChatBody, ChatResponse, RecommendPrefs } from "@/shared/contracts";
+import type { ActivityCategory, ChatBody, ChatResponse, FallbackReason, RecommendPrefs } from "@/shared/contracts";
 import { env } from "@/shared/config/env";
 import { listActiveActivities } from "@/modules/activities";
 import { searchPlaces } from "@/modules/campus";
@@ -31,6 +31,8 @@ const MAX_REPLY = 1200;
 
 export interface ChatDeps extends AssistantDeps {
   model: ChatModel | null;
+  /** For the server log only. */
+  modelName?: string;
   timeoutMs: number;
 }
 
@@ -44,6 +46,7 @@ export function defaultChatDeps(userId: string): ChatDeps {
     pickStudySpots: (input) => pickStudySpots(userId, input),
     listPlannedEvents: (to) => listPlannedEvents(userId, new Date(), to),
     model: e.geminiApiKey ? geminiChatModel(e.geminiApiKey, e.geminiModel) : null,
+    modelName: e.geminiModel,
     timeoutMs: CHAT_TIMEOUT_MS,
   };
 }
@@ -202,9 +205,11 @@ export async function chatWith(deps: ChatDeps, body: ChatBody): Promise<ChatResp
   const origin = body.origin ?? DEFAULT_ORIGIN;
   const last = body.messages.at(-1)!.text;
 
+  let reason: FallbackReason = "not-configured";
   if (deps.model) {
     const cards = new CardCollector();
     const controller = new AbortController();
+    let failure: FallbackReason | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<null>((resolve) => {
       timer = setTimeout(() => {
@@ -215,16 +220,39 @@ export async function chatWith(deps: ChatDeps, body: ChatBody): Promise<ChatResp
     try {
       const reply = await Promise.race([
         askModel(deps.model, { deps, origin, cards }, body, controller.signal).catch((err: unknown) => {
-          if (!controller.signal.aborted) console.warn("[assistant] Gemini failed; using the fallback:", err instanceof Error ? err.message : err);
+          if (!controller.signal.aborted) {
+            failure = classifyGeminiError(err);
+            console.warn(`[assistant] Gemini failed (${failure}, model ${deps.modelName ?? "?"}); using the fallback:`, describeError(err));
+          }
           return null;
         }),
         timeout,
       ]);
       if (reply) return { reply: clip(reply), cards: cards.pick(reply), source: "gemini" };
-      if (controller.signal.aborted) console.warn(`[assistant] Gemini took over ${deps.timeoutMs} ms; using the fallback`);
+      reason = controller.signal.aborted ? "timeout" : (failure ?? "no-answer");
+      if (reason === "timeout") console.warn(`[assistant] Gemini took over ${deps.timeoutMs} ms; using the fallback`);
+      if (reason === "no-answer") console.warn("[assistant] Gemini gave no usable answer (empty, or too many tool rounds); using the fallback");
     } finally {
       clearTimeout(timer);
     }
+  } else {
+    console.warn("[assistant] GEMINI_API_KEY is not set on this server; using the fallback");
   }
-  return fallbackReply({ deps, origin }, last);
+  return { ...(await fallbackReply({ deps, origin }, last)), fallbackReason: reason };
+}
+
+function describeError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const status = (err as { status?: unknown }).status;
+  return `${typeof status === "number" ? `HTTP ${status}: ` : ""}${err.message}`.slice(0, 500);
+}
+
+/** Sorts a Gemini SDK error into a reason the UI can show. */
+export function classifyGeminiError(err: unknown): FallbackReason {
+  const status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : undefined;
+  const msg = err instanceof Error ? err.message : String(err);
+  if (status === 429 || /quota|rate limit|resource.?exhausted/i.test(msg)) return "quota";
+  if (status === 401 || status === 403 || /api key|permission|unauthenticated|PERMISSION_DENIED/i.test(msg)) return "bad-key";
+  if (status === 404 || /not found|is not supported|unknown model|NOT_FOUND/i.test(msg)) return "model-not-found";
+  return "error";
 }
