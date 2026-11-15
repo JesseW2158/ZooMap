@@ -262,20 +262,22 @@ function previousPlaced(list: ScheduleEvent[], e: ScheduleEvent): ScheduleEvent 
 }
 
 function ConnectScreen({ onPick }: { onPick: (a: Adding) => void }) {
-  const tile = "flex flex-col items-center gap-2 rounded-2xl bg-linen p-4 text-center transition hover:-translate-y-0.5 hover:bg-ash/30";
-  const options: { Icon: IconC; title: string; hint: string; run: () => void }[] = [
-    { Icon: CapIcon, title: "Class", hint: "Every week", run: () => onPick({ kind: "class" }) },
-    { Icon: NoteIcon, title: "Plan", hint: "One time", run: () => onPick({ kind: "plan" }) },
-    { Icon: CalendarIcon, title: "Google", hint: "Read-only", run: () => openExternalAuth("/api/schedule/google/connect") },
-    { Icon: BookmarkIcon, title: "Canvas", hint: "Deadlines", run: () => onPick({ kind: "canvas" }) },
+  const tile =
+    "group zm-press flex flex-col items-center gap-2 rounded-2xl bg-linen p-4 text-center ring-1 ring-transparent transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg hover:shadow-ink/10 hover:ring-ash/50";
+  // each tile's icon gets its own tint from the palette (literal classes so Tailwind sees them)
+  const options: { Icon: IconC; title: string; hint: string; run: () => void; tint: string }[] = [
+    { Icon: CapIcon, title: "Class", hint: "Every week", run: () => onPick({ kind: "class" }), tint: "bg-sky/40" },
+    { Icon: NoteIcon, title: "Plan", hint: "One time", run: () => onPick({ kind: "plan" }), tint: "bg-jasmine/60" },
+    { Icon: CalendarIcon, title: "Google", hint: "Read-only", run: () => openExternalAuth("/api/schedule/google/connect"), tint: "bg-mint/50" },
+    { Icon: BookmarkIcon, title: "Canvas", hint: "Deadlines", run: () => onPick({ kind: "canvas" }), tint: "bg-coral/45" },
   ];
   return (
     <div className="space-y-3">
-      <p className="text-center font-semibold">Add your day</p>
-      <div className="grid grid-cols-2 gap-2">
+      <p className="text-center font-bold tracking-tight">Add your day</p>
+      <div className="zm-stagger grid grid-cols-2 gap-2.5">
         {options.map((o) => (
           <button key={o.title} type="button" onClick={o.run} className={tile}>
-            <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-ink"><o.Icon className="h-7 w-7" /></span>
+            <span aria-hidden className={`flex h-14 w-14 items-center justify-center rounded-2xl text-ink shadow-sm transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-hover:scale-110 group-hover:-rotate-3 ${o.tint}`}><o.Icon className="h-7 w-7" /></span>
             <span className="text-sm font-bold">{o.title}</span>
             <span className="-mt-1.5 text-xs text-yale">{o.hint}</span>
           </button>
