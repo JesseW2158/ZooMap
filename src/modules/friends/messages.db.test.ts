@@ -94,7 +94,9 @@ describe("direct messages", () => {
   });
 
   it("rate limits sending at 30 a minute", async () => {
-    const now = at(10);
+    // ahead of the real clock: the rate-limit counter has a TTL, and a past date let MongoDB's
+    // TTL sweep delete it mid-test, so the 31st send sometimes went through
+    const now = new Date(Date.now() + 10 * 60_000);
     for (let i = 0; i < 30; i++) await sendMessage(alex.id, blair.id, `m${i}`, now);
     expect(await codeOf(sendMessage(alex.id, blair.id, "one too many", now))).toBe("RATE_LIMITED");
   });

@@ -27,7 +27,9 @@ vi.mock("@google/genai", () => ({
 }));
 
 const t = withTestDb();
-const NOW = new Date("2026-11-16T15:00:30Z");
+// Thirty seconds into a minute ten minutes ahead of the real clock. Rate-limit counters carry a
+// TTL (expiresAt), so a pinned date in the past would let MongoDB's TTL sweep delete them mid-test.
+const NOW = new Date(Math.ceil(Date.now() / 60_000) * 60_000 + 10 * 60_000 + 30_000);
 
 const request = () =>
   POST(
