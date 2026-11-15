@@ -17,6 +17,7 @@ import {
   CrowdIcon,
   FriendsIcon,
   MapIcon,
+  MessagesIcon,
   PointsIcon,
   StudyIcon,
 } from "./icons";
@@ -42,7 +43,7 @@ interface Tab {
   };
 }
 
-/** Bottom navigation, left to right. The map sits in the middle. */
+/** Bottom navigation, left to right. The map sits in the middle: three tabs either side. */
 const TABS: Tab[] = [
   {
     id: "activities",
@@ -62,6 +63,16 @@ const TABS: Tab[] = [
     accent: {
       bg: "bg-rose",
       text: "text-rose",
+    },
+  },
+  {
+    id: "messages",
+    label: "Messages",
+    Icon: MessagesIcon,
+    panelIds: ["messages"],
+    accent: {
+      bg: "bg-lavender",
+      text: "text-lavender",
     },
   },
   {
@@ -112,6 +123,7 @@ const TABS: Tab[] = [
 const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   activities: ActivitiesIcon,
   friends: FriendsIcon,
+  messages: MessagesIcon,
   schedule: CalendarIcon,
   recommend: StudyIcon,
   rewards: PointsIcon,
@@ -143,7 +155,7 @@ function panelsFor(tab: Tab): PanelEntry[] {
  */
 export function AppShell({ user }: { user: ShellUser }) {
   const [activeId, setActiveId] = useState<string>(MAP_TAB);
-  const active = TABS.find((t) => t.id === activeId) ?? TABS[2]!;
+  const active = TABS.find((t) => t.id === activeId) ?? TABS.find((t) => t.id === MAP_TAB)!;
   const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
   const isDesktop = useIsDesktop();
@@ -245,7 +257,7 @@ export function AppShell({ user }: { user: ShellUser }) {
         ) : null}
       </div>
 
-      <TabBar activeId={active.id} onSelect={setActiveId} badges={{ friends: unread }} />
+      <TabBar activeId={active.id} onSelect={setActiveId} badges={{ messages: unread }} />
     </main>
   );
 }
@@ -322,7 +334,7 @@ function SectionTitle({
 const MESSAGES_CHANGED_EVENT = "zoomap:messages-changed";
 const UNREAD_POLL_MS = 20_000;
 
-/** Unread direct messages, for the Friends tab badge. */
+/** Unread direct messages, for the Messages tab badge. */
 function useUnreadMessages(): number {
   const [count, setCount] = useState(0);
   const load = async (signal?: AbortSignal) => {
