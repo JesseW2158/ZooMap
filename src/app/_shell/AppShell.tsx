@@ -43,7 +43,7 @@ const TABS: Tab[] = [
     id: "activities",
     label: "Activities",
     Icon: ActivitiesIcon,
-    panelIds: ["activities"],
+    panelIds: ["activities", "events"],
     accent: {
       bg: "bg-coral",
       text: "text-coral",
