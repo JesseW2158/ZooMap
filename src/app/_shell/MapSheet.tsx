@@ -123,6 +123,7 @@ function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps)
   const [expanded, setExpanded] = useState(false);
   const [drag, setDrag] = useState<number | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   const start = useRef<{ y: number; travel: number } | null>(null);
 
   // anything that asks the map to show something closes the sheet so the map is visible
@@ -140,6 +141,54 @@ function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps)
       ({ routeRequest, flyRequest, selectedPlaceId } = s);
     });
   }, []);
+
+  // Swiping down on the open sheet's content drags the sheet down like the header does, and closes
+  // it past SWIPE_PX, but only for a swipe that starts with the content scrolled to the top: a
+  // swipe that begins mid-list just scrolls, even if it reaches the top on the way.
+  // Native listeners: touchmove must be non-passive to stop the browser's own overscroll.
+  useEffect(() => {
+    const el = content.current;
+    if (!el || !expanded) return;
+    let startY = 0;
+    let travel = 0;
+    let pulling = false;
+    let pulled = 0;
+    let atTopAtStart = false;
+    const onStart = (e: TouchEvent) => {
+      startY = e.touches[0]!.clientY;
+      atTopAtStart = el.scrollTop <= 0;
+      travel = Math.max(0, (sheet.current?.offsetHeight ?? 0) - PEEK_PX);
+      pulling = false;
+      pulled = 0;
+    };
+    const onMove = (e: TouchEvent) => {
+      const dy = e.touches[0]!.clientY - startY;
+      if (!pulling) {
+        if (!atTopAtStart || dy <= TAP_PX || el.scrollTop > 0) return;
+        pulling = true;
+        startY = e.touches[0]!.clientY; // start the drag from here, so the sheet does not jump
+      }
+      e.preventDefault();
+      pulled = Math.min(Math.max(e.touches[0]!.clientY - startY, 0), travel);
+      setDrag(pulled);
+    };
+    const onEnd = () => {
+      if (!pulling) return;
+      pulling = false;
+      setDrag(null);
+      if (pulled > SWIPE_PX) setExpanded(false);
+    };
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    el.addEventListener("touchcancel", onEnd);
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+    };
+  }, [expanded]);
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     const height = sheet.current?.offsetHeight ?? 0;
@@ -205,6 +254,7 @@ function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps)
         </SheetHeader>
       </div>
       <div
+        ref={content}
         inert={!expanded}
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
       >
