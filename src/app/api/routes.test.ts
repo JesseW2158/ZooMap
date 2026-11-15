@@ -12,6 +12,11 @@ import type { AuthUser } from "@/shared/contracts";
  * this test keeps passing as long as they honour the contract.
  */
 
+// No Gemini here: with a key in .env.local, recommend and the assistant would call the real
+// API, whose 6 s timeout outlasts the 5 s test limit. Without one they answer from their
+// deterministic fallbacks, which is all a contract check needs.
+vi.stubEnv("GEMINI_API_KEY", "");
+
 let current: AuthUser | null = null;
 const USER: AuthUser = { id: "seed-alex", email: "dev.alex@umass.edu", name: "Alex Dev", via: "session" };
 
