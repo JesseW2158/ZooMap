@@ -5,6 +5,7 @@ import type { Place, RouteProfile, RouteResult } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { useUserLocation } from "@/shared/platform";
 import { addLayerToSlot, removeLayersAndSources, useMapEffect, useMapStore } from "@/shared/ui";
+import { CloseIcon } from "./icons";
 
 /**
  * Draws whatever route `useMapStore().routeRequest` asks for, from the user's location (or a
@@ -153,9 +154,9 @@ export function RoutingLayer() {
           type="button"
           aria-label="Clear route"
           onClick={() => { clearRoute(); setStepsOpen(false); }}
-          className="rounded-full px-2 py-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
         >
-          ✕
+          <CloseIcon className="h-4 w-4" />
         </button>
       </div>
 

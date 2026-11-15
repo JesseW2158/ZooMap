@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useFriendsFeed, useInvitePoller } from "./feed";
+import { CloseIcon } from "./icons";
 import { InviteCard } from "./parts";
 
 /**
@@ -26,7 +27,7 @@ export function FriendsInviteBanner() {
           aria-label="Dismiss"
           className="absolute right-2 top-2 rounded-full px-2 text-neutral-500"
         >
-          ✕
+          <CloseIcon className="h-4 w-4" />
         </button>
       </div>
     </div>

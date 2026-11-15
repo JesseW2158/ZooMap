@@ -5,6 +5,24 @@ import type { Place, RouteResult, ScheduleConnection, ScheduleEvent, Weekday } f
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { openExternalAuth, useUserLocation } from "@/shared/platform";
 import { useApi, useMapStore } from "@/shared/ui";
+import {
+  AlarmIcon,
+  AlertIcon,
+  BookmarkIcon,
+  CalendarIcon,
+  CapIcon,
+  ClockIcon,
+  CloseIcon,
+  GearIcon,
+  GoIcon,
+  NoteIcon,
+  PinIcon,
+  PlusIcon,
+  SkipIcon,
+  SunIcon,
+  TrashIcon,
+  WalkIcon,
+} from "./icons";
 
 /**
  * The Schedule tab is a day planner: classes, plans in between ("Study at Du Bois"), and the
@@ -23,6 +41,8 @@ const timeFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric"
 const hhmmFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 const dayFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" });
 const chipFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", day: "numeric" });
+const weekdayFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short" });
+const dateNumFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, day: "numeric" });
 const dayKeyFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
 const utcDayFmt = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" });
 const utcDayKeyFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "UTC", year: "numeric", month: "2-digit", day: "2-digit" });
@@ -41,6 +61,8 @@ const STATUS_MESSAGES: Record<string, string> = {
 };
 
 type Adding = null | { kind: "plan"; date?: string; start?: string; end?: string } | { kind: "class" } | { kind: "canvas" };
+
+type IconC = (p: { className?: string }) => ReactNode;
 
 // ---------------------------------------------------------------- walking times between places
 
@@ -101,6 +123,7 @@ export function SchedulePanel() {
   const next = timed.find((e) => !e.skipped && new Date(e.end).getTime() > now);
   const due = all.filter((e) => e.deadline && (e.allDay ? dayKey(e) >= days[0] : new Date(e.start).getTime() >= now)).slice(0, 8);
   const conns = connections.data ?? [];
+  const busyDays = new Set(timed.filter((e) => !e.skipped).map(dayKey));
 
   if (connections.loading && !connections.data) return <p className="p-4 text-sm text-neutral-500">Loading your schedule…</p>;
   if (connections.error?.code === "UNAUTHORIZED") return <p className="p-4 text-sm text-neutral-600">Sign in to see your schedule.</p>;
@@ -111,11 +134,11 @@ export function SchedulePanel() {
   };
 
   return (
-    <div className="space-y-4 p-4 text-neutral-900">
+    <div className="space-y-5 text-ink">
       {notice ? (
-        <p className="flex items-start justify-between gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-900">
+        <p className="flex items-start justify-between gap-2 rounded-2xl bg-sky/25 px-3 py-2 text-sm text-ink">
           <span>{notice}</span>
-          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="text-blue-400 hover:text-blue-700">✕</button>
+          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="text-yale hover:text-ink"><CloseIcon className="h-4 w-4" /></button>
         </p>
       ) : null}
 
@@ -129,38 +152,56 @@ export function SchedulePanel() {
         <>
           {next ? <NextUp event={next} previous={previousPlaced(timed, next)} now={now} /> : null}
 
-          {/* day chips and the one add button */}
+          {/* week strip: a circle per day, a dot where something is planned, and the add button */}
           <div className="flex items-center gap-2">
-            <div role="tablist" aria-label="Day" className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
-              {days.map((d, i) => (
-                <button
-                  key={d}
-                  role="tab"
-                  type="button"
-                  aria-selected={d === day}
-                  onClick={() => setSelectedDay(d)}
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${d === day ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"}`}
-                >
-                  {i === 0 ? "Today" : i === 1 ? "Tomorrow" : chipFmt.format(new Date(now + i * DAY_MS))}
-                </button>
-              ))}
+            <div role="tablist" aria-label="Day" className="flex min-w-0 flex-1 justify-between gap-1 overflow-x-auto">
+              {days.map((d, i) => {
+                const at = new Date(now + i * DAY_MS);
+                const selected = d === day;
+                const busy = busyDays.has(d);
+                return (
+                  <button
+                    key={d}
+                    role="tab"
+                    type="button"
+                    aria-selected={selected}
+                    aria-label={i === 0 ? "Today" : i === 1 ? "Tomorrow" : chipFmt.format(at)}
+                    onClick={() => setSelectedDay(d)}
+                    className="flex shrink-0 flex-col items-center gap-1"
+                  >
+                    <span className={`text-[10px] font-bold uppercase ${selected ? "text-ink" : "text-yale/70"}`}>
+                      {i === 0 ? "Today" : weekdayFmt.format(at)}
+                    </span>
+                    <span
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold tabular-nums transition-colors ${
+                        selected ? "bg-ink text-ivory" : i === 0 ? "bg-sky/40 text-ink" : "bg-linen text-ink hover:bg-ash/50"
+                      }`}
+                    >
+                      {dateNumFmt.format(at)}
+                    </span>
+                    <span aria-hidden className={`h-1 w-1 rounded-full ${busy ? (selected ? "bg-ink" : "bg-sky") : "bg-transparent"}`} />
+                  </button>
+                );
+              })}
             </div>
-            <div className="relative shrink-0">
+            <div className="relative shrink-0 self-center">
               <button
                 type="button"
                 aria-expanded={menu}
+                aria-label="Add"
+                title="Add"
                 onClick={() => setMenu((m) => !m)}
-                className="rounded-full bg-[#881c1c] px-3 py-1 text-xs font-semibold text-white hover:bg-[#6f1616]"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-ivory shadow-md hover:bg-yale"
               >
-                + Add
+                {menu ? <CloseIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />}
               </button>
               {menu ? (
-                <div className="absolute right-0 z-20 mt-1 w-56 overflow-hidden rounded-xl border border-neutral-200 bg-white text-sm shadow-lg" onClick={() => setMenu(false)}>
-                  <MenuItem title="Plan" hint="Study, meet a friend, eat: one time" onClick={() => setAdding({ kind: "plan", date: day })} />
-                  <MenuItem title="Class" hint="Repeats every week" onClick={() => setAdding({ kind: "class" })} />
-                  <MenuItem title="Canvas deadlines" hint="Paste your Canvas calendar link" onClick={() => setAdding({ kind: "canvas" })} />
+                <div className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl bg-white p-1 text-sm shadow-xl ring-1 ring-ink/10" onClick={() => setMenu(false)}>
+                  <MenuItem Icon={NoteIcon} title="Plan" hint="One time" onClick={() => setAdding({ kind: "plan", date: day })} />
+                  <MenuItem Icon={CapIcon} title="Class" hint="Every week" onClick={() => setAdding({ kind: "class" })} />
+                  <MenuItem Icon={BookmarkIcon} title="Canvas" hint="Deadlines" onClick={() => setAdding({ kind: "canvas" })} />
                   {!conns.some((c) => c.provider === "google") ? (
-                    <MenuItem title="Google Calendar" hint="Read-only" onClick={() => openExternalAuth("/api/schedule/google/connect")} />
+                    <MenuItem Icon={CalendarIcon} title="Google Calendar" hint="Read-only" onClick={() => openExternalAuth("/api/schedule/google/connect")} />
                   ) : null}
                 </div>
               ) : null}
@@ -177,16 +218,17 @@ export function SchedulePanel() {
 
           {due.length ? (
             <section>
-              <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">Due soon</h3>
-              <ul className="divide-y divide-neutral-100">
+              <h3 className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-yale"><AlarmIcon className="h-4 w-4" />Due soon</h3>
+              <ul>
                 {due.map((e) => (
-                  <li key={e.id} className="flex items-baseline gap-3 py-1.5 text-sm">
-                    <span className="w-24 shrink-0 text-xs text-neutral-500">
+                  <li key={e.id} className="flex items-center gap-3 py-1.5 text-sm">
+                    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-coral/30 text-ink"><BookmarkIcon className="h-4 w-4" /></span>
+                    <span className="w-20 shrink-0 text-xs text-yale">
                       {dayKey(e) === days[0] ? "Today" : (e.allDay ? utcDayFmt : dayFmt).format(new Date(e.start))}
                       {e.allDay ? "" : ` ${fmtTime(e.start)}`}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{e.title}</span>
-                    {e.course ? <span className="shrink-0 text-xs text-neutral-400">{e.course}</span> : null}
+                    {e.course ? <span className="shrink-0 text-xs text-yale/70">{e.course}</span> : null}
                   </li>
                 ))}
               </ul>
@@ -201,11 +243,14 @@ export function SchedulePanel() {
   );
 }
 
-function MenuItem({ title, hint, onClick }: { title: string; hint: string; onClick: () => void }) {
+function MenuItem({ Icon, title, hint, onClick }: { Icon: IconC; title: string; hint: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="block w-full px-3 py-2 text-left hover:bg-neutral-50">
-      <span className="block font-medium text-neutral-900">{title}</span>
-      <span className="block text-xs text-neutral-500">{hint}</span>
+    <button type="button" onClick={onClick} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-linen">
+      <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linen text-ink"><Icon className="h-5 w-5" /></span>
+      <span>
+        <span className="block font-semibold text-ink">{title}</span>
+        <span className="block text-xs text-yale">{hint}</span>
+      </span>
     </button>
   );
 }
@@ -217,26 +262,25 @@ function previousPlaced(list: ScheduleEvent[], e: ScheduleEvent): ScheduleEvent 
 }
 
 function ConnectScreen({ onPick }: { onPick: (a: Adding) => void }) {
-  const card = "w-full rounded-xl border border-neutral-200 p-3 text-left hover:bg-neutral-50";
+  const tile = "flex flex-col items-center gap-2 rounded-2xl bg-linen p-4 text-center transition hover:-translate-y-0.5 hover:bg-ash/30";
+  const options: { Icon: IconC; title: string; hint: string; run: () => void }[] = [
+    { Icon: CapIcon, title: "Class", hint: "Every week", run: () => onPick({ kind: "class" }) },
+    { Icon: NoteIcon, title: "Plan", hint: "One time", run: () => onPick({ kind: "plan" }) },
+    { Icon: CalendarIcon, title: "Google", hint: "Read-only", run: () => openExternalAuth("/api/schedule/google/connect") },
+    { Icon: BookmarkIcon, title: "Canvas", hint: "Deadlines", run: () => onPick({ kind: "canvas" }) },
+  ];
   return (
     <div className="space-y-3">
-      <p className="text-sm text-neutral-700">Plan your day: classes, study time in between, and how to walk there.</p>
-      <button type="button" onClick={() => onPick({ kind: "class" })} className={card}>
-        <div className="text-sm font-semibold">Add a class</div>
-        <div className="text-xs text-neutral-500">Course, building, days and time, from your SPIRE schedule.</div>
-      </button>
-      <button type="button" onClick={() => onPick({ kind: "plan" })} className={card}>
-        <div className="text-sm font-semibold">Add a plan</div>
-        <div className="text-xs text-neutral-500">“Study at Du Bois, 2–3pm”: something you do once.</div>
-      </button>
-      <button type="button" onClick={() => openExternalAuth("/api/schedule/google/connect")} className={card}>
-        <div className="text-sm font-semibold">Connect Google Calendar</div>
-        <div className="text-xs text-neutral-500">If your classes are in Google Calendar. Read-only.</div>
-      </button>
-      <button type="button" onClick={() => onPick({ kind: "canvas" })} className={card}>
-        <div className="text-sm font-semibold">Add Canvas deadlines</div>
-        <div className="text-xs text-neutral-500">Paste your Canvas calendar feed link to see what is due.</div>
-      </button>
+      <p className="text-center font-semibold">Add your day</p>
+      <div className="grid grid-cols-2 gap-2">
+        {options.map((o) => (
+          <button key={o.title} type="button" onClick={o.run} className={tile}>
+            <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-ink"><o.Icon className="h-7 w-7" /></span>
+            <span className="text-sm font-bold">{o.title}</span>
+            <span className="-mt-1.5 text-xs text-yale">{o.hint}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -255,10 +299,13 @@ function NextUp({ event, previous, now }: { event: ScheduleEvent; previous?: Sch
   const sameDay = dayKeyFmt.format(new Date(start)) === dayKeyFmt.format(new Date(now));
 
   return (
-    <section className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
-      <div className="text-xs font-semibold uppercase tracking-wide text-[#881c1c]">{inProgress ? "Now" : "Next up"}</div>
-      <div className="mt-0.5 text-base font-semibold">{event.title}</div>
-      <div className="text-sm text-neutral-600">
+    <section className="rounded-3xl bg-ink p-4 text-ivory shadow-lg">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky">
+        <span aria-hidden className={`h-2 w-2 rounded-full bg-sky ${inProgress ? "animate-pulse" : ""}`} />
+        {inProgress ? "Now" : "Next up"}
+      </div>
+      <div className="mt-0.5 text-lg font-bold leading-tight">{event.title}</div>
+      <div className="text-sm text-ivory/70">
         {sameDay ? "" : `${dayFmt.format(new Date(start))}, `}
         {fmtTime(event.start)}–{fmtTime(event.end)}
         {event.locationText ? ` · ${event.locationText}` : ""}
@@ -268,48 +315,48 @@ function NextUp({ event, previous, now }: { event: ScheduleEvent; previous?: Sch
         <div className="mt-2 text-sm">
           {typeof walk === "number" && leaveBy !== null ? (
             <p>
-              <span className="font-semibold">Leave by {fmtTime(leaveBy)}</span>
-              <span className="text-neutral-600">
+              <span className="inline-flex items-center gap-1 font-semibold text-jasmine"><WalkIcon className="h-4 w-4" />Leave by {fmtTime(leaveBy)}</span>
+              <span className="text-ivory/70">
                 {" "}· {walk} min walk from you
                 {minsToLeave !== null && minsToLeave >= 0 && minsToLeave < 120 ? ` · in ${minsToLeave} min` : ""}
                 {minsToLeave !== null && minsToLeave < 0 ? " · go now" : ""}
               </span>
             </p>
           ) : walk === "error" ? (
-            <p className="text-neutral-500">No walking time from where you are (off campus?).</p>
+            <p className="text-ivory/60">No walking time from where you are (off campus?).</p>
           ) : position ? (
-            <p className="text-neutral-500">Working out the walk…</p>
+            <p className="text-ivory/60">Working out the walk…</p>
           ) : status === "denied" || status === "unavailable" ? (
-            <p className="text-neutral-500">Location is off, so no walking time from you.</p>
+            <p className="flex items-center gap-1 text-ivory/60"><PinIcon className="h-3.5 w-3.5" />Location is off</p>
           ) : (
-            <button type="button" onClick={startLocation} className="text-sm font-medium text-[#1663d6] hover:underline">
-              {status === "requesting" ? "Finding you…" : "Use my location for the leave-by time"}
+            <button type="button" onClick={startLocation} className="text-sm font-semibold text-sky hover:underline">
+              <span className="inline-flex items-center gap-1"><PinIcon className="h-3.5 w-3.5" />{status === "requesting" ? "Finding you…" : "Use my location for leave-by"}</span>
             </button>
           )}
         </div>
       ) : null}
 
       {event.placeId ? (
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => { selectPlace(event.placeId!); requestRoute(event.placeId!); }}
-            className="rounded-full bg-[#881c1c] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#6f1616]"
+            className="flex items-center gap-1.5 rounded-full bg-ivory px-4 py-2 text-sm font-bold text-ink hover:bg-white"
           >
-            Go from here
+            <GoIcon className="h-4 w-4" /> Go
           </button>
           {previous?.placeId && previous.placeId !== event.placeId ? (
             <button
               type="button"
               onClick={() => { selectPlace(event.placeId!); requestRoute(event.placeId!, { fromPlaceId: previous.placeId }); }}
-              className="rounded-full border border-neutral-300 bg-white px-4 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-100"
+              className="rounded-full bg-ivory/10 px-4 py-2 text-sm font-medium text-ivory hover:bg-ivory/20"
             >
-              Preview from {previous.locationText?.split(" ")[0] ?? previous.title}
+              From {previous.locationText?.split(" ")[0] ?? previous.title}
             </button>
           ) : null}
         </div>
       ) : event.locationText ? (
-        <p className="mt-1 text-xs text-neutral-500">Could not place “{event.locationText}” on the map.</p>
+        <p className="mt-1 text-xs text-ivory/60">Could not place “{event.locationText}” on the map.</p>
       ) : null}
     </section>
   );
@@ -321,10 +368,11 @@ function DayTimeline(props: { items: ScheduleEvent[]; date: string; now: number;
   const { items, now } = props;
   if (!items.length) {
     return (
-      <div className="rounded-xl border border-dashed border-neutral-300 p-4 text-center text-sm text-neutral-600">
-        Nothing planned this day.{" "}
-        <button type="button" onClick={() => props.onAddPlan("14:00", "15:00")} className="font-medium text-[#881c1c] hover:underline">
-          + Add a plan
+      <div className="flex flex-col items-center gap-2 rounded-2xl bg-linen px-4 py-6 text-center text-sm">
+        <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-ink"><SunIcon className="h-7 w-7" /></span>
+        <p className="font-semibold">Free day</p>
+        <button type="button" onClick={() => props.onAddPlan("14:00", "15:00")} className="rounded-full bg-ink px-4 py-2 font-semibold text-ivory">
+          + Plan something
         </button>
       </div>
     );
@@ -342,7 +390,6 @@ function DayTimeline(props: { items: ScheduleEvent[]; date: string; now: number;
   }
   return (
     <div>
-      <p className="mb-1.5 text-xs text-neutral-500">Tap a class or plan to preview the walk there.</p>
       <ol className="space-y-0">{rows}</ol>
     </div>
   );
@@ -360,21 +407,23 @@ function Between({ from, to, now, onAddPlan }: { from: ScheduleEvent; to: Schedu
   const past = new Date(to.start).getTime() < now;
 
   return (
-    <li className="ml-[3.25rem] border-l-2 border-dotted border-neutral-300 py-1.5 pl-3 text-xs text-neutral-600">
+    <li className="ml-[1.6rem] border-l-2 border-dotted border-ash py-2 pl-5 text-xs text-yale">
       {canWalk ? (
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span aria-hidden>🚶</span>
+          <WalkIcon className="h-4 w-4 shrink-0" />
           <span>
             {typeof walk === "number" ? `${walk} min walk` : walk === "error" ? "No walking route" : "Walk…"}
             {" "}· {short(from)} → {short(to)}
           </span>
-          {tight ? <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-900">tight: {gap} min between</span> : null}
+          {tight ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-900"><AlertIcon className="h-3 w-3" />{gap} min</span> : null}
           <button
             type="button"
             onClick={() => { selectPlace(to.placeId!); requestRoute(to.placeId!, { fromPlaceId: from.placeId }); }}
-            className="rounded-full border border-neutral-300 bg-white px-2.5 py-0.5 font-medium text-[#1663d6] hover:bg-blue-50"
+            aria-label="Preview the walk"
+            title="Preview the walk"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#1663d6] shadow-sm ring-1 ring-ink/10 hover:bg-blue-50"
           >
-            Preview
+            <GoIcon className="h-3.5 w-3.5" />
           </button>
         </div>
       ) : null}
@@ -382,9 +431,9 @@ function Between({ from, to, now, onAddPlan }: { from: ScheduleEvent; to: Schedu
         <button
           type="button"
           onClick={() => onAddPlan(toHHMM(from.end), toHHMM(new Date(to.start).getTime() - walkMin * 60_000))}
-          className="mt-1 rounded-full border border-dashed border-[#881c1c]/50 px-2.5 py-0.5 font-medium text-[#881c1c] hover:bg-red-50"
+          className="mt-1.5 rounded-full border border-dashed border-sky px-3 py-1 font-semibold text-ink hover:bg-sky/15"
         >
-          + Plan something here · {free >= 90 ? `${Math.floor(free / 60)} h ${free % 60 ? `${free % 60} min` : ""}` : `${free} min`} free
+          <PlusIcon className="mr-1 inline h-3 w-3 align-[-1px]" />{free >= 90 ? `${Math.floor(free / 60)} h ${free % 60 ? `${free % 60} min` : ""}` : `${free} min`} free
         </button>
       ) : null}
     </li>
@@ -426,8 +475,8 @@ function ItemCard({ event, previous, past, onChanged }: { event: ScheduleEvent; 
   const previewing = !!routeRequest && routeRequest.toPlaceId === event.placeId && (routeRequest.fromPlaceId ?? undefined) === fromPlaceId;
   const fromName = fromPlaceId ? short(previous!) : "you";
 
-  const badge = isPlan ? "Plan" : event.source === "manual" ? "Class" : event.source === "google" ? "Google" : "Calendar";
-  const small = "rounded-full border border-neutral-200 bg-white px-2.5 py-0.5 text-xs font-medium hover:bg-neutral-100";
+  const KindIcon: IconC = isPlan ? NoteIcon : event.source === "manual" ? CapIcon : CalendarIcon;
+  const iconBtn = "flex h-8 w-8 items-center justify-center rounded-full bg-linen text-ink hover:bg-ash/50 disabled:opacity-40";
 
   return (
     <li
@@ -435,65 +484,74 @@ function ItemCard({ event, previous, past, onChanged }: { event: ScheduleEvent; 
       onKeyDown={canPreview && !mode ? (e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); preview(); } } : undefined}
       tabIndex={canPreview ? 0 : undefined}
       aria-label={canPreview ? `${event.title}: preview the walk from ${fromName}` : undefined}
-      className={`flex gap-3 rounded-xl border p-2.5 ${canPreview && !mode ? "cursor-pointer hover:border-[#1663d6]/60" : ""} ${
-        previewing ? "border-[#1663d6] ring-2 ring-[#1663d6]/30" : event.skipped ? "border-dashed border-neutral-200 bg-white" : isPlan ? "border-[#881c1c]/30 bg-red-50/40" : "border-neutral-200 bg-white"
-      } ${past && !event.skipped && !previewing ? "opacity-60" : ""}`}
+      className={`flex items-center gap-3 rounded-2xl p-2.5 transition ${canPreview && !mode ? "cursor-pointer hover:bg-linen/70" : ""} ${
+        previewing ? "bg-blue-50 ring-2 ring-[#1663d6]/50" : event.skipped ? "opacity-60" : ""
+      } ${past && !event.skipped && !previewing ? "opacity-50" : ""}`}
     >
-      <div className="w-[2.75rem] shrink-0 text-right text-xs tabular-nums text-neutral-600">
-        <div className="font-semibold text-neutral-900">{fmtTime(event.start)}</div>
-        <div>{fmtTime(event.end)}</div>
-      </div>
+      <span
+        aria-hidden
+        className={`flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center rounded-full text-ink ${isPlan ? "bg-jasmine/60" : "bg-sky/40"} ${event.skipped ? "grayscale" : ""}`}
+      >
+        <KindIcon className="h-6 w-6" />
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className={`truncate text-sm font-semibold ${event.skipped ? "text-neutral-400 line-through" : ""}`}>{event.title}</span>
-          <span className={`shrink-0 rounded px-1.5 text-[10px] font-semibold uppercase ${isPlan ? "bg-[#881c1c] text-white" : "bg-neutral-100 text-neutral-500"}`}>{badge}</span>
+        <div className={`truncate text-sm font-bold ${event.skipped ? "text-yale line-through" : ""}`}>{event.title}</div>
+        <div className="truncate text-xs text-yale">
+          <span className="font-semibold tabular-nums text-ink">{fmtTime(event.start)}</span>–{fmtTime(event.end)}
+          {event.locationText ? ` · ${event.locationText}` : ""}
         </div>
-        {event.locationText ? <div className="truncate text-xs text-neutral-500">{event.locationText}</div> : null}
 
         {mode === "move" && isPlan ? (
           <MovePlan event={event} busy={busy} onCancel={() => setMode(null)} onSave={(start, end) => act(() => apiFetch("/api/schedule/connections", { method: "PUT", body: { id: event.connectionId, plan: { start, end } } }))} />
         ) : mode === "confirm-delete" ? (
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-neutral-700">Delete this plan?</span>
-            <button type="button" disabled={busy} onClick={remove} className="rounded-full bg-red-700 px-2.5 py-0.5 font-medium text-white">Delete</button>
-            <button type="button" onClick={() => setMode(null)} className={small}>Keep</button>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
+            <span>Delete?</span>
+            <button type="button" disabled={busy} onClick={remove} className="rounded-full bg-red-600 px-3 py-1 font-semibold text-white">Delete</button>
+            <button type="button" onClick={() => setMode(null)} className="rounded-full bg-linen px-3 py-1 font-medium">Keep</button>
           </div>
-        ) : (
-          <div className="mt-1.5 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
-            {event.skipped ? (
-              <>
-                <span className="text-xs text-neutral-500">Skipped</span>
-                <button type="button" disabled={busy} onClick={() => setSkipped(false)} className={`${small} text-[#1663d6]`}>Undo</button>
-              </>
-            ) : (
-              <>
-                {canPreview ? (
-                  <button
-                    type="button"
-                    onClick={preview}
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${previewing ? "bg-[#1663d6] text-white" : "border border-[#1663d6]/40 bg-white text-[#1663d6] hover:bg-blue-50"}`}
-                  >
-                    {previewing ? "Previewing" : "Preview route"}
-                    {fromPlaceId ? ` from ${fromName}` : ""}
-                  </button>
-                ) : null}
-                {canPreview && fromPlaceId ? (
-                  <button type="button" onClick={fromMe} className={small}>From me</button>
-                ) : null}
-                {isPlan ? (
-                  <>
-                    <button type="button" onClick={() => setMode("move")} className={small}>Move</button>
-                    <button type="button" onClick={() => setMode("confirm-delete")} className={`${small} text-red-700`}>Delete</button>
-                  </>
-                ) : event.connectionId && !past ? (
-                  <button type="button" disabled={busy} onClick={() => setSkipped(true)} className={small} title="Skip just this one; the class stays on other days">Skip this one</button>
-                ) : null}
-              </>
-            )}
+        ) : event.skipped ? (
+          <div className="mt-1 flex items-center gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
+            <span className="inline-flex items-center gap-1 text-yale"><SkipIcon className="h-3.5 w-3.5" />Skipped</span>
+            <button type="button" disabled={busy} onClick={() => setSkipped(false)} className="rounded-full bg-linen px-2.5 py-0.5 font-semibold">Undo</button>
           </div>
-        )}
+        ) : null}
         {error ? <p className="mt-1 text-xs text-red-700">{error}</p> : null}
       </div>
+
+      {!mode && !event.skipped ? (
+        <div className="flex shrink-0 gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {canPreview && fromPlaceId ? (
+            <button type="button" onClick={fromMe} aria-label="Directions from me" title="Directions from me" className={iconBtn}>
+              <PinIcon className="h-4 w-4" />
+            </button>
+          ) : null}
+          {isPlan ? (
+            <>
+              <button type="button" onClick={() => setMode("move")} aria-label="Move" title="Move" className={iconBtn}>
+                <ClockIcon className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={() => setMode("confirm-delete")} aria-label="Delete" title="Delete" className={iconBtn}>
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </>
+          ) : event.connectionId && !past ? (
+            <button type="button" disabled={busy} onClick={() => setSkipped(true)} aria-label="Skip this one" title="Skip just this one" className={iconBtn}>
+              <SkipIcon className="h-4 w-4" />
+            </button>
+          ) : null}
+          {canPreview ? (
+            <button
+              type="button"
+              onClick={preview}
+              aria-label={`Preview the walk from ${fromName}`}
+              title={`Walk from ${fromName}`}
+              className={`flex h-8 w-8 items-center justify-center rounded-full ${previewing ? "bg-[#1663d6] text-white" : "bg-ink text-ivory hover:bg-yale"}`}
+            >
+              <GoIcon className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </li>
   );
 }
@@ -538,14 +596,18 @@ function Calendars({ connections, onChanged }: { connections: ScheduleConnection
       setBusy(null); setConfirm(null);
     }
   };
+  const KindIcon = ({ c }: { c: ScheduleConnection }) => {
+    const Icon = c.provider === "manual" ? CapIcon : c.provider === "plan" ? NoteIcon : c.provider === "google" ? CalendarIcon : BookmarkIcon;
+    return <Icon className="h-4 w-4" />;
+  };
   const kind = (c: ScheduleConnection) => (c.provider === "manual" ? "Class" : c.provider === "plan" ? "Plan" : c.provider === "google" ? "Google" : "Feed");
   return (
-    <details className="rounded-xl border border-neutral-200">
-      <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-neutral-700">My classes, plans and calendars ({connections.length})</summary>
+    <details className="rounded-2xl bg-linen/70">
+      <summary className="flex cursor-pointer items-center gap-2 px-3 py-2.5 text-sm font-semibold text-ink"><GearIcon className="h-4 w-4" />Manage ({connections.length})</summary>
       <ul className="divide-y divide-neutral-100 border-t border-neutral-100">
         {connections.map((c) => (
           <li key={c.id} className="flex items-center gap-2 px-3 py-2 text-sm">
-            <span className="w-12 shrink-0 text-[10px] font-semibold uppercase text-neutral-400">{kind(c)}</span>
+            <span aria-hidden title={kind(c)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-ink"><KindIcon c={c} /></span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">{c.label}</span>
               <span className="block truncate text-xs text-neutral-500">{c.summary}</span>
@@ -559,7 +621,7 @@ function Calendars({ connections, onChanged }: { connections: ScheduleConnection
                 <button type="button" onClick={() => setConfirm(null)} className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs">Keep</button>
               </span>
             ) : (
-              <button type="button" onClick={() => setConfirm(c.id)} className="shrink-0 rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-600 hover:text-red-700">
+              <button type="button" onClick={() => setConfirm(c.id)} className="shrink-0 rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs font-semibold text-yale hover:text-red-700">
                 Remove
               </button>
             )}
@@ -572,7 +634,7 @@ function Calendars({ connections, onChanged }: { connections: ScheduleConnection
 
 // ---------------------------------------------------------------- forms
 
-const inputCls = "w-full rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400";
+const inputCls = "mt-1 w-full rounded-xl border-0 bg-linen px-3 py-2 text-sm text-ink outline-none placeholder:text-yale/50 focus:outline-2 focus:outline-ink";
 
 function BuildingPicker({ place, onPick, placeholder }: { place: Place | null; onPick: (p: Place | null) => void; placeholder: string }) {
   const [q, setQ] = useState("");
@@ -588,8 +650,8 @@ function BuildingPicker({ place, onPick, placeholder }: { place: Place | null; o
   return (
     <div className="relative">
       {place ? (
-        <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm">
-          <span>{place.name}</span>
+        <div className="mt-1 flex items-center justify-between rounded-xl bg-linen px-3 py-2 text-sm text-ink">
+          <span className="flex items-center gap-1"><PinIcon className="h-3.5 w-3.5" />{place.name}</span>
           <button type="button" className="text-xs text-neutral-500 hover:underline" onClick={() => { onPick(null); setQ(""); }}>change</button>
         </div>
       ) : (
@@ -644,7 +706,7 @@ function PlanForm({ initial, onDone }: { initial: { date?: string; start?: strin
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold">Add a plan</h3>
+      <h3 className="flex items-center gap-2 text-base font-bold"><NoteIcon className="h-5 w-5" />New plan</h3>
       <div className="flex flex-wrap gap-1.5">
         {PLAN_PRESETS.map((p) => (
           <button
@@ -652,31 +714,31 @@ function PlanForm({ initial, onDone }: { initial: { date?: string; start?: strin
             type="button"
             aria-pressed={label === p}
             onClick={() => setLabel(p)}
-            className={`rounded-full px-3 py-1 text-xs ${label === p ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"}`}
+            className={`rounded-full px-3 py-1 text-xs ${label === p ? "bg-ink text-ivory" : "bg-linen text-ink hover:bg-ash/50"}`}
           >
             {p}
           </button>
         ))}
       </div>
-      <label className="block text-xs text-neutral-600">
+      <label className="block text-xs font-semibold text-yale">
         What
         <input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} maxLength={50} />
       </label>
-      <label className="block text-xs text-neutral-600">
+      <label className="block text-xs font-semibold text-yale">
         Where <span className="text-neutral-400">(optional)</span>
         <BuildingPicker place={place} onPick={setPlace} placeholder="Du Bois, ISB, Campus Center…" />
       </label>
       <div className="flex gap-2">
-        <label className="block flex-[1.3] text-xs text-neutral-600">Day<input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} /></label>
-        <label className="block flex-1 text-xs text-neutral-600">From<input type="time" className={inputCls} value={start} onChange={(e) => setStart(e.target.value)} /></label>
-        <label className="block flex-1 text-xs text-neutral-600">To<input type="time" className={inputCls} value={end} onChange={(e) => setEnd(e.target.value)} /></label>
+        <label className="block flex-[1.3] text-xs font-semibold text-yale">Day<input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} /></label>
+        <label className="block flex-1 text-xs font-semibold text-yale">From<input type="time" className={inputCls} value={start} onChange={(e) => setStart(e.target.value)} /></label>
+        <label className="block flex-1 text-xs font-semibold text-yale">To<input type="time" className={inputCls} value={end} onChange={(e) => setEnd(e.target.value)} /></label>
       </div>
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
       <div className="flex gap-2">
-        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-[#881c1c] px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60">
+        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60">
           {saving ? "Saving…" : "Add plan"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="rounded-full px-4 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100">Cancel</button>
+        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink">Cancel</button>
       </div>
     </div>
   );
@@ -717,21 +779,21 @@ function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold">Add a class</h3>
-      <label className="block text-xs text-neutral-600">
+      <h3 className="flex items-center gap-2 text-base font-bold"><CapIcon className="h-5 w-5" />New class</h3>
+      <label className="block text-xs font-semibold text-yale">
         Course
         <input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="CICS 210 Lecture" maxLength={60} />
       </label>
-      <label className="block text-xs text-neutral-600">
+      <label className="block text-xs font-semibold text-yale">
         Building
         <BuildingPicker place={place} onPick={setPlace} placeholder="ILC, LGRT, Morrill…" />
       </label>
-      <label className="block text-xs text-neutral-600">
+      <label className="block text-xs font-semibold text-yale">
         Room <span className="text-neutral-400">(optional)</span>
         <input className={inputCls} value={room} onChange={(e) => setRoom(e.target.value)} placeholder="S131" maxLength={30} />
       </label>
       <div>
-        <div className="text-xs text-neutral-600">Days</div>
+        <div className="text-xs font-semibold text-yale">Days</div>
         <div className="mt-1 flex gap-1">
           {DAYS.map((d) => {
             const on = days.includes(d.id);
@@ -741,7 +803,7 @@ function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
                 type="button"
                 aria-pressed={on}
                 onClick={() => setDays(on ? days.filter((x) => x !== d.id) : [...days, d.id])}
-                className={`h-9 w-10 rounded-lg border text-sm ${on ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 text-neutral-700"}`}
+                className={`h-10 w-10 rounded-full text-sm font-bold ${on ? "bg-ink text-ivory" : "bg-linen text-ink"}`}
               >
                 {d.label}
               </button>
@@ -750,15 +812,15 @@ function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
         </div>
       </div>
       <div className="flex gap-3">
-        <label className="block flex-1 text-xs text-neutral-600">Starts<input type="time" className={inputCls} value={start} onChange={(e) => setStart(e.target.value)} /></label>
-        <label className="block flex-1 text-xs text-neutral-600">Ends<input type="time" className={inputCls} value={end} onChange={(e) => setEnd(e.target.value)} /></label>
+        <label className="block flex-1 text-xs font-semibold text-yale">Starts<input type="time" className={inputCls} value={start} onChange={(e) => setStart(e.target.value)} /></label>
+        <label className="block flex-1 text-xs font-semibold text-yale">Ends<input type="time" className={inputCls} value={end} onChange={(e) => setEnd(e.target.value)} /></label>
       </div>
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
       <div className="flex gap-2">
-        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-[#881c1c] px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60">
+        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60">
           {saving ? "Saving…" : "Save class"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="rounded-full px-4 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100">Cancel</button>
+        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink">Cancel</button>
       </div>
     </div>
   );
@@ -784,8 +846,8 @@ function AddFeedForm({ onDone }: { onDone: (saved: boolean) => void }) {
   };
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold">Add Canvas deadlines</h3>
-      <ol className="list-decimal space-y-0.5 pl-5 text-xs text-neutral-600">
+      <h3 className="flex items-center gap-2 text-base font-bold"><BookmarkIcon className="h-5 w-5" />Canvas deadlines</h3>
+      <ol className="list-decimal space-y-0.5 pl-5 text-xs font-semibold text-yale">
         <li>Open Canvas and go to <b>Calendar</b>.</li>
         <li>At the bottom right, click <b>Calendar Feed</b> and copy the link.</li>
         <li>Paste it here. Treat it like a password: anyone with it can see your calendar.</li>
@@ -800,10 +862,10 @@ function AddFeedForm({ onDone }: { onDone: (saved: boolean) => void }) {
       />
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
       <div className="flex gap-2">
-        <button type="button" disabled={saving || !url.trim()} onClick={save} className="rounded-full bg-[#881c1c] px-4 py-1.5 text-sm font-medium text-white disabled:opacity-60">
+        <button type="button" disabled={saving || !url.trim()} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60">
           {saving ? "Adding…" : "Add link"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="rounded-full px-4 py-1.5 text-sm text-neutral-600 hover:bg-neutral-100">Cancel</button>
+        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink">Cancel</button>
       </div>
     </div>
   );

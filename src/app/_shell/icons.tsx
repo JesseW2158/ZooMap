@@ -6,7 +6,7 @@ const base = {
   viewBox: "0 0 24 24",
   fill: "none",
   stroke: "currentColor",
-  strokeWidth: 1.8,
+  strokeWidth: 2.1,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
   "aria-hidden": true,
@@ -72,7 +72,7 @@ export function CalendarIcon({ className }: IconProps) {
     <svg {...base} className={className}>
       <rect x="4" y="5" width="16" height="16" rx="2.5" />
       <path d="M4 10h16M8.5 3v4M15.5 3v4" />
-      <path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01" strokeWidth={2.4} />
+      <path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01M16 17.5h.01"strokeWidth={2.4} />
     </svg>
   );
 }
@@ -83,6 +83,16 @@ export function PointsIcon({ className }: IconProps) {
     <svg {...base} className={className}>
       <circle cx="12" cy="12" r="9" />
       <path d="M14.8 9.2c-.4-1-1.5-1.7-2.8-1.7-1.6 0-2.8.9-2.8 2.2 0 3 5.6 1.6 5.6 4.6 0 1.3-1.2 2.2-2.8 2.2-1.4 0-2.5-.7-2.9-1.8M12 6v1.5M12 16.5V18" />
+    </svg>
+  );
+}
+
+/** An open book: studying. */
+export function StudyIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 6.5C10.2 5.2 7.6 4.6 3.5 4.8v13.4c4.1-.2 6.7.4 8.5 1.8 1.8-1.4 4.4-2 8.5-1.8V4.8c-4.1-.2-6.7.4-8.5 1.7z" />
+      <path d="M12 6.5V20" />
     </svg>
   );
 }
