@@ -46,7 +46,7 @@ export function LocationConsent() {
                 joined so you earn points.
               </li>
               <li>
-                <strong>How to turn it off:</strong> use the &quot;Sharing location&quot; button at the top of the map,
+                <strong>How to turn it off:</strong> use the &quot;Sharing location&quot; button at the bottom right of the map,
                 or switch sharing off in the app. Android also lets you revoke location in Settings.
               </li>
             </ul>
@@ -90,7 +90,9 @@ export function LocationConsent() {
       ) : null}
 
       {mode === "sharing" || problem ? (
-        <div className="fixed right-3 top-[calc(env(safe-area-inset-top)+3.75rem)] z-40 flex max-w-[16rem] items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-neutral-900 shadow-md">
+        // Bottom-right, mirroring the crowd legend's "Map: …" mode button at the bottom-left: the same
+        // bottom offset (clear of the peeking sheet, tab bar and attribution), on the right.
+        <div className="fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-40 flex max-w-[16rem] items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-neutral-900 shadow-md">
           {problem === "permission-denied" ? (
             <>
               <span>Location is blocked.</span>
