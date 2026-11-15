@@ -10,10 +10,10 @@ import { CloseIcon } from "./icons";
 import { Avatar } from "./parts";
 
 /**
- * Full-screen layer used by "My code" and "Scan". Portalled to <body>: the bottom sheet is its
+ * Full-screen layer used by "My code", "Scan" and a friend's profile. Portalled to <body>: the bottom sheet is its
  * own stacking context, so anything rendered inside it can't cover the invite banner or map controls.
  */
-function Overlay({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+export function Overlay({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);

@@ -15,7 +15,6 @@ import {
   AskIcon,
   CalendarIcon,
   CrowdIcon,
-  FriendsIcon,
   MapIcon,
   MessagesIcon,
   PointsIcon,
@@ -43,7 +42,7 @@ interface Tab {
   };
 }
 
-/** Bottom navigation, left to right. The map sits in the middle: three tabs either side. */
+/** Bottom navigation, left to right. The map sits near the middle. */
 const TABS: Tab[] = [
   {
     id: "activities",
@@ -56,23 +55,14 @@ const TABS: Tab[] = [
     },
   },
   {
+    // friends and direct messages in one list: tapping a friend opens the chat
     id: "friends",
-    label: "Friends",
-    Icon: FriendsIcon,
+    label: "Chat",
+    Icon: MessagesIcon,
     panelIds: ["friends"],
     accent: {
       bg: "bg-rose",
       text: "text-rose",
-    },
-  },
-  {
-    id: "messages",
-    label: "Messages",
-    Icon: MessagesIcon,
-    panelIds: ["messages"],
-    accent: {
-      bg: "bg-lavender",
-      text: "text-lavender",
     },
   },
   {
@@ -122,8 +112,7 @@ const TABS: Tab[] = [
 /** Symbols for panel sections on a page that shows more than one panel. */
 const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   activities: ActivitiesIcon,
-  friends: FriendsIcon,
-  messages: MessagesIcon,
+  friends: MessagesIcon,
   schedule: CalendarIcon,
   recommend: StudyIcon,
   rewards: PointsIcon,
@@ -277,7 +266,7 @@ export function AppShell({ user }: { user: ShellUser }) {
         ) : null}
       </div>
 
-      <TabBar activeId={active.id} onSelect={selectTab} badges={{ messages: unread }} />
+      <TabBar activeId={active.id} onSelect={selectTab} badges={{ friends: unread }} />
     </main>
   );
 }
@@ -358,7 +347,7 @@ function SectionTitle({
 const MESSAGES_CHANGED_EVENT = "zoomap:messages-changed";
 const UNREAD_POLL_MS = 20_000;
 
-/** Unread direct messages, for the Messages tab badge. */
+/** Unread direct messages, for the Chat tab badge. */
 function useUnreadMessages(): number {
   const [count, setCount] = useState(0);
   const load = async (signal?: AbortSignal) => {

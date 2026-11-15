@@ -15,7 +15,6 @@ import { CampusLayer } from "@/modules/campus/ui/Layer";
 import { DensityLayer } from "@/modules/density/ui/Layer";
 import { DensityPanel } from "@/modules/density/ui/Panel";
 import { FriendsInviteBanner } from "@/modules/friends/ui/InviteBanner";
-import { MessagesPanel } from "@/modules/friends/ui/Messages";
 import { FriendsPanel } from "@/modules/friends/ui/Panel";
 import { MobileBridge } from "@/modules/mobile/ui/Bridge";
 import { LocationStatus } from "@/modules/mobile/ui/LocationStatus";
@@ -45,8 +44,7 @@ export const registry: AppRegistry = {
     { id: "events", title: "Events", Component: PlannedEventsPanel },
     { id: "recommend", title: "Study", Component: RecommendPanel },
     { id: "rewards", title: "Points", Component: RewardsPanel },
-    { id: "friends", title: "Friends", Component: FriendsPanel },
-    { id: "messages", title: "Messages", Component: MessagesPanel },
+    { id: "friends", title: "Chat", Component: FriendsPanel },
     { id: "assistant", title: "Ask", Component: AssistantPanel },
   ],
   topSlot: [{ id: "routing-search", Component: RoutingSearch }],
