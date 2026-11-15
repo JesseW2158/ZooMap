@@ -6,13 +6,16 @@ import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
+import { MapSheet, mapInsetVars, useIsDesktop } from "./MapSheet";
 import {
   ActivitiesIcon,
   AskIcon,
   CalendarIcon,
   CrowdIcon,
+  FriendsIcon,
   MapIcon,
   PointsIcon,
+  StudyIcon,
 } from "./icons";
 
 export interface ShellUser {
@@ -26,15 +29,13 @@ interface Tab {
   id: string;
   label: string;
   Icon: ComponentType<{ className?: string }>;
-  /** Registered panel ids shown on this tab's page, top to bottom. Empty for the map. */
+  /** Registered panel ids shown on this tab's page, top to bottom. For the map tab, the
+   *  panels in the map sheet instead. */
   panelIds: string[];
   /** Section colour classes (literal strings so Tailwind sees them). */
   accent: {
     bg: string;
     text: string;
-    /** Card background: a top stripe as a gradient, which the rounded corners clip cleanly (a
-     *  thick top border tapers at the corners, and overflow-hidden would clip panel dropdowns). */
-    card: string;
   };
 }
 
@@ -44,44 +45,42 @@ const TABS: Tab[] = [
     id: "activities",
     label: "Activities",
     Icon: ActivitiesIcon,
-    panelIds: ["activities"],
+    panelIds: ["activities", "events"],
     accent: {
       bg: "bg-coral",
       text: "text-coral",
-      card: "bg-[linear-gradient(var(--color-coral)_6px,white_6px)]",
     },
   },
   {
-    id: "crowd",
-    label: "Crowd",
-    Icon: CrowdIcon,
-    panelIds: ["density"],
+    id: "friends",
+    label: "Friends",
+    Icon: FriendsIcon,
+    panelIds: ["friends"],
     accent: {
-      bg: "bg-lavender",
-      text: "text-lavender",
-      card: "bg-[linear-gradient(var(--color-lavender)_6px,white_6px)]",
+      bg: "bg-rose",
+      text: "text-rose",
     },
   },
   {
     id: MAP_TAB,
     label: "Map",
     Icon: MapIcon,
-    panelIds: [],
+    // shown on the map itself, in the sidebar (desktop) or swipe-up sheet (phone)
+    panelIds: ["density"],
     accent: {
       bg: "bg-jasmine",
       text: "text-jasmine",
-      card: "bg-[linear-gradient(var(--color-jasmine)_6px,white_6px)]",
     },
   },
   {
     id: "calendar",
     label: "Calendar",
     Icon: CalendarIcon,
-    panelIds: ["schedule", "recommend"],
+    // "recommend" (Study) joins this page once it is built; until then its stub is hidden
+    panelIds: ["schedule"],
     accent: {
       bg: "bg-sky",
       text: "text-sky",
-      card: "bg-[linear-gradient(var(--color-sky)_6px,white_6px)]",
     },
   },
   {
@@ -92,7 +91,6 @@ const TABS: Tab[] = [
     accent: {
       bg: "bg-sand",
       text: "text-sand",
-      card: "bg-[linear-gradient(var(--color-sand)_6px,white_6px)]",
     },
   },
   {
@@ -103,16 +101,26 @@ const TABS: Tab[] = [
     accent: {
       bg: "bg-mint",
       text: "text-mint",
-      card: "bg-[linear-gradient(var(--color-mint)_6px,white_6px)]",
     },
   },
 ];
+
+/** Symbols for panel sections on a page that shows more than one panel. */
+const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  activities: ActivitiesIcon,
+  friends: FriendsIcon,
+  schedule: CalendarIcon,
+  recommend: StudyIcon,
+  rewards: PointsIcon,
+  density: CrowdIcon,
+};
 
 const panelsById = new Map(registry.panels.map((p) => [p.id, p]));
 
 // A registered panel that no tab names still gets shown, on the calendar page, so a new
 // registry line never silently disappears.
-const claimed = new Set(TABS.flatMap((t) => t.panelIds));
+const HIDDEN_UNTIL_BUILT = new Set(["recommend"]);
+const claimed = new Set([...TABS.flatMap((t) => t.panelIds), ...HIDDEN_UNTIL_BUILT]);
 const unclaimed = registry.panels
   .filter((p) => !claimed.has(p.id))
   .map((p) => p.id);
@@ -134,6 +142,10 @@ export function AppShell({ user }: { user: ShellUser }) {
   const [activeId, setActiveId] = useState<string>(MAP_TAB);
   const active = TABS.find((t) => t.id === activeId) ?? TABS[2]!;
   const onMap = active.id === MAP_TAB;
+  const isDesktop = useIsDesktop();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const mapTab = TABS.find((t) => t.id === MAP_TAB)!;
+  const mapPanels = panelsFor(mapTab);
 
   // a route or fly request from a panel means "show me on the map"
   useEffect(() => {
@@ -153,7 +165,10 @@ export function AppShell({ user }: { user: ShellUser }) {
 
   return (
     <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-linen">
-      <div className="relative min-h-0 flex-1">
+      <div
+        className="relative min-h-0 flex-1"
+        style={mapInsetVars(isDesktop, mapPanels.length > 0 && sidebarOpen)}
+      >
         <MapProvider>
           {registry.mapLayers.map(({ id, Component }) => (
             <Component key={id} />
@@ -164,13 +179,21 @@ export function AppShell({ user }: { user: ShellUser }) {
           <Component key={id} />
         ))}
 
-        {/* map chrome: account in the corner (the alerts bell sits just left of it, right-16,
-            from the notifications module; keep the two in step). The registry's top slot
-            (building search) is left out on purpose: the map is kept clear. */}
+        {/* map chrome: building search (directions from your location) and the account. The
+            alerts bell (notifications module) sits in the spacer just left of the account,
+            right-[3.75rem]; keep the two in step. z-[25] keeps the account menu above the
+            friend-invite banner (z-20). */}
         <div
           hidden={!onMap}
-          className="pointer-events-none absolute inset-x-0 top-0 z-[25] flex items-start justify-end p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
+          className="pointer-events-none absolute left-[var(--map-inset-left,0px)] right-0 top-0 z-[25] flex items-start gap-2 p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
         >
+          <div className="pointer-events-auto min-w-0 flex-1 md:mx-auto md:max-w-md">
+            {registry.topSlot.map(({ id, Component }) => (
+              <Component key={id} />
+            ))}
+          </div>
+          {/* room for the alerts bell (notifications, a headless entry pinned beside the account) */}
+          <div aria-hidden className="w-10 shrink-0" />
           <div className="pointer-events-auto">
             <AccountButton user={user} />
           </div>
@@ -178,16 +201,38 @@ export function AppShell({ user }: { user: ShellUser }) {
 
         {onMap ? <DevTools /> : null}
 
+        {mapPanels.length ? (
+          <MapSheet
+            title={mapPanels.map((p) => p.title).join(" · ")}
+            Icon={CrowdIcon}
+            accentBg="bg-lavender"
+            isDesktop={isDesktop}
+            sidebarOpen={sidebarOpen}
+            onSidebarOpenChange={setSidebarOpen}
+            hidden={!onMap}
+          >
+            <div className="space-y-6">
+              {mapPanels.map(({ id, Component }) => (
+                <Component key={id} />
+              ))}
+            </div>
+          </MapSheet>
+        ) : null}
+
         {!onMap ? (
           <Page tab={active} user={user}>
             {panelsFor(active).map(({ id, title, Component }, _i, all) => (
               <section
                 key={id}
                 aria-label={title}
-                className={`rounded-2xl px-4 pb-4 pt-5 shadow-md shadow-ink/10 ${active.accent.card}`}
+                className="rounded-3xl bg-white p-4 shadow-md shadow-ink/10"
               >
                 {all.length > 1 ? (
-                  <h2 className="mb-2 text-base font-bold text-ink">{title}</h2>
+                  <SectionTitle
+                    title={title}
+                    Icon={PANEL_ICONS[id]}
+                    accentBg={active.accent.bg}
+                  />
                 ) : null}
                 <Component />
               </section>
@@ -221,18 +266,18 @@ function Page({
       <header className="relative shrink-0 bg-ink pb-12 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
         {/* clip only the decorative circles: the header itself must not clip the account menu.
             The header has no z-index on purpose: the cards after it paint over its bottom edge,
-            while the menu's own z-40 lifts it above those cards. */}
-        <div aria-hidden className="absolute inset-0 overflow-hidden">
+            while the menu's own z-index lifts it above those cards. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -bottom-24 right-6 h-40 w-40 rounded-full bg-yale/45" />
           <div className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70" />
         </div>
         <div className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
           <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-ink ${accent.bg}`}
+            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-ink shadow-md ring-4 ring-ivory/15 ${accent.bg}`}
           >
-            <Icon className="h-6 w-6" />
+            <Icon className="h-8 w-8" />
           </span>
-          <h1 className="min-w-0 flex-1 truncate text-[28px] font-bold leading-tight tracking-tight">
+          <h1 className="min-w-0 flex-1 truncate text-xl font-bold leading-tight tracking-tight">
             {label}
           </h1>
           <AccountButton user={user} />
@@ -245,6 +290,35 @@ function Page({
   );
 }
 
+/** A section heading led by its symbol. */
+function SectionTitle({
+  title,
+  Icon,
+  accentBg,
+}: {
+  title: string;
+  Icon?: ComponentType<{ className?: string }>;
+  accentBg: string;
+}) {
+  return (
+    <h2 className="mb-2 flex items-center gap-2 text-base font-bold text-ink">
+      {Icon ? (
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink ${accentBg}`}
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+      ) : null}
+      {title}
+    </h2>
+  );
+}
+
+/**
+ * Icon-only bottom bar, in the manner of Snapchat: symbols, no captions (each has an
+ * aria-label and a tooltip). The selected symbol takes its section colour, grows a little and
+ * gets a dot underneath; the map sits raised in the middle.
+ */
 function TabBar({
   activeId,
   onSelect,
@@ -259,7 +333,7 @@ function TabBar({
     >
       <div
         role="tablist"
-        className="mx-auto flex max-w-2xl items-end justify-around px-1 pb-2 pt-2"
+        className="mx-auto flex max-w-2xl items-center justify-around px-2 py-2.5"
       >
         {TABS.map(({ id, label, Icon, accent }) => {
           const selected = id === activeId;
@@ -270,31 +344,34 @@ function TabBar({
               role="tab"
               type="button"
               aria-selected={selected}
+              aria-label={label}
+              title={label}
               onClick={() => onSelect(id)}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl text-[11px] leading-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory ${
-                selected
-                  ? `font-semibold ${accent.text}`
-                  : "font-medium text-ivory/70 hover:text-ivory"
+              className={`relative flex min-w-0 flex-1 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory ${
+                selected ? accent.text : "text-ivory/60 hover:text-ivory"
               }`}
             >
               {isMap ? (
                 <span
-                  className={`-mt-5 flex h-12 w-14 items-center justify-center rounded-2xl text-ink shadow-lg ring-4 ring-ink transition-transform ${
+                  className={`-my-4 flex h-14 w-14 items-center justify-center rounded-full text-ink shadow-lg ring-4 ring-ink transition-transform ${
                     accent.bg
-                  } ${selected ? "scale-105" : ""}`}
+                  } ${selected ? "scale-110" : "opacity-90"}`}
                 >
-                  <Icon className="h-7 w-7" />
+                  <Icon className="h-8 w-8" />
                 </span>
               ) : (
-                <span
-                  className={`flex h-8 w-14 items-center justify-center rounded-full transition-colors ${
-                    selected ? `${accent.bg} text-ink` : ""
-                  }`}
-                >
-                  <Icon className="h-6 w-6" />
+                <span className="flex h-11 w-11 flex-col items-center justify-center">
+                  <Icon
+                    className={`h-7 w-7 transition-transform duration-200 ${selected ? "scale-115" : ""}`}
+                  />
+                  <span
+                    aria-hidden
+                    className={`absolute bottom-[-6px] h-1.5 w-1.5 rounded-full transition-opacity ${accent.bg} ${
+                      selected ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
                 </span>
               )}
-              {label}
             </button>
           );
         })}
@@ -305,39 +382,51 @@ function TabBar({
 
 function AccountButton({ user }: { user: ShellUser }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const label = user.name ?? user.email;
+  const initial = label.slice(0, 1).toUpperCase();
 
-  // a tap anywhere else closes the menu, so it never sits under the alerts inbox, which opens
-  // over the same corner
+  // close on a tap outside or Escape
   useEffect(() => {
     if (!open) return;
-    const close = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    const onDown = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={box} className="relative shrink-0">
       <button
         type="button"
         aria-label="Account"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-ivory shadow-md ring-2 ring-ivory/80"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-sm font-bold text-ivory shadow-md ring-2 ring-ivory/80"
       >
-        {label.slice(0, 1).toUpperCase()}
+        {initial}
       </button>
       {open ? (
-        <div className="absolute right-0 top-12 z-40 w-56 rounded-xl bg-white p-3 text-sm text-ink shadow-xl ring-1 ring-ink/10">
-          <p className="truncate font-medium">{user.name ?? "Signed in"}</p>
-          <p className="mb-2 truncate text-xs text-yale">{user.email}</p>
-          <form action={signOutAction}>
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl bg-white p-4 text-sm text-ink shadow-xl ring-1 ring-ink/10">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink font-bold text-ivory">
+              {initial}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{user.name ?? "Signed in"}</p>
+              <p className="truncate text-xs text-yale">{user.email}</p>
+            </div>
+          </div>
+          <form action={signOutAction} className="mt-3">
             <button
               type="submit"
-              className="w-full rounded-lg bg-ink px-3 py-2 text-ivory hover:bg-yale"
+              className="w-full rounded-full bg-ink px-3 py-2.5 font-semibold text-ivory hover:bg-yale"
             >
               Sign out
             </button>
