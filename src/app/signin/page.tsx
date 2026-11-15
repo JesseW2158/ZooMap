@@ -28,6 +28,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   if (await getSessionUser()) redirect(next);
   const domains = env().allowedEmailDomains;
   const devAuth = env().devAuth;
+  const googleReady = Boolean(env().googleClientId && env().googleClientSecret);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
@@ -43,16 +44,35 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       ) : null}
 
       <ShellSignIn>
-      <form
-        action={async () => {
-          "use server";
-          await signIn("google", { redirectTo: next });
-        }}
-      >
-        <button type="submit" className="w-full rounded-xl bg-neutral-900 px-4 py-3 font-medium text-white">
-          Continue with Google
-        </button>
-      </form>
+      {/* TEMPORARY local bypass (not committed): one tap into the demo user, whose sample classes are loaded. */}
+      {devAuth ? (
+        <form
+          action={async () => {
+            "use server";
+            await signIn("dev", { email: "dev.alex@umass.edu", redirectTo: next });
+          }}
+        >
+          <button type="submit" className="w-full rounded-xl bg-[#881c1c] px-4 py-4 text-left text-white shadow-md hover:bg-[#6f1616]">
+            <span className="block text-lg font-semibold">Skip sign-in (demo)</span>
+            <span className="block text-sm text-white/80">Continue as Alex, with a sample class schedule loaded</span>
+          </button>
+        </form>
+      ) : null}
+
+      {googleReady ? (
+        <form
+          action={async () => {
+            "use server";
+            await signIn("google", { redirectTo: next });
+          }}
+        >
+          <button type="submit" className="w-full rounded-xl bg-neutral-900 px-4 py-3 font-medium text-white">
+            Continue with Google
+          </button>
+        </form>
+      ) : (
+        <p className="text-xs text-neutral-500">Google sign-in is not set up on this server yet.</p>
+      )}
 
       {devAuth ? (
         <section className="space-y-2 rounded-xl border border-dashed border-amber-400 bg-amber-50 p-3">
