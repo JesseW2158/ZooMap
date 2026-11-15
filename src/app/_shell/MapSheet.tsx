@@ -68,32 +68,35 @@ export function MapSheet(props: MapSheetProps) {
   return props.isDesktop ? <Sidebar {...props} /> : <BottomSheet {...props} />;
 }
 
-function Sidebar({
+/**
+ * Reopens the closed desktop sidebar. The shell puts it in the top bar beside the search, in
+ * the flow, so it never floats over the search, the route card or anything else that expands.
+ */
+export function SidebarOpenButton({
   title,
   Icon,
   accentBg,
-  sidebarOpen,
-  onSidebarOpenChange,
-  hidden,
-  children,
-}: MapSheetProps) {
-  if (!sidebarOpen) {
-    return (
-      <button
-        type="button"
-        hidden={hidden}
-        onClick={() => onSidebarOpenChange(true)}
-        aria-expanded={false}
-        className="absolute left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[8] flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-3 text-sm font-semibold text-ink shadow-md shadow-ink/20"
-      >
-        <span className={`flex h-7 w-7 items-center justify-center rounded-full ${accentBg}`}>
-          <Icon className="h-4 w-4" />
-        </span>
-        {title}
-        <span aria-hidden>›</span>
-      </button>
-    );
-  }
+  onOpen,
+}: Pick<MapSheetProps, "title" | "Icon" | "accentBg"> & { onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-expanded={false}
+      className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-white pl-1.5 pr-3 text-sm font-semibold text-ink shadow-md shadow-ink/20"
+    >
+      <span className={`flex h-7 w-7 items-center justify-center rounded-full ${accentBg}`}>
+        <Icon className="h-4 w-4" />
+      </span>
+      {title}
+      <span aria-hidden>›</span>
+    </button>
+  );
+}
+
+function Sidebar({ title, Icon, accentBg, sidebarOpen, onSidebarOpenChange, hidden, children }: MapSheetProps) {
+  // closed, the shell shows SidebarOpenButton in the top bar instead
+  if (!sidebarOpen) return null;
   return (
     <aside
       aria-label={title}
