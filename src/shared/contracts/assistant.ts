@@ -42,10 +42,16 @@ export const ChatCard = z.discriminatedUnion("kind", [
 ]);
 export type ChatCard = z.infer<typeof ChatCard>;
 
+/** Added later (additive): why Gemini did not answer. Details stay in the server log. */
+export const FallbackReason = z.enum(["not-configured", "bad-key", "model-not-found", "quota", "timeout", "error", "no-answer"]);
+export type FallbackReason = z.infer<typeof FallbackReason>;
+
 export const ChatResponse = z.object({
   reply: z.string(),
   cards: z.array(ChatCard),
   /** Which answered. A fallback reply is labelled as such in the UI. */
   source: z.enum(["gemini", "fallback"]),
+  /** Added later (additive): set on a fallback reply. */
+  fallbackReason: FallbackReason.optional(),
 });
 export type ChatResponse = z.infer<typeof ChatResponse>;

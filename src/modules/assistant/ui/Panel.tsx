@@ -14,7 +14,19 @@ import { createStore, useMapStore, useStore } from "@/shared/ui";
 interface Turn extends ChatMessage {
   cards?: ChatCard[];
   source?: ChatResponse["source"];
+  fallbackReason?: ChatResponse["fallbackReason"];
 }
+
+/** Why a reply is the keyword fallback, in words the team can act on. */
+const FALLBACK_REASONS: Record<NonNullable<ChatResponse["fallbackReason"]>, string> = {
+  "not-configured": "Gemini isn't set up on this server (no GEMINI_API_KEY).",
+  "bad-key": "Gemini rejected the API key.",
+  "model-not-found": "Gemini doesn't recognise the model name in GEMINI_MODEL.",
+  quota: "Gemini's usage limit was reached; try again later.",
+  timeout: "Gemini took too long to answer.",
+  error: "Gemini returned an error.",
+  "no-answer": "Gemini didn't give a usable answer.",
+};
 
 const HISTORY_SENT = 10;
 const chatStore = createStore<{ turns: Turn[]; pending: boolean; error: string | null }>({ turns: [], pending: false, error: null });
@@ -32,7 +44,7 @@ async function send(text: string, origin: ChatBody["origin"]) {
     // the server wants the conversation to start with the student
     while (messages[0]?.role === "assistant") messages.shift();
     const res = await apiFetch("/api/assistant/chat", { method: "POST", body: { messages, origin }, schema: ChatResponse });
-    chatStore.set({ turns: [...turns, { role: "assistant", text: res.reply, cards: res.cards, source: res.source }], pending: false });
+    chatStore.set({ turns: [...turns, { role: "assistant", text: res.reply, cards: res.cards, source: res.source, fallbackReason: res.fallbackReason }], pending: false });
   } catch (err) {
     const msg = err instanceof ApiClientError && err.code === "UNAUTHORIZED" ? "Sign in to use the assistant." : err instanceof Error ? err.message : "Something went wrong.";
     chatStore.set({ pending: false, error: msg });
@@ -92,7 +104,11 @@ export function AssistantPanel() {
               <div className="space-y-2">
                 <div className="max-w-[92%] rounded-2xl rounded-bl-sm border border-ash bg-ivory px-3 py-2">
                   <p className="whitespace-pre-wrap">{t.text}</p>
-                  {t.source === "fallback" ? <p className="mt-1 text-[11px] text-yale">Quick answer without AI (Gemini unavailable).</p> : null}
+                  {t.source === "fallback" ? (
+                    <p className="mt-1 text-[11px] text-yale">
+                      Quick answer without AI. {t.fallbackReason ? FALLBACK_REASONS[t.fallbackReason] : "Gemini unavailable."}
+                    </p>
+                  ) : null}
                 </div>
                 {t.cards?.length ? (
                   <div className="space-y-1.5">
