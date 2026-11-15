@@ -30,6 +30,7 @@ import {
   ProfileUpdateBody,
 } from "./friends";
 import { Ok } from "./common";
+import { AlertSettings, AlertSettingsBody, MarkReadBody, NotificationsResponse } from "./notifications";
 
 /**
  * Every JSON route, its validators and its success body. The route stubs parse their
@@ -121,6 +122,9 @@ export const API_ROUTES = {
     response: ParticipationResult,
   },
   inviteDecline: { path: "/api/friends/invites/[id]/decline", method: "POST", status: 200, response: Ok },
+  notificationsList: { path: "/api/notifications", method: "GET", status: 200, response: NotificationsResponse },
+  notificationsRead: { path: "/api/notifications/read", method: "POST", status: 200, body: MarkReadBody, response: Ok },
+  notificationsSettings: { path: "/api/notifications/settings", method: "PUT", status: 200, body: AlertSettingsBody, response: AlertSettings },
 } as const satisfies Record<string, ApiRouteSpec>;
 
 export type ApiRouteName = keyof typeof API_ROUTES;

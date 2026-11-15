@@ -3,6 +3,7 @@ import { ActivityCategory, ActivityStatus, ParticipationRole } from "./activitie
 import { PresenceSource } from "./density";
 import { ScheduleSource } from "./schedule";
 import { InviteStatus, SocialKind } from "./friends";
+import { AlertKind, AlertSettings } from "./notifications";
 
 /**
  * MongoDB document shapes, one per collection (see `@/shared/db/indexes.ts` for indexes).
@@ -206,3 +207,29 @@ export const RateLimitDoc = z.object({
   expiresAt: z.date(),
 });
 export type RateLimitDoc = z.infer<typeof RateLimitDoc>;
+
+/**
+ * Notifications: one per alert shown. `_id` is derived from the cause
+ * ("<userId>:exam:<eventId>:3d"), so writing the same alert twice is a no-op. Removed by a TTL index.
+ */
+export const NotificationDoc = z.object({
+  _id: id,
+  userId: id,
+  kind: AlertKind,
+  title: z.string(),
+  body: z.string(),
+  placeId: id.optional(),
+  /** When it became due. */
+  at: z.date(),
+  readAt: z.date().optional(),
+  expiresAt: z.date(),
+});
+export type NotificationDoc = z.infer<typeof NotificationDoc>;
+
+/** Notifications: a user's alert settings, `_id` = userId. Missing means the defaults. */
+export const NotificationSettingsDoc = AlertSettings.omit({ pausedUntil: true }).extend({
+  _id: id,
+  pausedUntil: z.date().nullable(),
+  updatedAt: z.date(),
+});
+export type NotificationSettingsDoc = z.infer<typeof NotificationSettingsDoc>;
