@@ -59,4 +59,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Friends: the Scan button reads friend QR codes with getUserMedia in the WebView.
+         Capacitor's WebView asks Android for the camera only if it is declared here; without
+         it the page gets NotAllowedError. Optional hardware, so devices without a camera can
+         still install the app. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

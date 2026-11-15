@@ -4,6 +4,7 @@ import { PlaceList, PlacesQuery, RouteQuery, RouteResult } from "./routing";
 import { BuildingCollection, GroundCollection } from "./campus";
 import { DensityResponse, PingBody, PingResponse, SharingBody, SharingState } from "./density";
 import { RecommendBody, RecommendResponse } from "./recommend";
+import { ChatBody, ChatResponse } from "./assistant";
 import { RedeemBody, Redemption, RewardsMe, StoreItemList } from "./rewards";
 import {
   CreateConnectionBody,
@@ -103,6 +104,8 @@ export const API_ROUTES = {
     response: Ok,
   },
   recommend: { path: "/api/recommend", method: "POST", status: 200, body: RecommendBody, response: RecommendResponse },
+  /** Added after Phase 0: the campus chatbot. */
+  assistantChat: { path: "/api/assistant/chat", method: "POST", status: 200, body: ChatBody, response: ChatResponse },
   mobileDeviceToken: { path: "/api/mobile/device-token", method: "POST", status: 201, response: DeviceTokenResponse },
   chainMe: { path: "/api/chain/me", method: "GET", status: 200, response: ChainMe },
   profileMe: { path: "/api/profile/me", method: "GET", status: 200, response: Profile },

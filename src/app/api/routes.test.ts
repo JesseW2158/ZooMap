@@ -165,6 +165,7 @@ const SAMPLES: Record<string, { query?: string; body?: unknown; headers?: Record
   scheduleConnectionsDelete: { query: "?id=fixture-connection-1" },
   scheduleConnectionsUpdate: { body: { id: "fixture-connection-1", skip: { eventId: "fixture-event-1", skipped: true } } },
   recommend: { body: { origin: { placeId: "w292876549" }, prefs: {} } },
+  assistantChat: { body: { messages: [{ role: "user", text: "hi" }] } },
   profileUpdate: { body: { pronouns: "they/them" } },
   friendsAdd: { body: { code: "ABCDEFGHJKLMNPQRSTUV" } },
   friendPreview: { query: "?code=ABCDEFGHJKLMNPQRSTUV" },
