@@ -107,8 +107,9 @@ export function LocationConsent() {
       {showPill ? (
         // Always present on the map tab (hidden on other tabs through the shell's data-map-tab):
         // bottom-right, mirroring the crowd legend's "Map: …" mode button at the bottom-left, with
-        // the same bottom offset (clear of the peeking sheet, tab bar and attribution).
-        <div className="hidden group-data-[map-tab=on]/shell:flex fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-40 max-w-[16rem] items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-neutral-900 shadow-md">
+        // the same bottom offset (clear of the peeking sheet, tab bar and attribution). z-[5], like the
+        // legend: below the map sheet (z-[8]), so pulling the sheet up covers it.
+        <div className="hidden group-data-[map-tab=on]/shell:flex fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-[5] max-w-[16rem] items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-neutral-900 shadow-md">
           {problem === "permission-denied" ? (
             <>
               <span>Location is blocked.</span>
