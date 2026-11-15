@@ -47,11 +47,12 @@ export function ShellSignIn({ children }: { children: ReactNode }) {
         type="button"
         onClick={onClick}
         disabled={busy}
-        className="w-full rounded-xl bg-neutral-900 px-4 py-3 font-medium text-white disabled:opacity-60"
+        className="zm-press w-full rounded-2xl bg-white px-4 py-3.5 font-semibold text-ink shadow-lg shadow-black/20 hover:bg-ivory disabled:opacity-60"
       >
         Continue with Google
       </button>
-      <p className="text-center text-xs text-neutral-500">Sign-in opens in your browser, then brings you back here.</p>
+      {/* the sign-in page is dark navy, so the hint is light */}
+      <p className="text-center text-xs text-ivory/70">Sign-in opens in your browser, then brings you back here.</p>
       {failed ? (
         <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
           Could not open the browser. Try again.

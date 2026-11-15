@@ -20,14 +20,14 @@ export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () 
   }, [onClose]);
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label="Settings" className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-linen text-ink">
-      <header className="sticky top-0 z-10 flex items-center justify-between bg-ink px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
+    <div role="dialog" aria-modal="true" aria-label="Settings" className="animate-fade zm-dots fixed inset-0 z-50 flex flex-col overflow-y-auto bg-linen text-ink">
+      <header className="sticky top-0 z-10 flex items-center justify-between bg-gradient-to-br from-ink to-yale px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
         <h2 className="text-xl font-bold tracking-tight">Settings</h2>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close settings"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-ivory/10 hover:bg-ivory/20"
+          className="zm-press flex h-10 w-10 items-center justify-center rounded-full bg-ivory/10 hover:bg-ivory/20"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden>
             <path d="M6 6l12 12M18 6L6 18" />
@@ -35,7 +35,7 @@ export function SettingsSheet({ user, onClose }: { user: ShellUser; onClose: () 
         </button>
       </header>
 
-      <div className="mx-auto w-full max-w-2xl space-y-5 px-4 py-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div className="zm-stagger mx-auto w-full max-w-2xl space-y-5 px-4 py-5 pb-[max(2rem,env(safe-area-inset-bottom))]">
         <Group title="Account">
           <Row title={user.name ?? "Signed in"} hint={user.email} />
           <Row title="Pronouns, phone and socials" hint="Edit your card in the Friends tab" />

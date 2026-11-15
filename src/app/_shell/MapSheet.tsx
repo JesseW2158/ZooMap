@@ -86,7 +86,7 @@ export function SidebarOpenButton({
       type="button"
       onClick={onOpen}
       aria-expanded={false}
-      className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-white pl-1.5 pr-3 text-sm font-semibold text-ink shadow-md shadow-ink/20"
+      className="zm-press animate-pop flex h-10 shrink-0 items-center gap-2 rounded-full bg-white pl-1.5 pr-3 text-sm font-semibold text-ink shadow-md shadow-ink/20 ring-1 ring-ink/5 hover:shadow-lg"
     >
       <span className={`flex h-7 w-7 items-center justify-center rounded-full ${accentBg}`}>
         <Icon className="h-4 w-4" />
@@ -104,7 +104,7 @@ function Sidebar({ title, Icon, accentBg, sidebarOpen, onSidebarOpenChange, hidd
     <aside
       aria-label={title}
       hidden={hidden}
-      className="absolute bottom-3 left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[8] flex w-80 flex-col overflow-hidden rounded-2xl bg-white text-ink shadow-lg shadow-ink/20"
+      className="animate-fade absolute bottom-3 left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[8] flex w-80 flex-col overflow-hidden rounded-2xl bg-white text-ink shadow-xl shadow-ink/25 ring-1 ring-ink/5"
     >
       <SheetHeader title={title} Icon={Icon} accentBg={accentBg}>
         <button
@@ -112,7 +112,7 @@ function Sidebar({ title, Icon, accentBg, sidebarOpen, onSidebarOpenChange, hidd
           onClick={() => onSidebarOpenChange(false)}
           aria-label={`Hide ${title}`}
           aria-expanded
-          className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-yale hover:bg-linen"
+          className="zm-press flex h-8 w-8 items-center justify-center rounded-full text-lg text-yale hover:bg-linen"
         >
           ‹
         </button>
@@ -279,7 +279,7 @@ function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children 
         className="shrink-0 cursor-grab touch-none select-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink active:cursor-grabbing"
         style={{ height: PEEK_PX }}
       >
-        <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-ash" />
+        <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-ash/80" />
         <SheetHeader title={title} Icon={Icon} accentBg={accentBg} compact>
           <span className="text-xs font-medium text-yale">{expanded ? "Swipe down" : "Swipe up"}</span>
         </SheetHeader>
@@ -311,10 +311,10 @@ function SheetHeader({
 }) {
   return (
     <div className={`flex items-center gap-2.5 px-4 ${compact ? "pt-1.5" : "py-3"}`}>
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink ${accentBg}`}>
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-ink shadow-sm ring-1 ring-ink/10 ${accentBg}`}>
         <Icon className="h-5 w-5" />
       </span>
-      <h2 className="min-w-0 flex-1 truncate text-lg font-bold">{title}</h2>
+      <h2 className="min-w-0 flex-1 truncate text-lg font-bold tracking-tight">{title}</h2>
       {children}
     </div>
   );

@@ -38,9 +38,9 @@ function Btn(props: { label: string; onClick: () => void; children: ReactNode; a
       onClick={props.onClick}
       aria-label={props.label}
       title={props.label}
-      className={`flex h-10 items-center justify-center text-[15px] font-semibold text-neutral-800 hover:bg-neutral-100 active:bg-neutral-200 ${
+      className={`flex h-10 items-center justify-center text-[15px] font-semibold transition-colors duration-150 active:scale-90 [transition-property:background-color,color,transform] ${
         props.wide ? "w-full px-2" : "w-10"
-      } ${props.active ? "bg-neutral-900 text-white hover:bg-neutral-800" : ""}`}
+      } ${props.active ? "bg-ink text-ivory hover:bg-yale" : "text-ink hover:bg-linen active:bg-ash/40"}`}
     >
       {props.children}
     </button>
@@ -48,7 +48,11 @@ function Btn(props: { label: string; onClick: () => void; children: ReactNode; a
 }
 
 function Group({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col divide-y divide-neutral-200 overflow-hidden rounded-xl border border-neutral-200 bg-white/95 shadow-md">{children}</div>;
+  return (
+    <div className="animate-pop flex flex-col divide-y divide-ash/40 overflow-hidden rounded-2xl bg-white/95 shadow-lg shadow-ink/15 ring-1 ring-ink/5">
+      {children}
+    </div>
+  );
 }
 
 export function MapControls({ map }: { map: MapLibreMap }) {
@@ -163,12 +167,12 @@ export function MapControls({ map }: { map: MapLibreMap }) {
       </div>
 
       {help ? (
-        <div className="pointer-events-auto absolute right-16 top-[calc(env(safe-area-inset-top)+4.25rem)] z-[7] w-64 rounded-xl border border-neutral-200 bg-white/95 p-3 text-xs text-neutral-700 shadow-lg">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="text-sm font-semibold text-neutral-900">Moving around</span>
-            <button type="button" aria-label="Close tips" onClick={() => setHelp(false)} className="px-1 text-neutral-400 hover:text-neutral-700">✕</button>
+        <div className="animate-pop pointer-events-auto absolute right-16 top-[calc(env(safe-area-inset-top)+4.25rem)] z-[7] w-64 origin-top-right rounded-2xl bg-white/95 p-3.5 text-xs leading-relaxed text-yale shadow-xl shadow-ink/20 ring-1 ring-ink/5">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-sm font-bold text-ink">Moving around</span>
+            <button type="button" aria-label="Close tips" onClick={() => setHelp(false)} className="flex h-6 w-6 items-center justify-center rounded-full text-yale/60 hover:bg-linen hover:text-ink">✕</button>
           </div>
-          <ul className="space-y-1">
+          <ul className="space-y-1 [&_b]:text-ink">
             <li><b>Move:</b> drag with one finger or the mouse.</li>
             <li><b>Zoom:</b> pinch, scroll, or + and −.</li>
             <li><b>Rotate:</b> twist two fingers, or right-drag (Ctrl + drag on a trackpad), or ⟲ ⟳.</li>

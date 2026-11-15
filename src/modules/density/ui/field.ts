@@ -51,7 +51,7 @@ export function rampColor(density: number, ramp: RampId = "green"): string {
   return toHex(last[1]);
 }
 
-/** Weight of one point in the field. The API weight is count / 50, capped at 1. */
+/** Weight of one point in the field. The API weight is a head count scaled to 0..1 (`heatWeight` on the server). */
 export const pointWeight = (apiWeight: number) => Math.min(1, apiWeight);
 
 /**

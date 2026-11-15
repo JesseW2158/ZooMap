@@ -86,6 +86,15 @@ export function categoryFor(query: string): ActivityCategory | undefined {
   return undefined;
 }
 
+/**
+ * Whether a query could be asking for activities: it names a category or a known activity
+ * word, or has no real words at all (a generic "what's happening?").
+ */
+export function soundsLikeActivityQuery(query: string): boolean {
+  const words = tokens(query).filter((w) => !STOPWORDS.has(w));
+  return !words.length || categoryFor(query) !== undefined || words.some((w) => SYNONYMS.some((group) => group.includes(w)));
+}
+
 interface Matchable {
   title: string;
   description?: string;

@@ -42,39 +42,42 @@ export function DensityPanel() {
     .slice(0, 8);
 
   return (
-    <div className="space-y-3 text-sm">
+    <div className="space-y-4 text-sm text-ink">
       {intro ? (
-        <div className="space-y-2 rounded-xl border border-neutral-200 bg-white p-3 shadow-sm">
-          <h2 className="text-base font-semibold">Help show how busy campus is</h2>
-          <p className="text-neutral-600">
+        <div className="animate-rise relative space-y-2 overflow-hidden rounded-2xl bg-gradient-to-br from-lavender/35 via-white to-white p-4 shadow-sm ring-1 ring-lavender/50">
+          <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-lavender/30 blur-xl" />
+          <h2 className="relative text-base font-bold tracking-tight">Help show how busy campus is</h2>
+          <p className="relative leading-relaxed text-yale">
             If you share your location, ZooMap records which building you are near, about every minute, and counts you in the crowd
             map. It keeps only that building and an approximate area, never your exact position, and never a history. It forgets you
             ten minutes after your last update, or at once when you switch sharing off. Other people see only totals per building.
           </p>
-          <div className="flex gap-2">
-            <button type="button" onClick={turnOn} className="rounded-lg bg-[#881c1c] px-3 py-1.5 font-medium text-white">
+          <div className="relative flex gap-2 pt-1">
+            <button type="button" onClick={turnOn} className="zm-press rounded-full bg-gradient-to-br from-[#a12424] to-[#6f1616] px-4 py-2 font-semibold text-white shadow-md shadow-[#881c1c]/30 hover:shadow-lg">
               Share my location
             </button>
-            <button type="button" onClick={notNow} className="rounded-lg bg-neutral-100 px-3 py-1.5 text-neutral-700">
+            <button type="button" onClick={notNow} className="zm-press rounded-full bg-linen px-4 py-2 font-medium text-yale hover:bg-ash/40">
               Not now
             </button>
           </div>
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-2xl bg-linen/70 p-3">
         <div>
-          <h2 className="text-base font-semibold">Crowd density</h2>
-          <p className="text-xs text-neutral-500">
+          <h2 className="text-base font-bold tracking-tight">Crowd density</h2>
+          <p className="text-xs text-yale">
+            <span aria-hidden className={`mr-1.5 inline-block size-2 rounded-full align-middle ${sharing ? "animate-pulse bg-[#118a5b]" : "bg-ash"}`} />
             {sharing ? "You are counted in the crowd." : "You are not sharing your location."}
           </p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-neutral-700">
+        <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-yale">
           Share my location
+          {/* a checkbox drawn as a sliding switch: the knob is a background circle that moves when checked */}
           <input
             type="checkbox"
             role="switch"
-            className="size-5 accent-[#881c1c]"
+            className="h-6 w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-ash/70 bg-[radial-gradient(circle,#fff_0,#fff_8px,transparent_9px)] bg-[length:24px_24px] bg-[position:0_0] bg-no-repeat shadow-inner transition-all duration-200 checked:bg-[#881c1c] checked:bg-[position:20px_0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-50"
             checked={sharing === true}
             disabled={sharing === null}
             onChange={(e) => {
@@ -89,7 +92,7 @@ export function DensityPanel() {
       </div>
 
       <div className="space-y-1.5">
-        <h3 className="text-xs font-medium text-neutral-700">Map colours</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-yale">Map colours</h3>
         <ModePicker />
       </div>
 
@@ -97,17 +100,20 @@ export function DensityPanel() {
       {error && !snapshot ? <p className="text-xs text-red-700">{error}</p> : null}
 
       {rows.length ? (
-        <ul className="divide-y divide-neutral-100">
+        <ul className="zm-stagger space-y-1">
           {rows.map((p) => (
             <li key={p.placeId}>
               <button
                 type="button"
-                className="flex w-full items-center gap-2 py-1.5 text-left"
+                className="zm-press group flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left hover:bg-linen"
                 onClick={() => selectPlace(p.placeId)}
               >
-                <span className="inline-block size-3 shrink-0 rounded-sm" style={{ background: colors[p.level] }} />
-                <span className="min-w-0 flex-1 truncate">{names[p.placeId]}</span>
-                <span className="text-xs text-neutral-500">
+                <span
+                  className="inline-block size-3 shrink-0 rounded-full ring-2 ring-white shadow-[0_0_0_1px_rgb(21_50_67/0.1)]"
+                  style={{ background: colors[p.level] }}
+                />
+                <span className="min-w-0 flex-1 truncate font-medium">{names[p.placeId]}</span>
+                <span className="text-xs text-yale/80 group-hover:text-yale">
                   {LEVEL_LABELS[p.level]}
                   {p.live > 0 ? ` · ${p.live} live` : ""}
                   {p.simulated > 0 ? " · simulated" : ""}
@@ -117,7 +123,7 @@ export function DensityPanel() {
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-neutral-500">{snapshot ? "Nobody is counted anywhere yet." : "Loading crowd data..."}</p>
+        <p className={`text-xs text-yale ${snapshot ? "" : "animate-pulse"}`}>{snapshot ? "Nobody is counted anywhere yet." : "Loading crowd data..."}</p>
       )}
     </div>
   );

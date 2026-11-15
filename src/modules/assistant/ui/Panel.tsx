@@ -74,35 +74,44 @@ export function AssistantPanel() {
   return (
     <div className="flex flex-col gap-3 p-4 text-sm text-ink">
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <h2 className="text-base font-semibold">Ask ZooMap</h2>
-          <p className="text-xs text-yale">Activities happening now, study spots, and how busy a building is.</p>
+        <div className="flex items-center gap-3">
+          {/* a small assistant badge with a sparkle */}
+          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-mint to-sky text-ink shadow-sm">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
+              <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
+            </svg>
+          </span>
+          <div>
+            <h2 className="text-base font-bold tracking-tight">Ask ZooMap</h2>
+            <p className="text-xs text-yale">Activities happening now, study spots, and how busy a building is.</p>
+          </div>
         </div>
         {turns.length ? (
-          <button type="button" className="shrink-0 text-xs text-yale underline" onClick={() => chatStore.set({ turns: [], error: null })}>
+          <button type="button" className="zm-press shrink-0 rounded-full bg-linen px-3 py-1 text-xs font-medium text-yale hover:bg-ash/40 hover:text-ink" onClick={() => chatStore.set({ turns: [], error: null })}>
             New chat
           </button>
         ) : null}
       </div>
 
       {turns.length === 0 ? (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="zm-stagger flex flex-wrap gap-2">
           {SUGGESTIONS.map((s) => (
-            <button key={s} type="button" onClick={() => submit(s)} className="rounded-full border border-ash bg-white px-3 py-1 text-xs text-yale hover:bg-ivory">
+            <button key={s} type="button" onClick={() => submit(s)} className="zm-press rounded-full border border-mint/70 bg-mint/15 px-3.5 py-1.5 text-xs font-medium text-ink hover:border-mint hover:bg-mint/35">
               {s}
             </button>
           ))}
         </div>
       ) : null}
 
-      <ol className="flex flex-col gap-2" aria-live="polite">
+      <ol className="flex flex-col gap-2.5" aria-live="polite">
         {turns.map((t, i) => (
-          <li key={i} className={t.role === "user" ? "self-end max-w-[85%]" : "self-start w-full"}>
+          <li key={i} className={`animate-rise ${t.role === "user" ? "self-end max-w-[85%]" : "self-start w-full"}`}>
             {t.role === "user" ? (
-              <div className="rounded-2xl rounded-br-sm bg-ink px-3 py-2 text-white">{t.text}</div>
+              <div className="rounded-2xl rounded-br-md bg-gradient-to-br from-yale to-ink px-3.5 py-2 text-white shadow-sm">{t.text}</div>
             ) : (
               <div className="space-y-2">
-                <div className="max-w-[92%] rounded-2xl rounded-bl-sm border border-ash bg-ivory px-3 py-2">
+                <div className="max-w-[92%] rounded-2xl rounded-bl-md bg-linen px-3.5 py-2 ring-1 ring-ash/40">
                   <p className="whitespace-pre-wrap">{t.text}</p>
                   {t.source === "fallback" ? (
                     <p className="mt-1 text-[11px] text-yale">
@@ -122,8 +131,14 @@ export function AssistantPanel() {
           </li>
         ))}
         {pending ? (
-          <li className="self-start rounded-2xl rounded-bl-sm border border-ash bg-ivory px-3 py-2 text-yale">
-            <span className="animate-pulse">Thinking…</span>
+          <li className="animate-rise flex items-center gap-2 self-start rounded-2xl rounded-bl-md bg-linen px-3.5 py-2 text-yale ring-1 ring-ash/40">
+            {/* three bouncing dots beside the words */}
+            <span aria-hidden className="flex gap-1">
+              <span className="size-1.5 animate-bounce rounded-full bg-yale/70" />
+              <span className="size-1.5 animate-bounce rounded-full bg-yale/70 [animation-delay:150ms]" />
+              <span className="size-1.5 animate-bounce rounded-full bg-yale/70 [animation-delay:300ms]" />
+            </span>
+            <span>Thinking…</span>
           </li>
         ) : null}
       </ol>
@@ -131,7 +146,7 @@ export function AssistantPanel() {
       <div ref={endRef} />
 
       <form
-        className="sticky bottom-0 flex gap-2 bg-white/90 py-1 backdrop-blur"
+        className="sticky bottom-0 flex gap-2 bg-white/90 py-1.5 backdrop-blur"
         onSubmit={(e) => {
           e.preventDefault();
           submit(draft);
@@ -144,9 +159,9 @@ export function AssistantPanel() {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Ask about activities, events or study spots"
           aria-label="Message"
-          className="min-w-0 flex-1 rounded-full border border-ash bg-white px-4 py-2 placeholder:text-neutral-400"
+          className="min-w-0 flex-1 rounded-full border border-ash/70 bg-linen/50 px-4 py-2.5 outline-none transition-all placeholder:text-yale/50 focus:border-ink/30 focus:bg-white focus:ring-2 focus:ring-mint/50"
         />
-        <button type="submit" disabled={pending || !draft.trim()} className="shrink-0 rounded-full bg-ink px-4 py-2 font-medium text-white disabled:opacity-50">
+        <button type="submit" disabled={pending || !draft.trim()} className="zm-press shrink-0 rounded-full bg-gradient-to-br from-yale to-ink px-5 py-2.5 font-semibold text-white shadow-md shadow-ink/25 disabled:from-ash disabled:to-ash disabled:shadow-none">
           Send
         </button>
       </form>
@@ -190,7 +205,7 @@ function EventCard({ event: initial }: { event: PlannedEvent }) {
   };
 
   return (
-    <div className="rounded-xl border border-ash bg-white px-3 py-2">
+    <div className="rounded-2xl bg-white px-3.5 py-2.5 shadow-sm ring-1 ring-ash/50 transition-shadow hover:shadow-md">
       <div className="truncate font-medium">{event.title}</div>
       <div className="text-xs text-yale">
         {whenFmt.format(new Date(event.startsAt))}–{timeFmt.format(new Date(event.endsAt))} · {event.placeName ?? "On campus"}
@@ -207,7 +222,7 @@ function EventCard({ event: initial }: { event: PlannedEvent }) {
             type="button"
             disabled={busy || full}
             onClick={() => void toggle()}
-            className={`rounded-lg px-3 py-1 text-xs font-medium disabled:opacity-50 ${event.going ? "border border-ash bg-ivory text-ink" : "bg-ink text-white"}`}
+            className={`zm-press rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${event.going ? "border border-ash bg-ivory text-ink" : "bg-ink text-white"}`}
           >
             {event.going ? "Going ✓" : full ? "Full" : "I'm going"}
           </button>
@@ -218,7 +233,7 @@ function EventCard({ event: initial }: { event: PlannedEvent }) {
             selectPlace(event.placeId);
             requestRoute(event.placeId);
           }}
-          className="rounded-lg border border-ash bg-white px-3 py-1 text-xs"
+          className="zm-press rounded-full border border-ash bg-white px-3 py-1 text-xs font-medium hover:bg-linen"
         >
           Route
         </button>
@@ -231,7 +246,7 @@ function EventCard({ event: initial }: { event: PlannedEvent }) {
 function PlaceCard({ card }: { card: Extract<ChatCard, { kind: "place" }> }) {
   const { selectPlace, requestRoute } = useMapStore();
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-ash bg-white px-3 py-2">
+    <div className="flex items-center gap-2 rounded-2xl bg-white px-3.5 py-2.5 shadow-sm ring-1 ring-ash/50 transition-shadow hover:shadow-md">
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium">{card.name}</div>
         <div className="text-xs text-yale">
@@ -246,7 +261,7 @@ function PlaceCard({ card }: { card: Extract<ChatCard, { kind: "place" }> }) {
           selectPlace(card.placeId);
           requestRoute(card.placeId);
         }}
-        className="shrink-0 rounded-lg bg-ink px-3 py-1 text-xs font-medium text-white"
+        className="shrink-0 zm-press rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white hover:bg-yale"
       >
         Route
       </button>
@@ -278,7 +293,7 @@ function ActivityCard({ activity: a }: { activity: Activity }) {
   };
 
   return (
-    <div className="rounded-xl border border-ash bg-white px-3 py-2">
+    <div className="rounded-2xl bg-white px-3.5 py-2.5 shadow-sm ring-1 ring-ash/50 transition-shadow hover:shadow-md">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium">{a.title}</div>
@@ -294,7 +309,7 @@ function ActivityCard({ activity: a }: { activity: Activity }) {
           type="button"
           disabled={full || joinState === "Joining…" || joinState === "Joined"}
           onClick={() => void join()}
-          className="rounded-lg bg-ink px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
+          className="zm-press rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white hover:bg-yale disabled:opacity-50"
         >
           {joinState === "Joined" ? "Joined" : full ? "Full" : "Join"}
         </button>
@@ -304,7 +319,7 @@ function ActivityCard({ activity: a }: { activity: Activity }) {
             selectPlace(a.placeId);
             requestRoute(a.placeId);
           }}
-          className="rounded-lg border border-ash bg-white px-3 py-1 text-xs"
+          className="zm-press rounded-full border border-ash bg-white px-3 py-1 text-xs font-medium hover:bg-linen"
         >
           Route
         </button>

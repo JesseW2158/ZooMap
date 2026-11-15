@@ -256,11 +256,12 @@ export function AppShell({ user }: { user: ShellUser }) {
 
         {!onMap ? (
           <Page tab={active} user={user}>
-            {panelsFor(active).map(({ id, title, Component }, _i, all) => (
+            {panelsFor(active).map(({ id, title, Component }, i, all) => (
               <section
                 key={id}
                 aria-label={title}
-                className="rounded-3xl bg-white p-4 shadow-md shadow-ink/10"
+                style={{ animationDelay: `${60 + i * 90}ms` }}
+                className="animate-rise rounded-3xl bg-white p-4 shadow-lg shadow-ink/10 ring-1 ring-ink/5"
               >
                 {all.length > 1 ? (
                   <SectionTitle
@@ -295,20 +296,23 @@ function Page({
     <div
       role="tabpanel"
       aria-label={label}
-      className="absolute inset-0 z-20 flex flex-col overflow-y-auto bg-linen text-ink"
+      className="zm-dots absolute inset-0 z-20 flex flex-col overflow-y-auto bg-linen text-ink"
     >
       {/* navy hero band with the section's colour; the cards overlap its bottom edge */}
-      <header className="relative shrink-0 bg-ink pb-12 pt-[max(1rem,env(safe-area-inset-top))] text-ivory">
+      <header className="relative shrink-0 bg-gradient-to-br from-ink via-ink to-yale pb-14 pt-[max(1.25rem,env(safe-area-inset-top))] text-ivory">
         {/* clip only the decorative circles: the header itself must not clip the account menu.
             The header has no z-index on purpose: the cards after it paint over its bottom edge,
             while the menu's own z-index lifts it above those cards. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          {/* a soft glow in the section's colour, drifting slowly */}
+          <div className={`animate-drift absolute -right-16 -top-24 h-72 w-72 rounded-full opacity-25 blur-3xl ${accent.bg}`} />
           <div className="absolute -bottom-24 right-6 h-40 w-40 rounded-full bg-yale/45" />
           <div className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-yale/70" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-ivory/20 to-transparent" />
         </div>
         <div className="relative mx-auto flex max-w-2xl items-center gap-3 px-4">
           <span
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-ink shadow-md ring-4 ring-ivory/15 ${accent.bg}`}
+            className={`animate-pop flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-ink shadow-lg shadow-black/25 ring-4 ring-ivory/15 ${accent.bg}`}
           >
             <Icon className="h-8 w-8" />
           </span>
@@ -390,7 +394,7 @@ function TabBar({
   return (
     <nav
       aria-label="Sections"
-      className="z-30 bg-ink pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(21,50,67,0.35)]"
+      className="relative z-30 bg-ink bg-gradient-to-b from-yale/40 to-ink pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(21,50,67,0.35)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-ivory/25 before:to-transparent"
     >
       <div
         role="tablist"
@@ -408,35 +412,42 @@ function TabBar({
               aria-label={label}
               title={label}
               onClick={() => onSelect(id)}
-              className={`relative flex min-w-0 flex-1 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory ${
+              className={`group relative flex min-w-0 flex-1 items-center justify-center rounded-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory ${
                 selected ? accent.text : "text-ivory/60 hover:text-ivory"
               }`}
             >
               {isMap ? (
                 <span
-                  className={`-my-4 flex h-14 w-14 items-center justify-center rounded-full text-ink shadow-lg ring-4 ring-ink transition-transform ${
+                  className={`-my-4 flex h-14 w-14 items-center justify-center rounded-full text-ink shadow-lg shadow-black/30 ring-4 ring-ink transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-hover:-translate-y-0.5 group-active:scale-95 ${
                     accent.bg
-                  } ${selected ? "scale-110" : "opacity-90"}`}
+                  } ${selected ? "scale-110" : "animate-glow opacity-90"}`}
                 >
                   <Icon className="h-8 w-8" />
                 </span>
               ) : (
                 <span className="relative flex h-11 w-11 flex-col items-center justify-center">
+                  {/* a soft disc behind the selected symbol */}
+                  <span
+                    aria-hidden
+                    className={`absolute inset-0 rounded-2xl bg-ivory/10 transition-all duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] ${
+                      selected ? "scale-100 opacity-100" : "scale-50 opacity-0 group-hover:scale-90 group-hover:opacity-60"
+                    }`}
+                  />
                   <Icon
-                    className={`h-7 w-7 transition-transform duration-200 ${selected ? "scale-115" : ""}`}
+                    className={`relative h-7 w-7 transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-active:scale-90 ${selected ? "scale-115 -translate-y-px" : ""}`}
                   />
                   {badges[id] ? (
                     <span
                       aria-hidden
-                      className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-ink"
+                      className="animate-pop absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-ink"
                     >
                       {badges[id] > 9 ? "9+" : badges[id]}
                     </span>
                   ) : null}
                   <span
                     aria-hidden
-                    className={`absolute bottom-[-6px] h-1.5 w-1.5 rounded-full transition-opacity ${accent.bg} ${
-                      selected ? "opacity-100" : "opacity-0"
+                    className={`absolute bottom-[-6px] h-1.5 rounded-full transition-all duration-300 ${accent.bg} ${
+                      selected ? "w-4 opacity-100" : "w-1.5 opacity-0"
                     }`}
                   />
                 </span>
@@ -492,12 +503,12 @@ function AccountButton({ user }: { user: ShellUser }) {
         aria-label="Account"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-sm font-bold text-ivory shadow-md ring-2 ring-ivory/80"
+        className="zm-press flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-yale to-ink text-sm font-bold text-ivory shadow-md ring-2 ring-ivory/80 hover:ring-jasmine"
       >
         {initial}
       </button>
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 rounded-2xl bg-white p-4 text-sm text-ink shadow-xl ring-1 ring-ink/10">
+        <div className="animate-pop absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 origin-top-right rounded-2xl bg-white p-4 text-sm text-ink shadow-xl ring-1 ring-ink/10">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink font-bold text-ivory">
               {initial}

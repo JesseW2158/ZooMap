@@ -147,29 +147,31 @@ export function RoutingLayer() {
   if (!routeRequest) return null;
 
   return (
-    <div className="pointer-events-auto absolute left-[calc(var(--map-inset-left,0px)+0.75rem)] right-14 top-[calc(env(safe-area-inset-top)+4rem)] z-[6] max-h-[45dvh] overflow-auto rounded-xl border border-neutral-200 bg-white/95 p-3 text-neutral-900 shadow-md">
+    <div className="animate-rise pointer-events-auto absolute left-[calc(var(--map-inset-left,0px)+0.75rem)] right-14 top-[calc(env(safe-area-inset-top)+4rem)] z-[6] max-h-[45dvh] overflow-auto rounded-2xl bg-white/95 p-3.5 text-ink shadow-xl shadow-ink/20 ring-1 ring-ink/5">
+      {/* a thin route-blue stripe along the top edge */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#1663d6] via-[#3b82f6] to-[#1663d6]" />
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           {result ? (
             <>
-              <div className="text-lg font-semibold leading-tight text-neutral-900">
+              <div className="text-xl font-extrabold leading-tight tracking-tight text-ink">
                 {fmtMinutes(result.durationS)}{" "}
-                <span className="text-sm font-normal text-neutral-500">
+                <span className="text-sm font-medium text-yale">
                   · {fmtDistance(result.distanceM)}
                   {result.stairs ? ` · ${result.stairs} ${result.stairs === 1 ? "stair flight" : "stair flights"}` : ""}
                 </span>
               </div>
-              <div className="truncate text-xs text-neutral-500">{result.steps?.at(-1)?.text}</div>
+              <div className="truncate text-xs text-yale">{result.steps?.at(-1)?.text}</div>
             </>
           ) : (
-            <div className="text-sm text-neutral-600">{state.loading ? "Finding a route…" : (state.error ?? "Directions")}</div>
+            <div className={`text-sm text-yale ${state.loading ? "animate-pulse" : ""}`}>{state.loading ? "Finding a route…" : (state.error ?? "Directions")}</div>
           )}
         </div>
         <button
           type="button"
           aria-label="Clear route"
           onClick={() => { clearRoute(); setStepsOpen(false); }}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+          className="zm-press flex h-8 w-8 items-center justify-center rounded-full bg-linen text-yale hover:bg-ash/40 hover:text-ink"
         >
           <CloseIcon className="h-4 w-4" />
         </button>
@@ -186,14 +188,14 @@ export function RoutingLayer() {
 
       {result || state.loading ? (
         <div className="mt-2 flex items-center gap-2">
-          <div role="group" aria-label="Route type" className="flex overflow-hidden rounded-full border border-neutral-200 text-xs">
+          <div role="group" aria-label="Route type" className="flex gap-0.5 rounded-full bg-linen p-0.5 text-xs">
             {(["fastest", "stepfree"] as const).map((p) => (
               <button
                 key={p}
                 type="button"
                 aria-pressed={profile === p}
                 onClick={() => setProfile(p)}
-                className={`px-3 py-1 ${profile === p ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100"}`}
+                className={`rounded-full px-3 py-1 font-semibold transition-all duration-200 ${profile === p ? "bg-ink text-ivory shadow-sm" : "text-yale hover:bg-white/70 hover:text-ink"}`}
               >
                 {p === "fastest" ? "Fastest" : "Step-free"}
               </button>
@@ -204,7 +206,7 @@ export function RoutingLayer() {
               type="button"
               aria-expanded={stepsOpen}
               onClick={() => setStepsOpen((o) => !o)}
-              className="ml-auto text-xs font-medium text-[#1663d6] hover:underline"
+              className="zm-press ml-auto rounded-full bg-[#1663d6]/10 px-3 py-1 text-xs font-semibold text-[#1663d6] hover:bg-[#1663d6]/15"
             >
               {stepsOpen ? "Hide steps" : `${result.steps.length} steps`}
             </button>
@@ -213,7 +215,7 @@ export function RoutingLayer() {
       ) : null}
 
       {stepsOpen && result?.steps ? (
-        <ol className="mt-2 border-t border-neutral-100">
+        <ol className="zm-stagger mt-3 space-y-0.5 border-t border-ash/40 pt-2">
           {result.steps.map((step, i) => (
             <li key={i}>
               <button
@@ -222,11 +224,11 @@ export function RoutingLayer() {
                   const [lng, lat] = result.line.coordinates[Math.min(step.coordIndex, result.line.coordinates.length - 1)];
                   flyTo({ lat, lng }, { zoom: 18.5 });
                 }}
-                className="grid w-full grid-cols-[1.25rem_1fr_auto] items-baseline gap-2 border-b border-neutral-100 py-1.5 text-left text-sm hover:bg-neutral-50"
+                className="grid w-full grid-cols-[1.75rem_1fr_auto] items-center gap-2 rounded-xl px-1 py-1.5 text-left text-sm hover:bg-linen"
               >
-                <span className="text-center text-xs text-[#1663d6]">{STEP_ICON[step.kind] ?? "↑"}</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1663d6]/10 text-xs text-[#1663d6]">{STEP_ICON[step.kind] ?? "↑"}</span>
                 <span>{step.text}</span>
-                <span className="text-xs tabular-nums text-neutral-400">{step.distanceM ? fmtDistance(step.distanceM) : ""}</span>
+                <span className="text-xs tabular-nums text-yale/70">{step.distanceM ? fmtDistance(step.distanceM) : ""}</span>
               </button>
             </li>
           ))}
@@ -256,7 +258,7 @@ function StartPicker(props: { canLocate: boolean; locating: boolean; onLocate: (
         <button
           type="button"
           onClick={props.onLocate}
-          className="w-full rounded-full bg-[#1663d6] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1252b3]"
+          className="zm-press w-full rounded-full bg-gradient-to-br from-[#3b82f6] to-[#1663d6] px-3 py-2 text-sm font-semibold text-white shadow-md shadow-[#1663d6]/30 hover:shadow-lg"
         >
           {props.locating ? "Finding you…" : "Use my location"}
         </button>
@@ -267,13 +269,13 @@ function StartPicker(props: { canLocate: boolean; locating: boolean; onLocate: (
         onChange={(e) => setQ(e.target.value)}
         placeholder="…or start from a building"
         aria-label="Starting building"
-        className="w-full rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400"
+        className="w-full rounded-full border border-ash/60 bg-white px-3.5 py-2 text-sm text-ink outline-none transition-shadow placeholder:text-yale/50 focus:border-ink/40 focus:ring-2 focus:ring-ink/10"
       />
       {shown.length ? (
-        <ul className="rounded-lg border border-neutral-100">
+        <ul className="animate-fade overflow-hidden rounded-xl ring-1 ring-ash/50">
           {shown.map((p) => (
             <li key={p.id}>
-              <button type="button" onClick={() => props.onPick(p.id)} className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100">
+              <button type="button" onClick={() => props.onPick(p.id)} className="w-full px-3.5 py-2 text-left text-sm hover:bg-linen">
                 {p.name}
               </button>
             </li>
