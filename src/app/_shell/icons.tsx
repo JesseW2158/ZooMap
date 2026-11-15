@@ -44,6 +44,18 @@ export function CrowdIcon({ className }: IconProps) {
   );
 }
 
+/** Two people, one in front of the other: your friends (Crowd has three side by side). */
+export function FriendsIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 20v-1a6 6 0 0 1 12 0v1" />
+      <path d="M15.2 4.9a3.2 3.2 0 0 1 0 6.2" />
+      <path d="M17.5 14.2A6 6 0 0 1 21 19.6v.4" />
+    </svg>
+  );
+}
+
 /** A map pin. */
 export function MapIcon({ className }: IconProps) {
   return (

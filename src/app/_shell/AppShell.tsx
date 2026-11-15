@@ -6,10 +6,12 @@ import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
+import { MapSheet, mapInsetVars, useIsDesktop } from "./MapSheet";
 import {
   ActivitiesIcon,
   CalendarIcon,
   CrowdIcon,
+  FriendsIcon,
   MapIcon,
   PointsIcon,
 } from "./icons";
@@ -25,7 +27,8 @@ interface Tab {
   id: string;
   label: string;
   Icon: ComponentType<{ className?: string }>;
-  /** Registered panel ids shown on this tab's page, top to bottom. Empty for the map. */
+  /** Registered panel ids shown on this tab's page, top to bottom. For the map tab, the
+   *  panels in the map sheet instead. */
   panelIds: string[];
   /** Section colour classes (literal strings so Tailwind sees them). */
   accent: {
@@ -51,21 +54,22 @@ const TABS: Tab[] = [
     },
   },
   {
-    id: "crowd",
-    label: "Crowd",
-    Icon: CrowdIcon,
-    panelIds: ["density"],
+    id: "friends",
+    label: "Friends",
+    Icon: FriendsIcon,
+    panelIds: ["friends"],
     accent: {
-      bg: "bg-lavender",
-      text: "text-lavender",
-      card: "bg-[linear-gradient(var(--color-lavender)_6px,white_6px)]",
+      bg: "bg-mint",
+      text: "text-mint",
+      card: "bg-[linear-gradient(var(--color-mint)_6px,white_6px)]",
     },
   },
   {
     id: MAP_TAB,
     label: "Map",
     Icon: MapIcon,
-    panelIds: [],
+    // shown on the map itself, in the sidebar (desktop) or swipe-up sheet (phone)
+    panelIds: ["density"],
     accent: {
       bg: "bg-jasmine",
       text: "text-jasmine",
@@ -122,6 +126,10 @@ export function AppShell({ user }: { user: ShellUser }) {
   const [activeId, setActiveId] = useState<string>(MAP_TAB);
   const active = TABS.find((t) => t.id === activeId) ?? TABS[2]!;
   const onMap = active.id === MAP_TAB;
+  const isDesktop = useIsDesktop();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const mapTab = TABS.find((t) => t.id === MAP_TAB)!;
+  const mapPanels = panelsFor(mapTab);
 
   // a route or fly request from a panel means "show me on the map"
   useEffect(() => {
@@ -141,7 +149,10 @@ export function AppShell({ user }: { user: ShellUser }) {
 
   return (
     <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-linen">
-      <div className="relative min-h-0 flex-1">
+      <div
+        className="relative min-h-0 flex-1"
+        style={mapInsetVars(isDesktop, mapPanels.length > 0 && sidebarOpen)}
+      >
         <MapProvider>
           {registry.mapLayers.map(({ id, Component }) => (
             <Component key={id} />
@@ -164,6 +175,24 @@ export function AppShell({ user }: { user: ShellUser }) {
         </div>
 
         {onMap ? <DevTools /> : null}
+
+        {mapPanels.length ? (
+          <MapSheet
+            title={mapPanels.map((p) => p.title).join(" · ")}
+            Icon={CrowdIcon}
+            accentBg="bg-lavender"
+            isDesktop={isDesktop}
+            sidebarOpen={sidebarOpen}
+            onSidebarOpenChange={setSidebarOpen}
+            hidden={!onMap}
+          >
+            <div className="space-y-6">
+              {mapPanels.map(({ id, Component }) => (
+                <Component key={id} />
+              ))}
+            </div>
+          </MapSheet>
+        ) : null}
 
         {!onMap ? (
           <Page tab={active} user={user}>

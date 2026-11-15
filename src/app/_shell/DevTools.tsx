@@ -9,7 +9,7 @@ export function DevTools() {
   if (!publicEnv.devTools) return null;
 
   return (
-    <div className="absolute left-3 top-16 z-10 flex items-center gap-2 rounded-xl bg-amber-100/95 px-3 py-2 text-xs text-amber-900 shadow-md">
+    <div className="absolute left-[calc(var(--map-inset-left,0px)+0.75rem)] top-16 z-10 flex items-center gap-2 rounded-xl bg-amber-100/95 px-3 py-2 text-xs text-amber-900 shadow-md">
       <span className="font-semibold">DEV</span>
       <button
         type="button"
