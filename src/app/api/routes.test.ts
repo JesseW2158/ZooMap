@@ -85,8 +85,22 @@ vi.mock("@/modules/friends", async (importOriginal) => {
     listMessages: async (userId: string, friendId: string) => [f.messageFixture(friendId, userId)],
     sendMessage: async (userId: string, friendId: string, body: string) => ({ ...f.messageFixture(userId, friendId), body }),
     markConversationRead: async () => ({ ok: true as const }),
+    // the AI routes call it; the real one writes to the database (covered by their `*.db.test.ts`)
+    rateLimit: async () => undefined,
   };
 });
+
+// Tests never reach the network. The recommend and assistant routes run their real code, and with or
+// without GEMINI_API_KEY the model call fails at once, so they take their fallback path.
+vi.mock("@google/genai", () => ({
+  GoogleGenAI: class {
+    models = {
+      generateContent: async () => {
+        throw new Error("Gemini is not reachable from tests");
+      },
+    };
+  },
+}));
 
 // The real `createDeviceToken` writes to the database; `src/modules/auth/device-token.db.test.ts` covers it.
 vi.mock("@/modules/mobile", () => ({ createDeviceToken: async () => ({ token: "FIXTURE-DEVICE-TOKEN" }) }));
