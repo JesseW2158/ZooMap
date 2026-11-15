@@ -96,7 +96,7 @@ export function RoutingSearch() {
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center gap-2 rounded-full bg-white py-1 pl-3 pr-1 text-ink shadow-md shadow-ink/20 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-ink/40">
+      <div className="animate-rise flex items-center gap-2 rounded-full bg-white py-1 pl-3 pr-1 text-ink shadow-lg shadow-ink/20 ring-1 ring-ink/5 transition-shadow duration-200 focus-within:shadow-xl focus-within:ring-2 focus-within:ring-ink/30">
         <SearchIcon className="h-5 w-5 shrink-0 text-yale" />
         <input
           type="search"
@@ -123,21 +123,21 @@ export function RoutingSearch() {
           <span
             aria-hidden
             title={position ? "Using your location" : "Location off"}
-            className={`mr-1 h-2.5 w-2.5 rounded-full ${position ? "bg-[#118a5b]" : "bg-ash"}`}
+            className={`mr-1 h-2.5 w-2.5 rounded-full ${position ? "bg-[#118a5b] shadow-[0_0_0_3px_rgb(17_138_91/0.18)]" : "bg-ash"}`}
           />
         )}
       </div>
 
       {shown.length > 0 ? (
-        <ul className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-2xl bg-white py-1 text-ink shadow-lg shadow-ink/20">
+        <ul className="animate-pop absolute left-0 right-0 z-20 mt-2 max-h-72 origin-top overflow-auto rounded-2xl bg-white p-1 text-ink shadow-xl shadow-ink/20 ring-1 ring-ink/5">
           {shown.map((place) => (
-            <li key={place.id} className="flex items-center gap-1 pr-2">
+            <li key={place.id} className="group flex items-center gap-1 rounded-xl pr-1.5 hover:bg-linen">
               <button
                 type="button"
-                className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left hover:bg-linen"
+                className="flex min-w-0 flex-1 items-center gap-3 px-2.5 py-2 text-left"
                 onClick={() => choose(place)}
               >
-                <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linen text-ink">
+                <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-linen text-ink transition-colors group-hover:bg-white">
                   <PlaceIcon category={place.category} className="h-4 w-4" />
                 </span>
                 <span className="min-w-0">
@@ -150,7 +150,7 @@ export function RoutingSearch() {
                 aria-label={`Directions to ${place.name}`}
                 title="Directions from my location"
                 onClick={() => directions(place)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-ivory hover:bg-yale"
+                className="zm-press flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-ivory shadow-sm hover:bg-yale"
               >
                 <GoIcon className="h-4 w-4" />
               </button>
@@ -160,8 +160,8 @@ export function RoutingSearch() {
       ) : null}
 
       {card && !shown.length ? (
-        <div className="mt-2 flex items-center gap-3 rounded-2xl bg-white p-3 text-ink shadow-md shadow-ink/20">
-          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linen text-ink">
+        <div className="animate-rise mt-2 flex items-center gap-3 rounded-2xl bg-white p-3 text-ink shadow-xl shadow-ink/20 ring-1 ring-ink/5">
+          <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-jasmine to-sand text-ink shadow-sm">
             <PlaceIcon category={card.category} className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -175,7 +175,7 @@ export function RoutingSearch() {
           <button
             type="button"
             onClick={() => directions(card)}
-            className="flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-2 text-sm font-semibold text-ivory shadow-sm hover:bg-yale"
+            className="zm-press flex items-center gap-1.5 rounded-full bg-gradient-to-br from-yale to-ink px-4 py-2 text-sm font-semibold text-ivory shadow-md shadow-ink/30 hover:shadow-lg"
           >
             <GoIcon className="h-4 w-4" />
             Go

@@ -22,12 +22,25 @@ export function ModePicker({ onPick, showHints = true }: { onPick?: () => void; 
               setHeatMode(m.id);
               onPick?.();
             }}
-            className={`rounded-lg border px-3 py-1.5 text-left text-sm ${
-              selected ? "border-[#881c1c] bg-[#881c1c]/10 font-medium text-neutral-900" : "border-neutral-200 bg-white text-neutral-700"
+            className={`zm-press flex items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+              selected
+                ? "border-ink bg-ink/[0.04] font-semibold text-ink shadow-sm"
+                : "border-ash/50 bg-white text-ink hover:border-ash hover:bg-linen/60"
             }`}
           >
-            {m.label}
-            {showHints ? <span className="block text-xs font-normal text-neutral-500">{m.hint}</span> : null}
+            {/* the radio dot */}
+            <span
+              aria-hidden
+              className={`flex size-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                selected ? "border-ink" : "border-ash"
+              }`}
+            >
+              <span className={`size-2 rounded-full bg-ink transition-transform duration-200 ${selected ? "scale-100" : "scale-0"}`} />
+            </span>
+            <span className="min-w-0">
+              {m.label}
+              {showHints ? <span className="block text-xs font-normal text-yale/80">{m.hint}</span> : null}
+            </span>
           </button>
         );
       })}
