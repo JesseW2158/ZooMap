@@ -25,6 +25,7 @@ const POLL_MS = 60_000;
 const KIND: Record<AlertKind, { icon: string; label: string }> = {
   nearby: { icon: "📍", label: "Nearby" },
   "big-event": { icon: "🎉", label: "Big event" },
+  going: { icon: "🎟️", label: "You're going" },
   exam: { icon: "📝", label: "Exam" },
   project: { icon: "📂", label: "Project" },
   assignment: { icon: "⏰", label: "Due soon" },
@@ -387,7 +388,7 @@ function Settings({ settings }: { settings: AlertSettings }) {
             </div>
           </div>
         ) : null}
-        <Toggle label="Big events on campus" hint="Activities with 50+ spots or 15+ people." on={settings.bigEvents} onChange={(v) => save({ bigEvents: v })} />
+        <Toggle label="Big events on campus" hint="When one is announced, then a week, a day and an hour before. 50+ spots or 15+ going." on={settings.bigEvents} onChange={(v) => save({ bigEvents: v })} />
       </Group>
 
       <Group title="Classes">
@@ -414,7 +415,7 @@ function Settings({ settings }: { settings: AlertSettings }) {
       </Group>
 
       <Group title="Updates">
-        <Toggle label="Points and my activities" on={settings.updates} onChange={(v) => save({ updates: v })} />
+        <Toggle label="Points, my activities, events I\u2019m going to" on={settings.updates} onChange={(v) => save({ updates: v })} />
       </Group>
 
       <Group title="Quiet and privacy">

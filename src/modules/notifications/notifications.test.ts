@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Activity, ScheduleEvent } from "@/shared/contracts";
 import { classifyTitle } from "./classify";
-import { bigEventAlerts, leaveByAlerts, quietRoomAlerts, workAlerts, type StudySpot, type WalkMinutes } from "./producers";
+import { bigEventAlerts, leaveByAlerts, plannedEventAlerts, quietRoomAlerts, workAlerts, type StudySpot, type WalkMinutes } from "./producers";
 import { DEFAULT_SETTINGS, mayAlert } from "./settings";
 import { clock, inQuietHours, zonedTimeToUtc } from "./time";
 
@@ -216,5 +216,58 @@ describe("settings", () => {
     expect(mayAlert({ ...DEFAULT_SETTINGS, updates: false }, "points", noon)).toBe(false);
     expect(mayAlert({ ...DEFAULT_SETTINGS, pausedUntil: local(16, 13).toISOString() }, "nearby", noon)).toBe(false);
     expect(mayAlert(DEFAULT_SETTINGS, "nearby", local(16, 23, 30))).toBe(false);
+  });
+});
+
+describe("plannedEventAlerts", () => {
+  const base = {
+    id: "pe-1",
+    hostId: "host",
+    hostName: "Host",
+    title: "Spring Concert",
+    placeId: "w1",
+    placeName: "Mullins Center",
+    category: "social" as const,
+    startsAt: iso(20, 19),
+    endsAt: iso(20, 22),
+    capacity: 400,
+    goingCount: 120,
+    going: false,
+    hosting: false,
+    big: true,
+    createdAt: iso(10, 15),
+  };
+  const now = local(10, 16);
+
+  it("announces a big event when posted, then a week, a day and an hour before", () => {
+    const out = plannedEventAlerts([base], [], "me", now);
+    expect(out.map((c) => c.key)).toEqual(["planned:pe-1:new", "planned:pe-1:7d", "planned:pe-1:1d", "planned:pe-1:1h"]);
+    expect(out[0].title).toBe("New big event: Spring Concert");
+    expect(out[0].body).toBe("Friday, Nov 20, 7:00pm · Mullins Center · 120 going. No classes before it that day.");
+    expect(out[0].fireAt).toEqual(local(10, 15));
+    expect(out[1].fireAt).toEqual(local(13, 9));
+    expect(out[1].title).toBe("Spring Concert next week");
+    expect(out[2].title).toBe("Spring Concert tomorrow");
+    expect(out[3].fireAt).toEqual(local(20, 18));
+    expect(out.every((c) => c.kind === "big-event")).toBe(true);
+  });
+
+  it("says whether it clashes with a class or when the last class ends", () => {
+    const clash = ev({ title: "Lab", course: "CICS 210", start: iso(20, 18, 30), end: iso(20, 19, 30), placeId: "x" });
+    expect(plannedEventAlerts([base], [clash], "me", now)[0].body).toContain("Clashes with CICS 210 Lab (6:30pm).");
+    const before = ev({ title: "Seminar", start: iso(20, 15), end: iso(20, 16, 15), placeId: "x" });
+    expect(plannedEventAlerts([base], [before], "me", now)[0].body).toContain("Your last class ends at 4:15pm.");
+  });
+
+  it("small events only for people going; never for the host; nothing before it was announced", () => {
+    const small = { ...base, id: "pe-2", capacity: 10, goingCount: 3, big: false };
+    expect(plannedEventAlerts([small], [], "me", now)).toEqual([]);
+    const going = plannedEventAlerts([{ ...small, going: true }], [], "me", now);
+    expect(going.map((c) => c.kind)).toEqual(["going", "going", "going"]);
+    expect(going[0].body).toContain("3 going including you");
+    expect(plannedEventAlerts([{ ...base, hostId: "me" }], [], "me", now)).toEqual([]);
+    // announced two days before: no "next week" reminder
+    const late = plannedEventAlerts([{ ...base, createdAt: iso(18, 12) }], [], "me", local(18, 13));
+    expect(late.map((c) => c.key.split(":").at(-1))).toEqual(["new", "1d", "1h"]);
   });
 });

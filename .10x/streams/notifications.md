@@ -18,7 +18,12 @@ Branch `aads`. Brief: `docs/plan/ws-notifications.md`.
 - [x] UI: `AlertsCenter` (headless registry entry). Bell top-right with an unread badge, inbox with route buttons, "Coming up today", settings, pop-ups, browser notifications after the user allows them.
 - [x] Tests: `notifications.test.ts` (pure) and `notifications.db.test.ts`. `npm run check` green.
 - [ ] Android: fire `upcoming` with `@capacitor/local-notifications`, and show nearby alerts in the background by adding `alerts` to the presence ping reply. Needs the mobile and density streams and a new dependency.
-- [ ] Big events **in advance**: activities have no future start time. Needs the activities stream to add an optional `startsAt`, or a campus events feed (team call in the brief).
+- [x] Big events **in advance**: a separate **planned events** module (`src/modules/planned`, Events tab, `/api/planned-events`). Activities are unchanged: they still start when hosted and count verified time.
+  - Anyone can announce an event up to 90 days ahead (at most 24 h long, at most 5 coming up per host).
+  - Others tap "I'm going"; capacity is enforced in the update filter. Only counts are shown, never who is going.
+  - Big means 50+ spots or 15+ going. Everyone with big-event alerts on gets "New big event" when it is posted, then reminders a week, a day and an hour before. Each alert says whether it clashes with a class or when your last class ends.
+  - People going get the same reminders (kind `going`, under the "updates" setting) whatever the size.
+- [ ] Planned events: tell people who were going when the host cancels; show events on the map; a campus events feed as a second source.
 - [ ] Real push (Web Push / FCM): stretch, needs a scheduler outside Vercel.
 
 ## How it works

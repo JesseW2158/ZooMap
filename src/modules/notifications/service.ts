@@ -1,8 +1,9 @@
-import type { Activity, AlertSettings, EventPayload, NotificationsResponse, ScheduleEvent, UpcomingAlert } from "@/shared/contracts";
+import type { Activity, AlertSettings, EventPayload, NotificationsResponse, PlannedEvent, ScheduleEvent, UpcomingAlert } from "@/shared/contracts";
 import { haversineM } from "@/shared/geo";
 import { getActiveParticipation, listActiveActivities } from "@/modules/activities";
 import { getPlaces } from "@/modules/campus";
 import { getDensitySnapshot } from "@/modules/density";
+import { listPlannedEvents } from "@/modules/planned";
 import { findRoute } from "@/modules/routing";
 import { getUpcomingEvents } from "@/modules/schedule";
 import {
@@ -10,6 +11,7 @@ import {
   leaveByAlerts,
   quietRoomAlerts,
   workAlerts,
+  plannedEventAlerts,
   type Candidate,
   type StudySpot,
   type WalkMinutes,
@@ -62,7 +64,8 @@ async function safely<T>(task: () => Promise<T>, fallback: T): Promise<T> {
 
 /** Every time-based alert this user could get between yesterday and tomorrow. */
 async function candidatesFor(userId: string, settings: AlertSettings, now: Date): Promise<Candidate[]> {
-  const needsSchedule = settings.exams || settings.projects || settings.assignments || settings.leaveBy || settings.quietRooms;
+  const needsSchedule =
+    settings.exams || settings.projects || settings.assignments || settings.leaveBy || settings.quietRooms || settings.bigEvents || settings.updates;
   const [events, activities] = await Promise.all([
     needsSchedule
       ? safely<ScheduleEvent[]>(() => getUpcomingEvents(userId, { from: new Date(now.getTime() - DAY), to: new Date(now.getTime() + 8 * DAY) }), [])
@@ -70,7 +73,12 @@ async function candidatesFor(userId: string, settings: AlertSettings, now: Date)
     settings.bigEvents ? safely<Activity[]>(() => listActiveActivities(now), []) : Promise.resolve([]),
   ]);
 
-  const out: Candidate[] = [...workAlerts(events, now), ...bigEventAlerts(activities, userId)];
+  const planned =
+    settings.bigEvents || settings.updates
+      ? await safely<PlannedEvent[]>(() => listPlannedEvents(userId, now, new Date(now.getTime() + 8 * DAY)), [])
+      : [];
+
+  const out: Candidate[] = [...workAlerts(events, now), ...bigEventAlerts(activities, userId), ...plannedEventAlerts(planned, events, userId, now)];
   if (settings.leaveBy) out.push(...(await safely(() => leaveByAlerts(events, now, settings.leaveByLeadMin, walkMinutes), [])));
   if (settings.quietRooms) out.push(...(await safely(() => quietRoomAlerts(events, now, { spotsAt: studySpotsAt, walk: walkMinutes }), [])));
   return out.filter((c) => kindEnabled(settings, c.kind));

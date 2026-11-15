@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: AlertSettings = {
 export const SETTING_FOR: Record<AlertKind, keyof AlertSettings> = {
   nearby: "nearby",
   "big-event": "bigEvents",
+  going: "updates",
   exam: "exams",
   project: "projects",
   assignment: "assignments",

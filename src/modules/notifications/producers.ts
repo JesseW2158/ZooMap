@@ -1,4 +1,4 @@
-import type { Activity, AlertKind, ScheduleEvent } from "@/shared/contracts";
+import type { Activity, AlertKind, PlannedEvent, ScheduleEvent } from "@/shared/contracts";
 import { classifyTitle } from "./classify";
 import { DAY, HOUR, MIN, clock, dayName, eventDate, localAt, localParts, sameLocalDay } from "./time";
 
@@ -228,6 +228,71 @@ export function bigEventAlerts(activities: Activity[], userId: string): Candidat
       staleAt: a.endsAt ? new Date(a.endsAt) : new Date(started.getTime() + 6 * HOUR),
       placeId: a.placeId,
     });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- planned events, ahead of time
+
+/** "Clashes with CICS 210 Lecture (6:30pm)" or "Your last class ends at 4:15pm", from the user's schedule. */
+export function fitsSchedule(start: Date, end: Date, events: ScheduleEvent[]): string {
+  const stops = events.filter(isStop);
+  const clash = stops.find((e) => new Date(e.start).getTime() < end.getTime() && new Date(e.end).getTime() > start.getTime());
+  if (clash) return `Clashes with ${label(clash)} (${clock(new Date(clash.start))})`;
+  const before = stops
+    .filter((e) => new Date(e.end).getTime() <= start.getTime() && sameLocalDay(new Date(e.end), start))
+    .sort((a, b) => a.end.localeCompare(b.end))
+    .at(-1);
+  return before ? `Your last class ends at ${clock(new Date(before.end))}` : "No classes before it that day";
+}
+
+/**
+ * Big planned events are announced to everyone when posted, then a week, a day and an hour
+ * before. Events you said you are going to get the same reminders whatever their size. A
+ * reminder that would come before the announcement is dropped.
+ */
+export function plannedEventAlerts(planned: PlannedEvent[], schedule: ScheduleEvent[], userId: string, now: Date): Candidate[] {
+  const out: Candidate[] = [];
+  for (const p of planned) {
+    if (p.hostId === userId) continue;
+    if (!p.big && !p.going) continue;
+    const start = new Date(p.startsAt);
+    if (start.getTime() <= now.getTime()) continue;
+    const created = new Date(p.createdAt);
+    const kind: AlertKind = p.going ? "going" : "big-event";
+    const where = p.placeName ?? "On campus";
+    const count = p.goingCount === 1 ? "1 going" : `${p.goingCount} going`;
+    const fit = fitsSchedule(start, new Date(p.endsAt), schedule);
+    const date = eventDate(start, false);
+
+    if (p.big && !p.going) {
+      out.push({
+        key: `planned:${p.id}:new`,
+        kind: "big-event",
+        title: `New big event: ${p.title}`,
+        body: `${dayName(start)}, ${clock(start)} · ${where} · ${count}. ${fit}.`,
+        fireAt: created,
+        staleAt: start,
+        placeId: p.placeId,
+      });
+    }
+    const reminders: { tag: string; fireAt: Date; lead: string }[] = [
+      { tag: "7d", fireAt: localAt(date, 7, 9), lead: "next week" },
+      { tag: "1d", fireAt: localAt(date, 1, 9), lead: "tomorrow" },
+      { tag: "1h", fireAt: new Date(start.getTime() - HOUR), lead: "in 1 hour" },
+    ];
+    for (const r of reminders) {
+      if (r.fireAt.getTime() <= created.getTime() || r.fireAt.getTime() >= start.getTime()) continue;
+      out.push({
+        key: `planned:${p.id}:${r.tag}`,
+        kind,
+        title: `${p.title} ${r.lead}`,
+        body: `${r.tag === "1h" ? clock(start) : `${dayName(start)}, ${clock(start)}`} · ${where} · ${count}${p.going ? " including you" : ""}. ${fit}.`,
+        fireAt: r.fireAt,
+        staleAt: r.tag === "1h" ? start : new Date(Math.min(r.fireAt.getTime() + 12 * HOUR, start.getTime())),
+        placeId: p.placeId,
+      });
+    }
   }
   return out;
 }

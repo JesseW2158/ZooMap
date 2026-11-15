@@ -1,6 +1,6 @@
 # Workstream: notifications and alerts (proposal)
 
-> **Status: draft for team review, 2026-11-14.** Nothing here is built yet. Items marked **Team call** need a yes or a change before implementation starts.
+> **Status, 2026-11-14:** built on branch `aads`. Big planned events use a separate planned-events feature (option 1 without changing activities). Progress is in `.10x/streams/notifications.md`.
 
 ## The pitch
 

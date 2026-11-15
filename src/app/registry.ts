@@ -17,6 +17,7 @@ import { FriendsInviteBanner } from "@/modules/friends/ui/InviteBanner";
 import { FriendsPanel } from "@/modules/friends/ui/Panel";
 import { MobileBridge } from "@/modules/mobile/ui/Bridge";
 import { AlertsCenter } from "@/modules/notifications/ui/Alerts";
+import { PlannedEventsPanel } from "@/modules/planned/ui/Panel";
 import { RecommendPanel } from "@/modules/recommend/ui/Panel";
 import { RewardsPanel } from "@/modules/rewards/ui/Panel";
 import { RoutingLayer } from "@/modules/routing/ui/Layer";
@@ -34,6 +35,7 @@ export const registry: AppRegistry = {
     { id: "density", title: "Crowds", Component: DensityPanel },
     { id: "activities", title: "Activities", Component: ActivitiesPanel },
     { id: "schedule", title: "Schedule", Component: SchedulePanel },
+    { id: "events", title: "Events", Component: PlannedEventsPanel },
     { id: "recommend", title: "Study", Component: RecommendPanel },
     { id: "rewards", title: "Points", Component: RewardsPanel },
     { id: "friends", title: "Friends", Component: FriendsPanel },
