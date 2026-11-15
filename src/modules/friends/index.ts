@@ -17,4 +17,5 @@ export {
   declineInvite,
 } from "./service";
 export { listMessages, sendMessage, markConversationRead, listConversations, countUnread } from "./messages";
+export { rateLimit } from "./rate-limit";
 export * as fixtures from "./fixtures";
