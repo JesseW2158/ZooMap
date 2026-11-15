@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { MapProvider, mapStore } from "@/shared/ui";
+import { MapProvider, mapStore, usePolling } from "@/shared/ui";
+import { UnreadCount } from "@/shared/contracts";
+import { apiFetch } from "@/shared/http/client";
 import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
@@ -142,6 +144,7 @@ function panelsFor(tab: Tab): PanelEntry[] {
 export function AppShell({ user }: { user: ShellUser }) {
   const [activeId, setActiveId] = useState<string>(MAP_TAB);
   const active = TABS.find((t) => t.id === activeId) ?? TABS[2]!;
+  const unread = useUnreadMessages();
   const onMap = active.id === MAP_TAB;
   const isDesktop = useIsDesktop();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -242,7 +245,7 @@ export function AppShell({ user }: { user: ShellUser }) {
         ) : null}
       </div>
 
-      <TabBar activeId={active.id} onSelect={setActiveId} />
+      <TabBar activeId={active.id} onSelect={setActiveId} badges={{ friends: unread }} />
     </main>
   );
 }
@@ -315,6 +318,29 @@ function SectionTitle({
   );
 }
 
+/** Fired by the friends module after reading or sending, so the badge updates without waiting for a poll. */
+const MESSAGES_CHANGED_EVENT = "zoomap:messages-changed";
+const UNREAD_POLL_MS = 20_000;
+
+/** Unread direct messages, for the Friends tab badge. */
+function useUnreadMessages(): number {
+  const [count, setCount] = useState(0);
+  const load = async (signal?: AbortSignal) => {
+    try {
+      setCount((await apiFetch("/api/messages/unread", { schema: UnreadCount, signal })).count);
+    } catch {
+      // keep the last count; the next poll retries
+    }
+  };
+  usePolling(load, { intervalMs: UNREAD_POLL_MS });
+  useEffect(() => {
+    const onChange = () => void load();
+    window.addEventListener(MESSAGES_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(MESSAGES_CHANGED_EVENT, onChange);
+  }, []);
+  return count;
+}
+
 /**
  * Icon-only bottom bar, in the manner of Snapchat: symbols, no captions (each has an
  * aria-label and a tooltip). The selected symbol takes its section colour, grows a little and
@@ -323,9 +349,11 @@ function SectionTitle({
 function TabBar({
   activeId,
   onSelect,
+  badges,
 }: {
   activeId: string;
   onSelect: (id: string) => void;
+  badges: Record<string, number>;
 }) {
   return (
     <nav
@@ -361,10 +389,18 @@ function TabBar({
                   <Icon className="h-8 w-8" />
                 </span>
               ) : (
-                <span className="flex h-11 w-11 flex-col items-center justify-center">
+                <span className="relative flex h-11 w-11 flex-col items-center justify-center">
                   <Icon
                     className={`h-7 w-7 transition-transform duration-200 ${selected ? "scale-115" : ""}`}
                   />
+                  {badges[id] ? (
+                    <span
+                      aria-hidden
+                      className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-ink"
+                    >
+                      {badges[id] > 9 ? "9+" : badges[id]}
+                    </span>
+                  ) : null}
                   <span
                     aria-hidden
                     className={`absolute bottom-[-6px] h-1.5 w-1.5 rounded-full transition-opacity ${accent.bg} ${
@@ -373,6 +409,9 @@ function TabBar({
                   />
                 </span>
               )}
+              {badges[id] ? (
+                <span className="sr-only">, {badges[id]} unread</span>
+              ) : null}
             </button>
           );
         })}

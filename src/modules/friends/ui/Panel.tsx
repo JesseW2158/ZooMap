@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { InviteResult, Profile, SocialKind, type Friend, type Profile as ProfileT, type SocialInput } from "@/shared/contracts";
+import { InviteResult, Profile, SocialKind, type Conversation, type Friend, type Profile as ProfileT, type SocialInput } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import { errorText, refreshFriends, setMyProfile, useFriendsFeed } from "./feed";
+import { ChatOverlay } from "./Chat";
+import { closeChat, openChat, useConversations } from "./messages-feed";
 import { MyCodeOverlay, ScanOverlay } from "./overlays";
 import { ChatIcon, CheckIcon, CloseIcon, HeartIcon, MailIcon, PencilIcon, QrIcon, ScanIcon, SendIcon, UserMinusIcon, UserPlusIcon, UsersIcon } from "./icons";
 import { Avatar, ContactButtons, InviteCard, SOCIAL_LABELS } from "./parts";
@@ -16,6 +18,7 @@ export function FriendsPanel() {
   const { me, friends, invites, current, error } = useFriendsFeed();
   const [overlay, setOverlay] = useState<"code" | "scan" | null>(null);
   const [editing, setEditing] = useState(false);
+  const { conversations, openWith } = useConversations();
 
   useEffect(() => {
     void refreshFriends();
@@ -63,6 +66,8 @@ export function FriendsPanel() {
         </section>
       ) : null}
 
+      <Inbox conversations={conversations} />
+
       <FriendsList
         friends={friends}
         current={current?.participation ? current.activity : null}
@@ -72,6 +77,7 @@ export function FriendsPanel() {
 
       {overlay === "code" ? <MyCodeOverlay me={me} onClose={() => setOverlay(null)} /> : null}
       {overlay === "scan" ? <ScanOverlay onClose={() => setOverlay(null)} /> : null}
+      {openWith ? <ChatOverlay key={openWith.userId} friend={openWith} onClose={closeChat} /> : null}
     </div>
   );
 }
@@ -99,6 +105,54 @@ function SectionLabel({ Icon, text, count }: { Icon: (p: { className?: string })
       {text}
       {count !== undefined ? <span className="rounded-full bg-linen px-2 py-0.5 text-[11px] text-ink">{count}</span> : null}
     </h2>
+  );
+}
+
+const shortTime = (iso: string) => {
+  const d = new Date(iso);
+  return Date.now() - d.getTime() < 86_400_000
+    ? d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    : d.toLocaleDateString([], { month: "short", day: "numeric" });
+};
+
+/** Conversations with friends, newest first. Tapping one opens the chat. */
+function Inbox({ conversations }: { conversations: Conversation[] | null }) {
+  if (!conversations?.length) return null;
+  return (
+    <section className="space-y-2">
+      <SectionLabel Icon={ChatIcon} text="Messages" count={conversations.length} />
+      <ul className="space-y-2">
+        {conversations.map((c) => {
+          const theirs = c.lastMessage.fromUserId === c.friend.userId;
+          return (
+            <li key={c.friend.userId}>
+              <button
+                type="button"
+                onClick={() => openChat({ userId: c.friend.userId, name: c.friend.name, image: c.friend.image })}
+                className="flex w-full items-center gap-3 rounded-xl border border-neutral-200 bg-white p-2.5 text-left hover:bg-neutral-50"
+              >
+                <Avatar person={c.friend} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline gap-2">
+                    <span className={`min-w-0 flex-1 truncate ${c.unread ? "font-bold" : "font-semibold"}`}>{c.friend.name}</span>
+                    <span className="shrink-0 text-xs text-neutral-500">{shortTime(c.lastMessage.createdAt)}</span>
+                  </span>
+                  <span className={`block truncate ${c.unread ? "font-medium text-neutral-900" : "text-neutral-500"}`}>
+                    {theirs ? "" : "You: "}
+                    {c.lastMessage.body}
+                  </span>
+                </span>
+                {c.unread ? (
+                  <span aria-label={`${c.unread} unread`} className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">
+                    {c.unread > 99 ? "99+" : c.unread}
+                  </span>
+                ) : null}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
