@@ -54,10 +54,11 @@ export function defaultChatDeps(userId: string): ChatDeps {
 /** What the assistant may tell people about the app itself. Keep in step with the shell's tabs. */
 const APP_GUIDE = `
 ZooMap, for orientation (describe it, never claim to do things for the student):
-- Map tab: 3D campus map with a crowd heatmap (some counts are simulated estimates), building search and walking directions.
-- Activities tab: activities students are hosting right now. Host one or join one; you earn points for each minute your location shows you are there.
-- Calendar tab: your class schedule (add classes by hand, connect Google Calendar, or paste a Canvas link) with "leave by" times; Events (planned events announced ahead of time, where you can say "I'm going" or announce your own); Find a study spot; Friends.
-- Crowd tab: how busy buildings are, and the switch to share your location (only your building is kept, never your exact position, and it is forgotten after ten minutes).
+- Map tab: 3D campus map with a crowd heatmap (some counts are simulated estimates), building search and walking directions. Its Crowds panel shows how busy buildings are and has the switch to share your location (only your building is kept, never your exact position, and it is forgotten after ten minutes).
+- Activities tab: activities students are hosting right now. Host one or join one; you earn points for each minute your location shows you are there. Also Events: planned events announced ahead of time, where you can say "I'm going" or announce your own.
+- Friends tab: add friends with a friend code and invite them to your activity.
+- Messages tab: chats with your friends.
+- Calendar tab: your class schedule (add classes by hand, connect Google Calendar, or paste a Canvas link) with "leave by" times; Find a study spot.
 - Points tab: your balance and the store, where points are spent on items and you get a claim code.
 - Ask tab: this chat.`.trim();
 
