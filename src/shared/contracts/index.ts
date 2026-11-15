@@ -8,6 +8,7 @@ export * from "./rewards";
 export * from "./schedule";
 export * from "./routing";
 export * from "./recommend";
+export * from "./assistant";
 export * from "./platform";
 export * from "./friends";
 export * from "./events";

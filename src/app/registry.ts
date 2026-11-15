@@ -10,6 +10,7 @@
 import type { AppRegistry } from "@/shared/ui/registry-types";
 import { ActivitiesLayer } from "@/modules/activities/ui/Layer";
 import { ActivitiesPanel } from "@/modules/activities/ui/Panel";
+import { AssistantPanel } from "@/modules/assistant/ui/Panel";
 import { CampusLayer } from "@/modules/campus/ui/Layer";
 import { DensityLayer } from "@/modules/density/ui/Layer";
 import { DensityPanel } from "@/modules/density/ui/Panel";
@@ -36,6 +37,7 @@ export const registry: AppRegistry = {
     { id: "recommend", title: "Study", Component: RecommendPanel },
     { id: "rewards", title: "Points", Component: RewardsPanel },
     { id: "friends", title: "Friends", Component: FriendsPanel },
+    { id: "assistant", title: "Ask", Component: AssistantPanel },
   ],
   topSlot: [{ id: "routing-search", Component: RoutingSearch }],
   headless: [
