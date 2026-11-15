@@ -401,7 +401,7 @@ function TabBar({
                 <span
                   className={`-my-4 flex h-14 w-14 items-center justify-center rounded-full text-ink shadow-lg shadow-black/30 ring-4 ring-ink transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] group-hover:-translate-y-0.5 group-active:scale-95 ${
                     accent.bg
-                  } ${selected ? "scale-110" : "animate-glow opacity-90"}`}
+                  } ${selected ? "scale-110" : "opacity-90"}`}
                 >
                   <Icon className="h-8 w-8" />
                 </span>
