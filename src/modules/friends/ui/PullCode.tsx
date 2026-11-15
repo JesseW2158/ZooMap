@@ -475,7 +475,7 @@ function PulledCode({
                 <div className="flex h-full flex-col items-center justify-center gap-2 p-5 text-center">
                   <p className="font-semibold">Use your camera app</p>
                   <p className="text-xs text-ivory/70">
-                    This browser can&apos;t scan inside Minute Map. Point your phone&apos;s camera at your friend&apos;s code and tap
+                    This browser can&apos;t scan inside ZooMap. Point your phone&apos;s camera at your friend&apos;s code and tap
                     the link that appears.
                   </p>
                 </div>
@@ -495,7 +495,7 @@ function PulledCode({
           )}
         </div>
         <p className="min-h-[3.75rem] max-w-xs text-center text-sm text-ivory/70">
-          {camera ? (inApp ? (status ?? "Point the camera at a friend's Minute Map code.") : null) : FRIEND_CODE_HELP}
+          {camera ? (inApp ? (status ?? "Point the camera at a friend's ZooMap code.") : null) : FRIEND_CODE_HELP}
         </p>
       </div>
 

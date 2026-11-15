@@ -11,7 +11,7 @@ const url = process.env.CAP_SERVER_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "ht
 
 const config: CapacitorConfig = {
   appId: "app.zoomap",
-  appName: "Minute Map",
+  appName: "ZooMap",
   webDir: "mobile-www",
   server: {
     url,

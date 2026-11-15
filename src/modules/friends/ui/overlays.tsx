@@ -93,7 +93,7 @@ export function FriendCodeOverlay({ me, onClose }: { me: Profile | null; onClose
 }
 
 export const FRIEND_CODE_HELP =
-  "Let a friend scan this with their camera or with Scan in Minute Map. A code works for 15 minutes, and opening your code again makes a new one.";
+  "Let a friend scan this with their camera or with Scan in ZooMap. A code works for 15 minutes, and opening your code again makes a new one.";
 
 /** The QR, the code under it and how to use it, from `useFriendCode()`. */
 function FriendCodeView({ code, svg, error }: ReturnType<typeof useFriendCode>) {
@@ -177,7 +177,7 @@ export function addPathFromScan(raw: string): string | null {
 
 
 /**
- * The in-app QR reader: while `enabled`, runs the back camera into `video` and, on a Minute Map
+ * The in-app QR reader: while `enabled`, runs the back camera into `video` and, on a ZooMap
  * friend code, opens its /add page. `status` says what is happening (null when this browser
  * can't scan in-app; see `canScanInApp`).
  */
@@ -200,7 +200,7 @@ export function useQrScanner(enabled: boolean) {
         }
         video.current.srcObject = stream;
         await video.current.play();
-        setStatus("Point the camera at a friend's Minute Map code.");
+        setStatus("Point the camera at a friend's ZooMap code.");
         const Detector = (window as unknown as { BarcodeDetector: BarcodeDetectorCtor }).BarcodeDetector;
         const detector = new Detector({ formats: ["qr_code"] });
         timer = setInterval(async () => {
@@ -215,7 +215,7 @@ export function useQrScanner(enabled: boolean) {
               return;
             }
           }
-          if (found.length) setStatus("That QR isn't a Minute Map friend code.");
+          if (found.length) setStatus("That QR isn't a ZooMap friend code.");
         }, 300);
       } catch {
         if (!stopped) setStatus("Camera access was blocked. Allow it in the browser, or scan with your camera app.");
@@ -246,8 +246,8 @@ function Scanner() {
         <div className="max-w-xs space-y-3 text-center">
           <p className="text-lg font-semibold">Use your camera app</p>
           <p className="text-neutral-700">
-            This browser can&apos;t scan inside Minute Map. Open your phone&apos;s camera, point it at your friend&apos;s code and tap
-            the link that appears. It opens Minute Map to add them.
+            This browser can&apos;t scan inside ZooMap. Open your phone&apos;s camera, point it at your friend&apos;s code and tap
+            the link that appears. It opens ZooMap to add them.
           </p>
         </div>
       )}

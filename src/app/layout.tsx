@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Minute Map",
+  title: "ZooMap",
   description: "UMass Amherst campus map: crowds, routes, schedule and activities.",
 };
 

@@ -8,7 +8,7 @@ export const CHAT_PER_MINUTE = 15;
 /**
  * Assistant module (added after Phase 0). A campus chatbot: activities happening now, study
  * spots, and how busy a building is. Stateless: the client sends the recent conversation and
- * nothing is stored. Gemini answers through Minute Map's tools; without it, keyword answers do.
+ * nothing is stored. Gemini answers through ZooMap's tools; without it, keyword answers do.
  */
 export async function chat(userId: string, body: ChatBody): Promise<ChatResponse> {
   // Each call can cost several Gemini requests, so cap them per user (RATE_LIMITED, 429).
