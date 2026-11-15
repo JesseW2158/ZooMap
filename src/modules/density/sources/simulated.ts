@@ -1,5 +1,6 @@
 import type { DensitySource, Place, PlaceCategory, PlaceCount } from "@/shared/contracts";
 import { getPlaces } from "@/modules/campus";
+import { capacityOf } from "../capacity";
 
 /**
  * Simulated crowd. A pure function of (place, category, five-minute bucket): the same
@@ -8,17 +9,6 @@ import { getPlaces } from "@/modules/campus";
  */
 
 export const BUCKET_MS = 5 * 60_000;
-
-/** People at a place at its busiest, by category. */
-const CAPACITY: Record<PlaceCategory, number> = {
-  academic: 48,
-  library: 55,
-  dining: 50,
-  residence: 38,
-  athletic: 30,
-  student_life: 32,
-  other: 12,
-};
 
 const NY = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York",
@@ -94,7 +84,7 @@ export function simulatedCount(place: Pick<Place, "id" | "category">, at: Date):
   const popularity = 0.4 + 0.65 * hash01(`pop:${place.id}`);
   const wobble = 0.9 + 0.2 * hash01(`${place.id}:${bucket}`);
   const clock = localClock(new Date(bucket * BUCKET_MS));
-  return Math.max(0, Math.round(CAPACITY[place.category] * busyness(place.category, clock) * popularity * wobble));
+  return Math.max(0, Math.round(capacityOf(place) * busyness(place.category, clock) * popularity * wobble));
 }
 
 export function simulatedCounts(places: Pick<Place, "id" | "category">[], at: Date): PlaceCount[] {
