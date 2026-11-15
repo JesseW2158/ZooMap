@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "@/shared/ui/store";
 import {
   acceptDisclosure,
@@ -18,7 +19,8 @@ const secondary = "w-full rounded-xl bg-neutral-100 px-4 py-3 font-medium text-n
 
 /**
  * The disclosure shown before Android's first location prompt, the follow-up about "Allow all
- * the time", and the small status pill that is the always-visible way to turn sharing off.
+ * the time", and the small status pill on the map: "Location off · Turn on" or "Sharing location
+ * · Turn off", always present on the map tab in the Android app.
  */
 export function LocationConsent() {
   const disclosureOpen = useStore(controllerStore, (s) => s.disclosureOpen);
@@ -26,6 +28,19 @@ export function LocationConsent() {
   const sharing = useStore(controllerStore, (s) => s.sharing);
   const mode = useStore(controllerStore, (s) => s.mode);
   const problem = useStore(controllerStore, (s) => s.problem);
+  const ready = useStore(controllerStore, (s) => s.ready);
+  const [turningOn, setTurningOn] = useState(false);
+
+  // Only in the Android app: `ready` and `sharing` are filled in by the native bridge alone.
+  const showPill = (ready && sharing !== null) || mode === "sharing" || problem !== null;
+  const turnOn = async () => {
+    setTurningOn(true);
+    try {
+      await setSharing(true); // the disclosure, then Android's prompt, then "Allow all the time"
+    } finally {
+      setTurningOn(false);
+    }
+  };
 
   return (
     <>
@@ -89,10 +104,11 @@ export function LocationConsent() {
         </div>
       ) : null}
 
-      {mode === "sharing" || problem ? (
-        // Bottom-right, mirroring the crowd legend's "Map: …" mode button at the bottom-left: the same
-        // bottom offset (clear of the peeking sheet, tab bar and attribution), on the right.
-        <div className="fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-40 flex max-w-[16rem] items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-neutral-900 shadow-md">
+      {showPill ? (
+        // Always present on the map tab (hidden on other tabs through the shell's data-map-tab):
+        // bottom-right, mirroring the crowd legend's "Map: …" mode button at the bottom-left, with
+        // the same bottom offset (clear of the peeking sheet, tab bar and attribution).
+        <div className="hidden group-data-[map-tab=on]/shell:flex fixed bottom-[max(calc(var(--map-attrib-clear,1.5rem)_+_2.75rem),calc(env(safe-area-inset-bottom)_+_6rem_+_var(--map-inset-bottom,0px)))] right-3 z-40 max-w-[16rem] items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs text-neutral-900 shadow-md">
           {problem === "permission-denied" ? (
             <>
               <span>Location is blocked.</span>
@@ -112,6 +128,14 @@ export function LocationConsent() {
               <span>Sharing paused.</span>
               <button type="button" className="font-semibold underline" onClick={() => void fixProblem()}>
                 Retry
+              </button>
+            </>
+          ) : mode !== "sharing" ? (
+            <>
+              <span aria-hidden className="size-2 rounded-full border border-neutral-400" />
+              <span>Location off</span>
+              <button type="button" className="font-semibold underline" disabled={turningOn} onClick={() => void turnOn()}>
+                {turningOn ? "Turning on…" : "Turn on"}
               </button>
             </>
           ) : (
