@@ -1,14 +1,34 @@
 @import "tailwindcss";
 
 /*
+ * ZooMap palette. Calm navy and warm off-whites so the map's own colours (heatmap,
+ * maroon selection, blue route) stay the loudest thing on screen. Use as Tailwind
+ * classes: bg-ink, text-yale, border-ash, bg-ivory, bg-linen.
+ */
+@theme {
+  --color-ink: #153243;   /* Deep Space Blue: text, primary buttons, active tab */
+  --color-yale: #284b63;  /* Yale Blue: secondary text, idle tabs */
+  --color-ash: #b4b8ab;   /* Ash Grey: borders, dividers, subtle fills (never text) */
+  --color-ivory: #f4f9e9; /* Ivory: cards, tab bar */
+  --color-linen: #eef0eb; /* Soft Linen: page background */
+
+  /* Section accents, one per tab, all dark enough to carry ink text. */
+  --color-jasmine: #ffe381;  /* The map button */
+  --color-coral: #f4a886;    /* Activities */
+  --color-lavender: #989fce; /* Crowd */
+  --color-sky: #81c3d7;      /* Calendar */
+  --color-sand: #cec288;     /* Points */
+}
+
+/*
  * Light only. Every surface (the sheet, panels, the search bar) is white over a light map, so
  * a dark-scheme text colour made panel text white on white. `color-scheme` keeps form
  * controls and placeholders light too. A dark theme would need dark surfaces first.
  */
 :root {
   color-scheme: light;
-  --background: #fafaf9;
-  --foreground: #1c1917;
+  --background: #eef0eb;
+  --foreground: #153243;
 }
 
 html,
@@ -24,4 +44,11 @@ body {
   overscroll-behavior: none;
 }
 
-/* The sheet and panels are light surfaces on top of the map in either colour scheme. */
+/*
+ * MapLibre's attribution and logo sit at the bottom of the map, where the raised map button
+ * in the tab bar pokes up over them. Lift them clear of it.
+ */
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  margin-bottom: 1.5rem;
+}
