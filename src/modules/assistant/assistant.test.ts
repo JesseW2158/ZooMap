@@ -219,7 +219,28 @@ describe("chatWith with Gemini (scripted)", () => {
     });
     const res = await chatWith(deps({ model }), ask("I wanna play soccer"));
     expect(res.source).toBe("fallback");
+    expect(res.fallbackReason).toBe("error");
     expect(res.cards).toHaveLength(1);
+  });
+
+  it("says why it fell back", async () => {
+    const failWith = (status: number, message: string) =>
+      vi.fn<ChatModel>(async () => {
+        throw Object.assign(new Error(message), { status });
+      });
+    const reason = async (model: ChatModel | null) => (await chatWith(deps({ model }), ask("hi"))).fallbackReason;
+    expect(await reason(null)).toBe("not-configured");
+    expect(await reason(failWith(400, "API key not valid. Please pass a valid API key."))).toBe("bad-key");
+    expect(await reason(failWith(403, "Permission denied"))).toBe("bad-key");
+    expect(await reason(failWith(404, "models/gemini-9 is not found for API version v1beta"))).toBe("model-not-found");
+    expect(await reason(failWith(429, "Resource has been exhausted (e.g. check quota)."))).toBe("quota");
+    expect(await reason(failWith(500, "Internal error"))).toBe("error");
+    expect(await reason(scripted({ text: "" }))).toBe("no-answer");
+  });
+
+  it("a Gemini answer has no fallback reason", async () => {
+    const res = await chatWith(deps({ model: scripted({ text: "Hi! Ask me about campus." }) }), ask("hi"));
+    expect(res).toEqual({ reply: "Hi! Ask me about campus.", cards: [], source: "gemini" });
   });
 
   it("falls back on a timeout", async () => {
@@ -227,6 +248,7 @@ describe("chatWith with Gemini (scripted)", () => {
     const started = Date.now();
     const res = await chatWith(deps({ model, timeoutMs: 30 }), ask("best study spots"));
     expect(res.source).toBe("fallback");
+    expect(res.fallbackReason).toBe("timeout");
     expect(Date.now() - started).toBeLessThan(1_000);
   });
 
