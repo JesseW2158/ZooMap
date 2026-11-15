@@ -135,6 +135,9 @@ describe("fallback intent", () => {
     ["a quiet place to study near me", "study"],
     ["how busy is the Du Bois Library?", "place"],
     ["hi", "help"],
+    ["thanks!", "thanks"],
+    ["ok cool, thank you so much", "thanks"],
+    ["thanks, how busy is the ILC?", "place"],
   ] as const)("%s -> %s", (text, intent) => {
     expect(detectIntent(text)).toBe(intent);
   });
@@ -146,6 +149,16 @@ describe("fallback intent", () => {
 
   it("pulls the building out of a place question", () => {
     expect(placeQuery("How busy is the Du Bois Library?")).toBe("Du Bois Library");
+  });
+
+  it.each([
+    ["how busy is Du Bois right now?", "Du Bois"],
+    ["is the ILC busy right now?", "ILC"],
+    ["is the ILC currently crowded?!", "ILC"],
+    ["how crowded is the rec center today", "rec center"],
+    ["where is the Campus Center now?", "Campus Center"],
+  ] as const)("leaves time words out of the building: %s", (text, place) => {
+    expect(placeQuery(text)).toBe(place);
   });
 });
 
@@ -162,6 +175,35 @@ describe("chatWith without Gemini", () => {
     const res = await chatWith(deps(), ask("anyone rowing?"));
     expect(res.reply).toMatch(/could not find any active/);
     expect(res.cards).toEqual([]);
+  });
+
+  it("says no activities when a known activity has none on", async () => {
+    const res = await chatWith(deps({ listActivities: async () => [] }), ask("frisbee"));
+    expect(res.reply).toMatch(/could not find any active sports activities/);
+  });
+
+  it("explains what it can do when the message is not about activities", async () => {
+    const res = await chatWith(deps(), ask("what time does the dining hall close?"));
+    expect(res.reply).toMatch(/^I'm not sure I can help with that\. I can find activities/);
+    expect(res.cards).toEqual([]);
+  });
+
+  it("still finds an activity whose words it has no synonym for", async () => {
+    const knitting = activity("k1", { title: "Knitting circle" });
+    const res = await chatWith(deps({ listActivities: async () => [knitting] }), ask("knitting?"));
+    expect(res.reply).toContain("Knitting circle");
+  });
+
+  it("answers thanks without searching", async () => {
+    const listActivities = vi.fn(async () => ACTIVITIES);
+    const res = await chatWith(deps({ listActivities }), ask("thanks!"));
+    expect(res.reply).toMatch(/^Anytime!/);
+    expect(listActivities).not.toHaveBeenCalled();
+  });
+
+  it("finds the building when the question says right now", async () => {
+    const res = await chatWith(deps(), ask("how busy is Du Bois right now?"));
+    expect(res.reply).toMatch(/W\.E\.B\. Du Bois Library is busy right now/);
   });
 
   it("answers a study-spot question with place cards", async () => {
