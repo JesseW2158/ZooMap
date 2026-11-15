@@ -5,7 +5,7 @@
  * Buildings follow how the campus reads from above: mostly light concrete and pale stone
  * with flat light roofs (the Campus Center, LGRT, the Fine Arts Center), tan precast for the
  * Southwest towers, a granite Old Chapel, the timber Design Building, and the W.E.B. Du Bois
- * Library as the one red-brick landmark. Unnamed buildings get one of the light neutrals,
+ * Library in pale grey, so it never reads as a crowded red. Unnamed buildings get one of the light neutrals,
  * picked from their position so it stays stable.
  */
 import type { ExpressionSpecification } from "maplibre-gl";
@@ -58,7 +58,7 @@ const MATERIAL = {
   greyConcrete: ["#bfbdb6"],
   limestone: ["#ddd2bf", "#d3c6ae"],
   tan: ["#d3c19f"],
-  library: ["#8b4a38"],
+  library: ["#d9d8d3"],
   stone: ["#a99f8e"],
   wood: ["#cfb995"],
   glass: ["#cfe3ea"],

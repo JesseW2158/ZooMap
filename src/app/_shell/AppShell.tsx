@@ -8,7 +8,7 @@ import type { PanelEntry } from "@/shared/ui";
 import { registry } from "../registry";
 import { signOutAction } from "./actions";
 import { DevTools } from "./DevTools";
-import { MapSheet, mapInsetVars, useIsDesktop } from "./MapSheet";
+import { MapSheet, SidebarOpenButton, mapInsetVars, useIsDesktop } from "./MapSheet";
 import { SettingsSheet } from "./Settings";
 import {
   ActivitiesIcon,
@@ -130,6 +130,9 @@ const PANEL_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   density: CrowdIcon,
 };
 
+/** Title of the map's sidebar (desktop) and swipe-up sheet (phone). */
+const MAP_SHEET_TITLE = "Map update";
+
 const panelsById = new Map(registry.panels.map((p) => [p.id, p]));
 
 // A registered panel that no tab names still gets shown, on the calendar page, so a new
@@ -203,6 +206,16 @@ export function AppShell({ user }: { user: ShellUser }) {
           hidden={!onMap}
           className="pointer-events-none absolute left-[var(--map-inset-left,0px)] right-0 top-0 z-[25] flex items-start gap-2 p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
         >
+          {isDesktop && mapPanels.length > 0 && !sidebarOpen ? (
+            <div className="pointer-events-auto">
+              <SidebarOpenButton
+                title={MAP_SHEET_TITLE}
+                Icon={CrowdIcon}
+                accentBg="bg-lavender"
+                onOpen={() => setSidebarOpen(true)}
+              />
+            </div>
+          ) : null}
           <div className="pointer-events-auto min-w-0 flex-1 md:mx-auto md:max-w-md">
             {registry.topSlot.map(({ id, Component }) => (
               <Component key={id} />
@@ -219,7 +232,7 @@ export function AppShell({ user }: { user: ShellUser }) {
 
         {mapPanels.length ? (
           <MapSheet
-            title={mapPanels.map((p) => p.title).join(" · ")}
+            title={MAP_SHEET_TITLE}
             Icon={CrowdIcon}
             accentBg="bg-lavender"
             isDesktop={isDesktop}
