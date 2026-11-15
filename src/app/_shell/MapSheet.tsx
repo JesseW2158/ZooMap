@@ -56,6 +56,8 @@ export interface MapSheetProps {
   onSidebarOpenChange: (open: boolean) => void;
   isDesktop: boolean;
   hidden?: boolean;
+  /** Phone only: the bottom sheet closes whenever this number changes (the Map tab was tapped). */
+  closeSignal?: number;
   children: ReactNode;
 }
 
@@ -119,12 +121,20 @@ function Sidebar({ title, Icon, accentBg, sidebarOpen, onSidebarOpenChange, hidd
   );
 }
 
-function BottomSheet({ title, Icon, accentBg, hidden, children }: MapSheetProps) {
+function BottomSheet({ title, Icon, accentBg, hidden, closeSignal = 0, children }: MapSheetProps) {
   const [expanded, setExpanded] = useState(false);
   const [drag, setDrag] = useState<number | null>(null);
   const sheet = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const start = useRef<{ y: number; travel: number } | null>(null);
+
+  // tapping the Map tab button brings the sheet down (skips the first render)
+  const lastCloseSignal = useRef(closeSignal);
+  useEffect(() => {
+    if (closeSignal === lastCloseSignal.current) return;
+    lastCloseSignal.current = closeSignal;
+    setExpanded(false);
+  }, [closeSignal]);
 
   // anything that asks the map to show something closes the sheet so the map is visible
   useEffect(() => {
