@@ -96,11 +96,8 @@ export function RecommendPanel() {
   };
 
   return (
-    <div className="space-y-3 p-4 text-sm text-ink">
-      <div>
-        <h2 className="text-base font-semibold">Find a study spot</h2>
-        <p className="text-xs text-yale">Picks a place for right now from crowd levels, walking time and your next class.</p>
-      </div>
+    <div className="space-y-3 text-sm text-ink">
+      <p className="text-xs text-yale">Find a study spot: picks a place for right now from crowd levels, walking time and your next class.</p>
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Preferences">
         <button type="button" aria-pressed={crowd === "quiet"} className={chip(crowd === "quiet")} onClick={() => setCrowd(crowd === "quiet" ? null : "quiet")}>
