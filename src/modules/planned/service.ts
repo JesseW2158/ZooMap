@@ -1,5 +1,6 @@
 import type { AuthUser, CreatePlannedEventBody, Place, PlannedEvent, PlannedEventDoc } from "@/shared/contracts";
 import { getCollections, newId } from "@/shared/db";
+import { emit } from "@/shared/events";
 import { ApiError } from "@/shared/http";
 import { getPlace, getPlaces } from "@/modules/campus";
 import { MAX_UPCOMING_PER_HOST, checkTimes, isBigEvent } from "./rules";
@@ -100,5 +101,15 @@ export async function cancelPlannedEvent(user: User, eventId: string, now = new 
   const doc = await planned_events.findOne({ _id: eventId, cancelledAt: { $exists: false } });
   if (!doc) throw new ApiError("NOT_FOUND", "No such event");
   if (doc.hostId !== user.id) throw new ApiError("FORBIDDEN", "Only the host can cancel this event");
-  await planned_events.updateOne({ _id: eventId }, { $set: { cancelledAt: now } });
+  // conditional, so cancelling twice at once tells people only once
+  const res = await planned_events.updateOne({ _id: eventId, cancelledAt: { $exists: false } }, { $set: { cancelledAt: now } });
+  if (res.modifiedCount === 0) return;
+  await emit("planned.cancelled", {
+    eventId,
+    hostId: doc.hostId,
+    title: doc.title,
+    startsAt: doc.startsAt,
+    goingIds: doc.goingIds.filter((id) => id !== doc.hostId),
+    at: now,
+  });
 }

@@ -17,13 +17,15 @@ Branch `aads`. Brief: `docs/plan/ws-notifications.md`.
 - [x] Settings: every kind toggles; nearby radius and categories; leave-by lead time; quiet hours 23:00–07:00; hide details; pause.
 - [x] UI: `AlertsCenter` (headless registry entry). Bell top-right with an unread badge, inbox with route buttons, "Coming up today", settings, pop-ups, browser notifications after the user allows them.
 - [x] Tests: `notifications.test.ts` (pure) and `notifications.db.test.ts`. `npm run check` green.
-- [ ] Android: fire `upcoming` with `@capacitor/local-notifications`, and show nearby alerts in the background by adding `alerts` to the presence ping reply. Needs the mobile and density streams and a new dependency.
+- [ ] Android, alerts while the app is closed: **skipped by the owner for now.** The plan was to fire `upcoming` with `@capacitor/local-notifications` and add `alerts` to the presence ping reply; it needs the mobile and density streams, a new dependency and a phone.
 - [x] Big events **in advance**: a separate **planned events** module (`src/modules/planned`, Events tab, `/api/planned-events`). Activities are unchanged: they still start when hosted and count verified time.
   - Anyone can announce an event up to 90 days ahead (at most 24 h long, at most 5 coming up per host).
   - Others tap "I'm going"; capacity is enforced in the update filter. Only counts are shown, never who is going.
   - Big means 50+ spots or 15+ going. Everyone with big-event alerts on gets "New big event" when it is posted, then reminders a week, a day and an hour before. Each alert says whether it clashes with a class or when your last class ends.
   - People going get the same reminders (kind `going`, under the "updates" setting) whatever the size.
-- [ ] Planned events: tell people who were going when the host cancels; show events on the map; a campus events feed as a second source.
+- [x] Cancelling: the host cancels; `planned.cancelled` (new domain event) tells everyone who was going, saved even during quiet hours or a pause so it waits in the inbox.
+- [x] Map: `PlannedEventsLayer` puts a labelled HTML pin ("🎉 Fri 7pm") on each event in the next week; tapping it opens the Events card in a pop-up. Gold = big, maroon = you are going.
+- [ ] A campus events feed as a second source of planned events.
 - [ ] Real push (Web Push / FCM): stretch, needs a scheduler outside Vercel.
 
 ## How it works
@@ -39,3 +41,5 @@ Branch `aads`. Brief: `docs/plan/ws-notifications.md`.
 - **density / mobile**: the plan is for `POST /api/presence/ping` to return `alerts` (unread nearby alerts) and for the shell to show them as local notifications. Nothing is changed in your files yet.
 - **recommend**: the quiet-room producer has its own simple scoring (`level × 6 + walk there + walk on`). Swap in `recommendStudySpot` once it is real.
 - A local `.env.local` with `POINTS_PER_MINUTE=10` fails one activities test that assumes 1. Run the checks with the default.
+
+- In `npm run dev`, the event bus lives on `globalThis` and keeps the event list it was created with. After adding a domain event, restart the dev server, or `emit` fails with "Cannot read properties of undefined (reading 'parse')".

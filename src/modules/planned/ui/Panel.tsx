@@ -4,12 +4,12 @@ import { useState, type FormEvent } from "react";
 import {
   PlaceList,
   PlannedEvent,
-  PlannedEventList,
   type ActivityCategory,
   type Place,
 } from "@/shared/contracts";
 import { ApiClientError, apiFetch } from "@/shared/http/client";
-import { mapActions, usePolling } from "@/shared/ui";
+import { mapActions } from "@/shared/ui";
+import { plannedActions, usePlannedFeed } from "./feed";
 
 /**
  * The Events tab: what is coming up on campus, with "I'm going", and a form to announce an
@@ -41,29 +41,8 @@ function errorText(error: unknown): string {
 }
 
 export function PlannedEventsPanel() {
-  const [events, setEvents] = useState<PlannedEvent[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { events, error } = usePlannedFeed();
   const [adding, setAdding] = useState(false);
-
-  const load = async (signal?: AbortSignal) => {
-    try {
-      setEvents(
-        await apiFetch("/api/planned-events", {
-          signal,
-          schema: PlannedEventList,
-        }),
-      );
-      setError(null);
-    } catch (e) {
-      if (!(e instanceof DOMException)) setError(errorText(e));
-    }
-  };
-  usePolling((signal) => load(signal), { intervalMs: 60_000 });
-
-  const replace = (next: PlannedEvent) =>
-    setEvents(
-      (list) => list?.map((e) => (e.id === next.id ? next : e)) ?? null,
-    );
 
   return (
     <div className="space-y-3 text-neutral-900">
@@ -82,36 +61,24 @@ export function PlannedEventsPanel() {
         <AnnounceForm
           onDone={(created) => {
             setAdding(false);
-            setEvents((list) =>
-              [...(list ?? []), created].sort((a, b) =>
-                a.startsAt.localeCompare(b.startsAt),
-              ),
-            );
+            plannedActions.add(created);
           }}
         />
       ) : null}
 
-      {error ? (
-        <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>
-      ) : null}
+      {error ? <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p> : null}
       {events === null ? (
         <p className="text-sm text-neutral-500">Loading…</p>
       ) : events.length === 0 ? (
         <p className="text-sm text-neutral-500">
-          Nothing announced yet. Planning something big? Announce it so people
-          hear about it days ahead.
+          Nothing announced yet. Planning something big? Announce it so people hear about it days ahead.
         </p>
       ) : (
         <ul className="space-y-2">
           {events.map((e) => (
-            <EventCard
-              key={e.id}
-              event={e}
-              onChange={replace}
-              onCancelled={(id) =>
-                setEvents((l) => l?.filter((x) => x.id !== id) ?? null)
-              }
-            />
+            <li key={e.id}>
+              <EventCard event={e} />
+            </li>
           ))}
         </ul>
       )}
@@ -119,15 +86,8 @@ export function PlannedEventsPanel() {
   );
 }
 
-function EventCard({
-  event,
-  onChange,
-  onCancelled,
-}: {
-  event: PlannedEvent;
-  onChange: (e: PlannedEvent) => void;
-  onCancelled: (id: string) => void;
-}) {
+/** One event with its actions. Used in the Events tab and in the map pop-up. */
+export function EventCard({ event, onRoute }: { event: PlannedEvent; onRoute?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -135,7 +95,7 @@ function EventCard({
     setBusy(true);
     setError(null);
     try {
-      onChange(
+      plannedActions.replace(
         await apiFetch(`/api/planned-events/${event.id}/going`, {
           method: "POST",
           body: { going: next },
@@ -153,7 +113,7 @@ function EventCard({
     setBusy(true);
     try {
       await apiFetch(`/api/planned-events/${event.id}`, { method: "DELETE" });
-      onCancelled(event.id);
+      plannedActions.remove(event.id);
     } catch (e) {
       setError(errorText(e));
       setBusy(false);
@@ -166,7 +126,7 @@ function EventCard({
     !event.going;
 
   return (
-    <li
+    <div
       className={`rounded-xl border p-3 ${event.going ? "border-[#881c1c]/40 bg-[#881c1c]/5" : "border-neutral-200 bg-white"}`}
     >
       <div className="flex items-start gap-2">
@@ -242,14 +202,17 @@ function EventCard({
         )}
         <button
           type="button"
-          onClick={() => mapActions.requestRoute(event.placeId)}
+          onClick={() => {
+            mapActions.requestRoute(event.placeId);
+            onRoute?.();
+          }}
           className="rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
         >
           Route
         </button>
       </div>
       {error ? <p className="mt-1 text-xs text-red-700">{error}</p> : null}
-    </li>
+    </div>
   );
 }
 

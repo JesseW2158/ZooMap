@@ -18,7 +18,7 @@ import {
 } from "./producers";
 import { getSettings, isPaused, kindEnabled, mayAlert } from "./settings";
 import { alertId, countSince, listAlerts, saveAlert, wasAlerted } from "./store";
-import { DAY, HOUR, inQuietHours } from "./time";
+import { DAY, HOUR, clock, dayName, inQuietHours } from "./time";
 
 // ---------------------------------------------------------------- walking times, cached
 
@@ -185,4 +185,22 @@ export async function onParticipationStarted(e: EventPayload<"participation.star
     at: e.at,
     placeId: activity.placeId,
   });
+}
+
+/**
+ * A planned event you were going to was cancelled (only if it had not started). Saved even in
+ * quiet hours or a pause, so it waits in the inbox: missing it means turning up for nothing.
+ */
+export async function onPlannedCancelled(e: EventPayload<"planned.cancelled">): Promise<void> {
+  if (e.startsAt.getTime() <= e.at.getTime()) return;
+  for (const userId of e.goingIds) {
+    if (!kindEnabled(await getSettings(userId), "going")) continue;
+    await saveAlert(userId, {
+      key: `planned:${e.eventId}:cancelled`,
+      kind: "going",
+      title: `Cancelled: ${e.title}`,
+      body: `${dayName(e.startsAt)}, ${clock(e.startsAt)}. The host cancelled it.`,
+      at: e.at,
+    });
+  }
 }

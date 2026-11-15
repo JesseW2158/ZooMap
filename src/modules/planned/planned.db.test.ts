@@ -66,3 +66,21 @@ describe("planned events (database)", () => {
     expect(await t.cols.planned_events.countDocuments({ _id: done.id })).toBe(1);
   });
 });
+
+describe("cancelling", () => {
+  it("tells everyone who was going, once, and not the host", async () => {
+    const { bus } = await import("@/shared/events");
+    const { registerAllSubscribers } = await import("@/shared/events/subscribers");
+    registerAllSubscribers(bus);
+    const e = await createPlannedEvent(user("h7"), body({ title: "Open mic", startsAt: inDays(2) }), now);
+    await setGoing(user("fan1"), e.id, true, now);
+    await setGoing(user("fan2"), e.id, true, now);
+    await cancelPlannedEvent(user("h7"), e.id, now);
+    await expect(cancelPlannedEvent(user("h7"), e.id, now)).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    const alerts = await t.cols.notifications.find({ kind: "going" }).toArray();
+    expect(alerts.map((a) => a.userId).sort()).toEqual(["fan1", "fan2"]);
+    expect(alerts[0].title).toBe("Cancelled: Open mic");
+    expect(alerts[0].body).toMatch(/The host cancelled it\.$/);
+  });
+});
