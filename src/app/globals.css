@@ -13,7 +13,8 @@
   --color-linen: #eef0eb; /* Soft Linen: page background */
 
   /* Section accents, one per tab, all dark enough to carry ink text. */
-  --color-jasmine: #ffe381;  /* Activities and the map button */
+  --color-jasmine: #ffe381;  /* The map button */
+  --color-coral: #f4a886;    /* Activities */
   --color-lavender: #989fce; /* Crowd */
   --color-sky: #81c3d7;      /* Calendar */
   --color-sand: #cec288;     /* Points */
@@ -43,24 +44,11 @@ body {
   overscroll-behavior: none;
 }
 
-/* The sheet and panels are light surfaces on top of the map in either colour scheme. */
-
-/* Landmark labels on the campus map (HTML markers: the map style has no glyphs). */
-.campus-label {
-  pointer-events: none;
-  white-space: nowrap;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgb(21 50 67 / 0.88);
-  color: #f4f9e9;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  box-shadow: 0 2px 6px rgb(21 50 67 / 0.3);
-  transition: opacity 200ms ease;
-}
-.campus-label-water {
-  background: rgb(255 255 255 / 0.85);
-  color: #1d6fa5;
-  font-style: italic;
+/*
+ * MapLibre's attribution and logo sit at the bottom of the map, where the raised map button
+ * in the tab bar pokes up over them. Lift them clear of it.
+ */
+.maplibregl-ctrl-bottom-right,
+.maplibregl-ctrl-bottom-left {
+  margin-bottom: 1.5rem;
 }

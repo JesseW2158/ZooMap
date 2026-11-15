@@ -1,12 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Map as MapLibreMap, Marker, Popup } from "maplibre-gl";
+import type { ExpressionSpecification, Map as MapLibreMap, Popup } from "maplibre-gl";
 import type { BuildingCollection, GroundCollection } from "@/shared/contracts";
 import { isDevPickingNow } from "@/shared/platform";
 import { addLayerToSlot, removeLayersAndSources, useApi, useMap, useMapEffect, useMapStore } from "@/shared/ui";
 import { CAMPUS_VIEW, MapControls } from "./Controls";
-import { BUILDING_COLOR, COLORS, LANDMARKS, LIGHT, SKY, centreOf, lineWidth, paintBuildings, treeCanopies } from "./look";
+import {
+  BUILDING_COLOR,
+  COLORS,
+  HAZE_COLOR,
+  LIGHT,
+  MAX_BOUNDS,
+  SKY,
+  hazeFrames,
+  lineWidth,
+  paintBuildings,
+  treeCanopies,
+} from "./look";
 
 /**
  * The 3D campus: ground (lawns, woods, pitches, water, parking, roads, paths), trees, and
@@ -16,6 +27,10 @@ import { BUILDING_COLOR, COLORS, LANDMARKS, LIGHT, SKY, centreOf, lineWidth, pai
  *
  * Decorative extras (trees, woods, pitches, tracks) come from `public/campus/decor.geojson`,
  * built by `scripts/build-campus-decor.ts`; the map works without it.
+ *
+ * Around campus, the town and countryside (`public/campus/surroundings.geojson`, built by
+ * `scripts/build-campus-surroundings.ts`) are drawn quieter than campus, and the whole map
+ * fades into haze past the camera bounds, so it has no hard edge.
  */
 
 const GROUND_SRC = "campus-ground";
@@ -36,13 +51,18 @@ const TREE_SRC = "campus-trees";
 const TREE_LAYER = "campus-trees-3d";
 const BUILDING_SRC = "campus-buildings";
 const BUILDING_LAYER = "campus-buildings-3d";
+const SURR_SRC = "campus-surroundings";
+const SURR_AREA = "campus-surroundings-area";
+const SURR_ROAD_CASING = "campus-surroundings-road-casing";
+const SURR_ROAD = "campus-surroundings-road";
+const SURR_TREE_SRC = "campus-surroundings-trees";
+const SURR_TREES = "campus-surroundings-trees-3d";
+const SURR_BUILDINGS = "campus-surroundings-buildings-3d";
+const HAZE_SRC = "campus-haze";
+const HAZE_LAYER = "campus-haze";
 
 const DECOR_URL = "/campus/decor.geojson";
-/** Landmark labels show from this zoom in, so the zoomed-out view stays clean. */
-const LABEL_MIN_ZOOM = 15.6;
-
-/** South-west and north-east corners the camera may not leave. */
-const MAX_BOUNDS: [[number, number], [number, number]] = [[-72.548, 42.370], [-72.506, 42.406]];
+const SURROUNDINGS_URL = "/campus/surroundings.geojson";
 
 function setupCamera(map: MapLibreMap) {
   map.setMaxBounds(MAX_BOUNDS);
@@ -56,27 +76,36 @@ function setupCamera(map: MapLibreMap) {
   map.setSky({ ...SKY });
 }
 
-function useDecor(): GeoJSON.FeatureCollection | null {
-  const [decor, setDecor] = useState<GeoJSON.FeatureCollection | null>(null);
+/** A static decoration file; null until loaded, and null for good if it is missing. */
+function useStaticGeojson(url: string): GeoJSON.FeatureCollection | null {
+  const [data, setData] = useState<GeoJSON.FeatureCollection | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetch(DECOR_URL)
+    fetch(url)
       .then((r) => (r.ok ? (r.json() as Promise<GeoJSON.FeatureCollection>) : null))
       .then((d) => {
-        if (!cancelled && d) setDecor(d);
+        if (!cancelled && d) setData(d);
       })
       .catch(() => {}); // decoration only: the map is complete without it
     return () => {
       cancelled = true;
     };
-  }, []);
-  return decor;
+  }, [url]);
+  return data;
+}
+
+/** The layer just above the ground slot, so something placed before it covers all ground. */
+function firstLayerAbove(map: MapLibreMap, slot: string): string | undefined {
+  const layers = map.getStyle().layers;
+  const i = layers.findIndex((l) => l.id === slot);
+  return i >= 0 ? layers[i + 1]?.id : undefined;
 }
 
 export function CampusLayer() {
   const ground = useApi<GroundCollection>("/api/campus/ground");
   const buildings = useApi<BuildingCollection>("/api/campus/buildings");
-  const decor = useDecor();
+  const decor = useStaticGeojson(DECOR_URL);
+  const surroundings = useStaticGeojson(SURROUNDINGS_URL);
   const { selectedPlaceId, selectPlace } = useMapStore();
   const map = useMap();
   const cameraSet = useRef(false);
@@ -87,6 +116,100 @@ export function CampusLayer() {
     cameraSet.current = true;
     setupCamera(map);
   }, [map]);
+
+  // the town and countryside around campus: flat land use and roads under the campus
+  // ground (whichever loads first), houses and woodland trees already tinted towards the haze
+  useMapEffect(
+    (map) => {
+      if (!surroundings) return;
+      map.addSource(SURR_SRC, { type: "geojson", data: surroundings, tolerance: 0.4 });
+      map.addSource(SURR_TREE_SRC, { type: "geojson", data: treeCanopies(surroundings), tolerance: 0 });
+      const below = map.getLayer(GROUND_FILL) ? GROUND_FILL : "slot-ground";
+      // zoom must be the outer input, so the class is matched at each zoom stop
+      const roadWidth = (major: [number, number], minor: [number, number], service: [number, number]): ExpressionSpecification => {
+        const at = (i: 0 | 1): ExpressionSpecification => ["match", ["get", "class"], "major", major[i], "service", service[i], minor[i]];
+        return ["interpolate", ["exponential", 2], ["zoom"], 15, at(0), 19, at(1)];
+      };
+      map.addLayer(
+        { id: SURR_AREA, type: "fill", source: SURR_SRC, filter: ["==", ["get", "kind"], "area"], paint: { "fill-color": ["get", "color"] } },
+        below,
+      );
+      map.addLayer(
+        {
+          id: SURR_ROAD_CASING,
+          type: "line",
+          source: SURR_SRC,
+          filter: ["==", ["get", "kind"], "road"],
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": COLORS.roadCasing, "line-width": roadWidth([4.5, 28], [2.6, 17], [1.6, 10]) },
+        },
+        below,
+      );
+      map.addLayer(
+        {
+          id: SURR_ROAD,
+          type: "line",
+          source: SURR_SRC,
+          filter: ["==", ["get", "kind"], "road"],
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": COLORS.road, "line-width": roadWidth([3, 23], [1.7, 13], [1, 7]) },
+        },
+        below,
+      );
+      addLayerToSlot(
+        map,
+        {
+          id: SURR_BUILDINGS,
+          type: "fill-extrusion",
+          source: SURR_SRC,
+          filter: ["==", ["get", "kind"], "building"],
+          paint: {
+            "fill-extrusion-height": ["get", "h"],
+            "fill-extrusion-base": 0,
+            "fill-extrusion-color": ["get", "color"],
+            "fill-extrusion-vertical-gradient": true,
+          },
+        },
+        "slot-buildings",
+      );
+      addLayerToSlot(
+        map,
+        {
+          id: SURR_TREES,
+          type: "fill-extrusion",
+          source: SURR_TREE_SRC,
+          minzoom: 14.8,
+          paint: {
+            "fill-extrusion-base": ["get", "base"],
+            "fill-extrusion-height": ["get", "top"],
+            "fill-extrusion-color": ["get", "color"],
+            "fill-extrusion-opacity": 0.95,
+            "fill-extrusion-vertical-gradient": true,
+          },
+        },
+        "slot-buildings",
+      );
+      return () =>
+        removeLayersAndSources(map, [SURR_TREES, SURR_BUILDINGS, SURR_ROAD, SURR_ROAD_CASING, SURR_AREA], [SURR_TREE_SRC, SURR_SRC]);
+    },
+    [surroundings],
+  );
+
+  // haze past the camera bounds: stacked frames over all the ground, so the map fades out
+  // instead of stopping at the edge of the data
+  useMapEffect((map) => {
+    map.addSource(HAZE_SRC, { type: "geojson", data: hazeFrames(), tolerance: 0.5 });
+    map.addLayer(
+      {
+        id: HAZE_LAYER,
+        type: "fill",
+        source: HAZE_SRC,
+        paint: { "fill-color": HAZE_COLOR, "fill-opacity": ["get", "opacity"], "fill-antialias": false },
+      },
+      firstLayerAbove(map, "slot-ground"),
+    );
+    return () => removeLayersAndSources(map, [HAZE_LAYER], [HAZE_SRC]);
+  }, []);
 
   // ground: lawns, woods, pitches, water, parking, then roads and paths on top
   useMapEffect(
@@ -118,7 +241,16 @@ export function CampusLayer() {
         filter: ["match", ["get", "kind"], ["grass", "water", "parking"], true, false],
         paint: {
           "line-color": ["match", ["get", "kind"], "grass", COLORS.grassEdge, "water", COLORS.waterEdge, COLORS.parkingEdge],
-          "line-width": ["match", ["get", "kind"], "water", lineWidth(1.5, 6), lineWidth(0.6, 2)],
+          // zoom must be the outer input of an expression, so the kind is matched at each stop
+          "line-width": [
+            "interpolate",
+            ["exponential", 2],
+            ["zoom"],
+            15,
+            ["match", ["get", "kind"], "water", 1.5, 0.6],
+            19,
+            ["match", ["get", "kind"], "water", 6, 2],
+          ],
         },
       });
 
@@ -321,54 +453,6 @@ export function CampusLayer() {
     [buildings.data, selectPlace],
   );
 
-  // landmark labels: HTML, because the style has no glyphs for map text
-  useMapEffect(
-    (map) => {
-      if (!buildings.data || !ground.data) return;
-      const spots: { text: string; at: [number, number]; water?: boolean }[] = [];
-      const seen = new Set<string>();
-      for (const f of buildings.data.features) {
-        const name = f.properties.name;
-        if (!name || seen.has(name)) continue;
-        const hit = LANDMARKS.find(([re]) => re.test(name));
-        const at = hit ? centreOf(f.geometry as GeoJSON.Geometry) : null;
-        if (hit && at) {
-          seen.add(name);
-          spots.push({ text: hit[1], at });
-        }
-      }
-      const pond = ground.data.features.find((f) => f.properties.kind === "water" && f.properties.name === "Campus Pond");
-      const pondAt = pond ? centreOf(pond.geometry as GeoJSON.Geometry) : null;
-      if (pondAt) spots.push({ text: "Campus Pond", at: pondAt, water: true });
-
-      let markers: Marker[] = [];
-      let cancelled = false;
-      const container: HTMLElement[] = [];
-      const sync = () => {
-        const show = map.getZoom() >= LABEL_MIN_ZOOM;
-        for (const el of container) el.style.opacity = show ? "1" : "0";
-      };
-      void import("maplibre-gl").then(({ Marker }) => {
-        if (cancelled) return;
-        markers = spots.map(({ text, at, water }) => {
-          const el = document.createElement("div");
-          el.className = water ? "campus-label campus-label-water" : "campus-label";
-          el.textContent = text;
-          container.push(el);
-          return new Marker({ element: el, anchor: "bottom", offset: [0, -4] }).setLngLat(at).addTo(map);
-        });
-        sync();
-      });
-      map.on("zoom", sync);
-      return () => {
-        cancelled = true;
-        map.off("zoom", sync);
-        for (const m of markers) m.remove();
-      };
-    },
-    [buildings.data, ground.data],
-  );
-
   // hover name on devices with a pointer (no glyphs, so an HTML popup instead of a map label)
   useMapEffect(
     (map) => {
@@ -415,17 +499,6 @@ export function CampusLayer() {
     [selectedPlaceId, buildings.data],
   );
 
-  return (
-    <>
-      {map ? <MapControls map={map} /> : null}
-      {/* just under the search bar, where cards and controls never cover it */}
-      <div className="pointer-events-auto absolute right-14 top-[calc(env(safe-area-inset-top)+3.3rem)] z-[5] rounded bg-white/80 px-1.5 text-[10px] leading-4 text-neutral-600">
-        ©{" "}
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">
-          OpenStreetMap
-        </a>{" "}
-        contributors
-      </div>
-    </>
-  );
+  // the OpenStreetMap credit is in MapLibre's attribution control (see MapProvider)
+  return map ? <MapControls map={map} /> : null;
 }

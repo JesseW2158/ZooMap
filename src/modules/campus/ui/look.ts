@@ -1,5 +1,5 @@
 /**
- * The campus look: colours, building materials, tree canopies and landmark labels. Pure
+ * The campus look: colours, building materials and tree canopies. Pure
  * data and functions, so `Layer.tsx` only wires them into MapLibre.
  *
  * Buildings follow how the campus reads from above: mostly light concrete and pale stone
@@ -37,11 +37,14 @@ export const COLORS = {
 /** Light from the south-west in late afternoon: warm, and shows two faces of each building. */
 export const LIGHT = { anchor: "map", position: [1.4, 215, 38], color: "#ffffff", intensity: 0.35 } as const;
 
+/** The haze the map fades into at its edges, and the sky's fog: one colour, so they meet. */
+export const HAZE_COLOR = "#e9eee4";
+
 /** A soft blue sky behind the horizon when the map is tilted, fading into haze. */
 export const SKY = {
   "sky-color": "#79b8e8",
   "horizon-color": "#dcecf5",
-  "fog-color": "#eef1e6",
+  "fog-color": HAZE_COLOR,
   "sky-horizon-blend": 0.6,
   "horizon-fog-blend": 0.7,
   "fog-ground-blend": 0.85,
@@ -129,39 +132,6 @@ export function treeCanopies(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureColl
   return { type: "FeatureCollection", features };
 }
 
-// ---------------------------------------------------------------- labels
-
-/** A handful of landmarks people navigate by, with the short name students use. */
-export const LANDMARKS: [RegExp, string][] = [
-  [/^W\.E\.B\. Du Bois Library$/, "Du Bois Library"],
-  [/^Murray D\. Lincoln Campus Center$/, "Campus Center"],
-  [/^Student Union$/, "Student Union"],
-  [/^Integrative Learning Center$/, "ILC"],
-  [/^Isenberg School of Management$/, "Isenberg"],
-  [/^Old Chapel$/, "Old Chapel"],
-  [/^Randolph W\. Bromery Center for the Arts$/, "Fine Arts Center"],
-  [/^Lederle Graduate Research Tower$/, "LGRT"],
-  [/^Mullins Center$/, "Mullins Center"],
-  [/^Recreation Center$/, "Rec Center"],
-  [/^Worcester Commons$/, "Worcester"],
-  [/^Franklin Dining Commons$/, "Franklin"],
-];
-
-/** The centre of a footprint's outer ring (vertex average: fine for a label). */
-export function centreOf(geometry: GeoJSON.Geometry): [number, number] | null {
-  const ring =
-    geometry.type === "Polygon" ? geometry.coordinates[0] : geometry.type === "MultiPolygon" ? geometry.coordinates[0]?.[0] : undefined;
-  if (!ring?.length) return null;
-  let x = 0;
-  let y = 0;
-  const n = ring.length - 1 || 1;
-  for (let i = 0; i < n; i++) {
-    x += ring[i]![0]!;
-    y += ring[i]![1]!;
-  }
-  return [x / n, y / n];
-}
-
 /** Line width that doubles with every zoom level, given its width at zoom 15 and 19. */
 export const lineWidth = (atZ15: number, atZ19: number): ExpressionSpecification => [
   "interpolate",
@@ -172,3 +142,118 @@ export const lineWidth = (atZ15: number, atZ19: number): ExpressionSpecification
   19,
   atZ19,
 ];
+
+// ---------------------------------------------------------------- edges
+
+/** South-west and north-east corners the camera may not leave. */
+export const MAX_BOUNDS: [[number, number], [number, number]] = [[-72.548, 42.370], [-72.506, 42.406]];
+
+/**
+ * How the map ends. Around the camera bounds a band of real surroundings (woods, fields,
+ * houses, roads: `public/campus/surroundings.geojson`) fades into haze. Distances are metres
+ * outside a rounded rectangle (a superellipse) the size of the camera bounds, so the fade
+ * has no corners.
+ */
+export const EDGE = {
+  centre: [(MAX_BOUNDS[0][0] + MAX_BOUNDS[1][0]) / 2, (MAX_BOUNDS[0][1] + MAX_BOUNDS[1][1]) / 2] as [number, number],
+  /** Half the size of the camera bounds, east-west and north-south. */
+  halfM: [1726, 1990] as [number, number],
+  /** The haze starts this far outside the bounds... */
+  hazeStartM: 250,
+  /** ...and is solid from here. */
+  hazeEndM: 2400,
+  /** Steps of the fade; each one covers everything farther out. */
+  hazeSteps: 20,
+  hazeStepOpacity: 0.1,
+  /** Superellipse exponent: 2 is an ellipse, higher is squarer. */
+  shape: 4,
+} as const;
+
+const KX_EDGE = 111_320 * Math.cos((EDGE.centre[1] * Math.PI) / 180);
+
+/** Metres east and north of the edge centre. */
+export function edgeXY([lng, lat]: [number, number]): [number, number] {
+  return [(lng - EDGE.centre[0]) * KX_EDGE, (lat - EDGE.centre[1]) * M_PER_DEG_LAT];
+}
+
+/** How far outside the bounds' rounded rectangle a point is, in metres (negative inside). */
+export function edgeDistanceM(lngLat: [number, number]): number {
+  const [x, y] = edgeXY(lngLat);
+  const [hx, hy] = EDGE.halfM;
+  const inside = (d: number) => Math.abs(x / (hx + d)) ** EDGE.shape + Math.abs(y / (hy + d)) ** EDGE.shape <= 1;
+  let lo = -Math.min(hx, hy) + 1;
+  let hi = 50_000;
+  if (inside(lo)) return lo;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (inside(mid)) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+/** Where the fade steps sit, metres outside the bounds; the last one is solid. */
+export function hazeStepDistances(): number[] {
+  const { hazeStartM, hazeEndM, hazeSteps } = EDGE;
+  return Array.from({ length: hazeSteps + 1 }, (_, i) => hazeStartM + ((hazeEndM - hazeStartM) * i) / hazeSteps);
+}
+
+/** How much haze covers ground this far outside the bounds, 0 to 1 (matches the frames). */
+export function hazeAt(distanceM: number): number {
+  const steps = hazeStepDistances();
+  if (distanceM >= steps[steps.length - 1]!) return 1;
+  const n = steps.filter((d) => d <= distanceM).length;
+  return 1 - (1 - EDGE.hazeStepOpacity) ** n;
+}
+
+/** One frame per fade step: a huge square with a rounded-rectangle hole. */
+export function hazeFrames(): GeoJSON.FeatureCollection {
+  const [cx, cy] = EDGE.centre;
+  const [hx, hy] = EDGE.halfM;
+  const steps = hazeStepDistances();
+  const outer: [number, number][] = [[cx - 2, cy - 2], [cx + 2, cy - 2], [cx + 2, cy + 2], [cx - 2, cy + 2], [cx - 2, cy - 2]];
+  return {
+    type: "FeatureCollection",
+    features: steps.map((d, i) => {
+      const hole: [number, number][] = [];
+      const n = 128;
+      for (let k = 0; k <= n; k++) {
+        const a = -((k % n) / n) * Math.PI * 2; // clockwise, opposite to the outer ring
+        const c = Math.cos(a);
+        const s = Math.sin(a);
+        const x = (hx + d) * Math.sign(c) * Math.abs(c) ** (2 / EDGE.shape);
+        const y = (hy + d) * Math.sign(s) * Math.abs(s) ** (2 / EDGE.shape);
+        hole.push([cx + x / KX_EDGE, cy + y / M_PER_DEG_LAT]);
+      }
+      return {
+        type: "Feature",
+        properties: { opacity: i === steps.length - 1 ? 1 : EDGE.hazeStepOpacity },
+        geometry: { type: "Polygon", coordinates: [outer, hole] },
+      };
+    }),
+  };
+}
+
+/** Mixes a `#rrggbb` colour towards the haze by `t` (0 to 1). */
+export function intoHaze(hex: string, t: number): string {
+  const p = (h: string, i: number) => parseInt(h.slice(1 + i * 2, 3 + i * 2), 16);
+  const out = [0, 1, 2].map((i) => Math.round(p(hex, i) + (p(HAZE_COLOR, i) - p(hex, i)) * t));
+  return `#${out.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** Colours of the surroundings: quieter than campus, so campus stays the subject. */
+export const SURROUND = {
+  residential: "#d9dbc9",
+  commercial: "#dcd5c6",
+  industrial: "#d0ccc2",
+  farmland: "#c3d999",
+  meadow: "#acd182",
+  grass: "#9fcb74",
+  park: "#97c76c",
+  wood: "#679d50",
+  wetland: "#94bf86",
+  water: "#4aa0d8",
+  cemetery: "#a5c98a",
+  houses: ["#e7e3da", "#dcd7cc", "#d2cbbd", "#ebe7de", "#cdc4b3", "#c9cdd0"],
+  trees: ["#467f3a", "#538f40", "#609c48"],
+} as const;
