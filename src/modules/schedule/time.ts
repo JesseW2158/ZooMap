@@ -46,3 +46,13 @@ export function localDays(from: Date, to: Date, tz = CAMPUS_TZ): { y: number; m:
   }
   return out;
 }
+
+/**
+ * `count` consecutive campus-local dates ("YYYY-MM-DD"), the first being the date of `from`.
+ * Steps by calendar date, not by 24 hours: on the Sunday a clock changes the day is 23 or 25
+ * hours long, so adding whole days to an instant late on the Saturday evening skips that Sunday.
+ */
+export function localDayKeys(from: Date, count: number, tz = CAMPUS_TZ): string[] {
+  const s = localParts(from, tz);
+  return Array.from({ length: count }, (_, i) => new Date(Date.UTC(s.y, s.m - 1, s.d + i, 12)).toISOString().slice(0, 10));
+}

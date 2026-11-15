@@ -5,7 +5,7 @@ import { getSessionUser, seedUsers, signIn } from "@/modules/auth";
 // eslint-disable-next-line no-restricted-imports -- client-only component; the module index is server code
 import { ShellSignIn } from "@/modules/mobile/ui/ShellSignIn";
 
-export const metadata = { title: "Sign in · ZooMap" };
+export const metadata = { title: "Sign in · Minute Map" };
 
 const ERRORS: Record<string, string> = {
   AccessDenied: "That account is not allowed. Sign in with your UMass Google account.",
@@ -57,7 +57,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             className="mb-5 h-16 w-16 rounded-full shadow-lg shadow-black/30 ring-4 ring-ivory/10"
           />
           <h1 className="text-4xl font-extrabold tracking-tight">
-            Zoo<span className="text-jasmine">Map</span>
+            Minute <span className="text-jasmine">Map</span>
           </h1>
           <p className="mt-2 text-ivory/70">Your campus, live. Sign in with your {domains.map((d) => `@${d}`).join(" or ")} Google account.</p>
         </header>

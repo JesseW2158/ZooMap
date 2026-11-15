@@ -1,4 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { SolanaClient } from "./solana";
 import { chainConfig, DEFAULT_RPC_URL, explorerAddressUrl } from "./config";
 import { decodeSecret, userPrivateKeyBytes, userSigner } from "./keys";
 
@@ -41,5 +42,31 @@ describe("custodial keys", () => {
   it("decodes a Solana CLI JSON keypair and base58", () => {
     expect(decodeSecret("[1,2,3]")).toEqual(Uint8Array.from([1, 2, 3]));
     expect(decodeSecret("2")).toEqual(Uint8Array.from([1]));
+  });
+});
+
+describe("SolanaClient.confirm", () => {
+  const client = () =>
+    new SolanaClient({
+      enabled: true,
+      rpcUrl: "http://127.0.0.1:1",
+      cluster: "devnet",
+      mint: "So11111111111111111111111111111111111111112",
+      authoritySecret: "x",
+      userSeed: "y",
+    });
+
+  it("returns not_found at the deadline when the RPC keeps failing, instead of throwing or hanging", async () => {
+    const c = client();
+    vi.spyOn(c, "status").mockRejectedValue(new Error("rpc stalled"));
+    const started = Date.now();
+    expect(await c.confirm("sig", 1_200)).toBe("not_found");
+    expect(Date.now() - started).toBeLessThan(3_000);
+  });
+
+  it("keeps polling past a failed poll and returns the status once it lands", async () => {
+    const c = client();
+    vi.spyOn(c, "status").mockRejectedValueOnce(new Error("blip")).mockResolvedValue("confirmed");
+    expect(await c.confirm("sig", 5_000)).toBe("confirmed");
   });
 });

@@ -20,6 +20,7 @@ import { ApiError } from "@/shared/http";
 import { getActiveParticipation, joinActivity, leaveActivity, listActiveActivities } from "@/modules/activities";
 import { rateLimit } from "./rate-limit";
 import {
+  CODE_TTL_MS,
   formatCode,
   friendshipId,
   hashCode,
@@ -122,8 +123,9 @@ export async function updateProfile(user: User, body: ProfileUpdateBody, now = n
 // ------------------------------------------------------------------ friend codes
 
 /**
- * A fresh friend code. Only its hash is stored, so the previous code stops working: a code
- * is good while it is on someone's screen. `origin` is the site the QR link points at.
+ * A fresh friend code. Only its hash is stored, so the previous code stops working, and any code
+ * stops working CODE_TTL_MS (15 minutes) after it was issued. The code screen asks for a new one
+ * before then while it stays open. `origin` is the site the QR link points at.
  */
 export async function issueFriendCode(user: User, origin: string, now = new Date()): Promise<FriendCode> {
   const { profiles } = await getCollections();
@@ -143,19 +145,23 @@ export async function issueFriendCode(user: User, origin: string, now = new Date
   }
 }
 
-async function ownerOfCode(viewerId: string, code: string) {
+async function ownerOfCode(viewerId: string, code: string, now: Date) {
   await rateLimit("friend-code", viewerId, CODE_LOOKUPS_PER_MINUTE, 60_000);
   const normalized = normalizeCode(code);
   if (!/^[A-Z2-9]{20}$/.test(normalized)) throw notFound();
   const { profiles } = await getCollections();
-  const owner = await profiles.findOne({ friendCodeHash: hashCode(normalized) }, { projection: { _id: 1 } });
+  // an expired code reads exactly like an unknown one: NOT_FOUND
+  const owner = await profiles.findOne(
+    { friendCodeHash: hashCode(normalized), friendCodeIssuedAt: { $gt: new Date(now.getTime() - CODE_TTL_MS) } },
+    { projection: { _id: 1 } },
+  );
   if (!owner) throw notFound();
   return owner._id;
 }
 
 /** Who a code belongs to: the public part only (name, photo, pronouns). */
-export async function previewFriendCode(viewer: User, code: string): Promise<FriendPreview> {
-  const ownerId = await ownerOfCode(viewer.id, code);
+export async function previewFriendCode(viewer: User, code: string, now = new Date()): Promise<FriendPreview> {
+  const ownerId = await ownerOfCode(viewer.id, code, now);
   const p = await person(ownerId);
   if (!p) throw notFound();
   const self = ownerId === viewer.id;
@@ -168,7 +174,7 @@ export async function previewFriendCode(viewer: User, code: string): Promise<Fri
  * the insert that created it emits `friendship.created`.
  */
 export async function addFriend(viewer: User, code: string, now = new Date()): Promise<Friend> {
-  const ownerId = await ownerOfCode(viewer.id, code);
+  const ownerId = await ownerOfCode(viewer.id, code, now);
   if (ownerId === viewer.id) throw new ApiError("CONFLICT", "That's your own code");
   const { id, userIds } = friendshipId(viewer.id, ownerId);
   const { friendships } = await getCollections();
@@ -309,8 +315,10 @@ async function myPendingInvite(userId: string, inviteId: string) {
 
 /**
  * Accept: join the activity through the activities module, so capacity and one-activity-at-a-
- * time still apply and its errors pass through unchanged (the invite stays pending). With
- * `leaveCurrent`, leave the activity you are in first (a host leaving ends theirs).
+ * time still apply and its errors pass through unchanged (the invite stays pending). Being in
+ * another activity is refused (ALREADY_IN_ACTIVITY) unless the caller confirms with
+ * `leaveCurrent`, which leaves it first (a host leaving ends theirs). The invited activity is
+ * checked (still active, not full) before anything is left, so a failed accept costs nothing.
  */
 export async function acceptInvite(user: User, inviteId: string, body: AcceptInviteBody, now = new Date()): Promise<ParticipationResult> {
   const invite = await myPendingInvite(user.id, inviteId);
@@ -324,6 +332,13 @@ export async function acceptInvite(user: User, inviteId: string, body: AcceptInv
     return { participation: current.participation, activity: current.activity };
   }
   if (current.participation && current.activity && body.leaveCurrent) {
+    // Leaving cannot be undone (a host leaving ends theirs for everyone), so make sure the
+    // invited activity can still be joined before giving anything up.
+    const target = (await listActiveActivities(now)).find((a) => a.id === invite.activityId);
+    if (!target) throw new ApiError("ACTIVITY_ENDED", "This activity has ended");
+    if (target.capacity !== undefined && target.participantCount >= target.capacity) {
+      throw new ApiError("CAPACITY_FULL", "This activity is full");
+    }
     await leaveActivity(user, current.activity.id, now);
   }
   const joined = await joinActivity(user, invite.activityId, now);

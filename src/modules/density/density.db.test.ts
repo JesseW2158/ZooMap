@@ -3,6 +3,7 @@ import { withTestDb } from "@/shared/db/testing";
 import { bus } from "@/shared/events";
 import { ApiError } from "@/shared/http";
 import { getDensitySnapshot, getSharing, recordPing, setSharing } from "./index";
+import { MAX_ACCURACY_M } from "./presence";
 
 const t = withTestDb();
 
@@ -53,6 +54,31 @@ describe("presence and density (database)", () => {
     expect(docs[0].expiresAt.getTime() - docs[0].updatedAt.getTime()).toBe(10 * 60_000);
     expect(seen).toHaveLength(2);
     expect(seen[0]).toMatchObject({ userId: "u1", placeId: place.id, position: place.center });
+  });
+
+  it("ignores a ping whose accuracy radius is too large, without failing or changing presence", async () => {
+    await addUser("u1", true);
+    const place = await somePlace();
+    const seen: unknown[] = [];
+    bus.on("presence.updated", "density-test:accuracy", (e) => void seen.push(e));
+    const now = new Date("2026-11-17T15:00:00Z");
+
+    // nothing stored yet: ignored, nothing created
+    expect(await recordPing("u1", place.center, "web", now, MAX_ACCURACY_M + 1)).toEqual({ placeId: null, expiresAt: now });
+    expect(await t.cols.presence.countDocuments()).toBe(0);
+
+    // a good fix is stored; a later loose fix elsewhere leaves it exactly as it was
+    const good = await recordPing("u1", place.center, "web", now, MAX_ACCURACY_M);
+    const before = await t.cols.presence.findOne({ _id: "u1" });
+    const later = new Date(now.getTime() + 60_000);
+    const far = { lat: place.center.lat + 0.01, lng: place.center.lng };
+    expect(await recordPing("u1", far, "web", later, 2_500)).toEqual(good);
+    expect(await t.cols.presence.findOne({ _id: "u1" })).toEqual(before);
+    expect(seen).toHaveLength(1);
+
+    // sharing still has to be on
+    await setSharing("u1", false);
+    await expect(recordPing("u1", place.center, "web", later, 2_500)).rejects.toMatchObject({ code: "SHARING_OFF" });
   });
 
   it("deletes the presence document when sharing is turned off", async () => {

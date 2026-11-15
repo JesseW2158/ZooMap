@@ -44,6 +44,19 @@ export async function loadSharing(signal?: AbortSignal): Promise<void> {
   }
 }
 
+/**
+ * Another screen (Settings, the activity card) changed the setting. Without this the layer would
+ * not start pinging after "on" and would keep pinging until the server refused after "off".
+ * The event name is shared with activities/ui/feed.ts and app/_shell/Settings.tsx.
+ */
+export const SHARING_CHANGED_EVENT = "zoomap:sharing-changed";
+if (typeof window !== "undefined") {
+  window.addEventListener(SHARING_CHANGED_EVENT, (e) => {
+    const enabled = (e as CustomEvent<{ enabled?: unknown }>).detail?.enabled;
+    if (typeof enabled === "boolean") densityStore.set({ sharing: enabled });
+  });
+}
+
 /** Turn sharing on or off. Turning it off deletes the server's copy of where you are. */
 export async function updateSharing(enabled: boolean): Promise<void> {
   const previous = densityStore.get().sharing;
@@ -51,6 +64,7 @@ export async function updateSharing(enabled: boolean): Promise<void> {
   try {
     const res = await apiFetch("/api/presence/sharing", { method: "PUT", body: { enabled }, schema: SharingState });
     densityStore.set({ sharing: res.enabled });
+    window.dispatchEvent(new CustomEvent(SHARING_CHANGED_EVENT, { detail: { enabled: res.enabled } }));
   } catch (cause) {
     densityStore.set({
       sharing: previous,

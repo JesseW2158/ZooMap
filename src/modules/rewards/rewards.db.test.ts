@@ -8,6 +8,7 @@ import { applyEntry } from "./ledger";
 import { getRewardsMe } from "./me";
 import { TIME_AT_ACTIVITY } from "./rules/time-at-activity";
 import { seed } from "./seed";
+import { settleUnpaid } from "./settle";
 import { listStoreItems, redeem } from "./store";
 
 const t = withTestDb();
@@ -49,7 +50,7 @@ function ended(participationId: string, verifiedSeconds: number, endedAt: Date, 
 }
 
 beforeEach(async () => {
-  await Promise.all([t.cols.users.deleteMany({}), t.cols.ledger.deleteMany({}), t.cols.redemptions.deleteMany({}), t.cols.store_items.deleteMany({})]);
+  await Promise.all([t.cols.users.deleteMany({}), t.cols.participations.deleteMany({}), t.cols.ledger.deleteMany({}), t.cols.redemptions.deleteMany({}), t.cols.store_items.deleteMany({})]);
   bus.clear();
   await makeUser();
 });
@@ -123,6 +124,81 @@ describe("time-at-activity", () => {
     const { emit } = await import("@/shared/events");
     await emit("participation.ended", ended("p-bus", 3 * 60, new Date()));
     expect((await getRewardsMe(USER)).balance).toBe(3);
+  });
+});
+
+describe("settling unpaid points", () => {
+  const NOW = new Date("2026-11-14T18:00:00Z");
+  const minutesAgo = (m: number) => new Date(NOW.getTime() - m * 60_000);
+
+  async function endedParticipation(id: string, verifiedSeconds: number, leftAt: Date, userId = USER) {
+    await t.cols.participations.insertOne({
+      _id: id,
+      activityId: "act-none",
+      userId,
+      role: "guest",
+      status: "ended",
+      joinedAt: new Date(leftAt.getTime() - verifiedSeconds * 1000),
+      leftAt,
+      verifiedSeconds,
+    });
+  }
+
+  it("pays an ended participation whose event was never handled, once, however often it runs", async () => {
+    await endedParticipation("p-lost", 30 * 60, minutesAgo(20));
+    expect(await settleUnpaid(USER, NOW)).toBe(1);
+    expect(await settleUnpaid(USER, NOW)).toBe(0);
+    await Promise.all([settleUnpaid(USER, NOW), settleUnpaid(USER, NOW), settleUnpaid(USER, NOW)]);
+
+    const entries = await t.cols.ledger.find({ userId: USER }).toArray();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ delta: 30, ruleId: TIME_AT_ACTIVITY, idempotencyKey: "participation:p-lost:time" });
+    expect(entries[0].createdAt).toEqual(minutesAgo(20)); // dated to when it was earned
+    await expectBalanceMatchesLedger();
+  });
+
+  it("does not pay twice when the original event arrives late, or when it was already paid", async () => {
+    await endedParticipation("p-paid", 10 * 60, minutesAgo(30));
+    await runRules("participation.ended", ended("p-paid", 10 * 60, minutesAgo(30)), undefined, minutesAgo(30));
+    expect(await settleUnpaid(USER, NOW)).toBe(0);
+
+    await endedParticipation("p-late", 10 * 60, minutesAgo(20));
+    await settleUnpaid(USER, NOW);
+    await runRules("participation.ended", ended("p-late", 10 * 60, minutesAgo(20)));
+    expect(await t.cols.ledger.countDocuments({ userId: USER })).toBe(2);
+    expect((await t.cols.users.findOne({ _id: USER }))?.pointsBalance).toBe(20);
+    await expectBalanceMatchesLedger();
+  });
+
+  it("leaves alone what is too new, too short, too old, still active, or someone else's", async () => {
+    await endedParticipation("p-new", 10 * 60, new Date(NOW.getTime() - 10_000));
+    await endedParticipation("p-short", 59, minutesAgo(20));
+    await endedParticipation("p-old", 10 * 60, new Date(NOW.getTime() - 8 * 24 * 3_600_000));
+    await endedParticipation("p-other", 10 * 60, minutesAgo(20), "seed-other-user");
+    await t.cols.participations.insertOne({
+      _id: "p-active", activityId: "act-none", userId: USER, role: "guest", status: "active", joinedAt: minutesAgo(30), verifiedSeconds: 600,
+    });
+    expect(await settleUnpaid(USER, NOW)).toBe(0);
+    expect(await t.cols.ledger.countDocuments()).toBe(0);
+  });
+
+  it("keeps the daily cap: a participation capped to zero the first time stays unpaid", async () => {
+    process.env.POINTS_PER_MINUTE = "1";
+    const day = new Date("2026-11-14T15:00:00Z");
+    for (const id of ["c1", "c2", "c3", "c4"]) {
+      await endedParticipation(id, 4 * 3600, day);
+      await runRules("participation.ended", ended(id, 4 * 3600, day), undefined, day);
+    }
+    expect(await t.cols.ledger.countDocuments({ userId: USER })).toBe(3); // 240 + 240 + 120; c4 got nothing
+    expect(await settleUnpaid(USER, NOW)).toBe(0);
+    expect(await t.cols.ledger.countDocuments({ userId: USER })).toBe(3);
+    await expectBalanceMatchesLedger();
+  });
+
+  it("getRewardsMe pays what is owed before it reads the balance", async () => {
+    await endedParticipation("p-me", 7 * 60, new Date(Date.now() - 5 * 60_000));
+    expect((await getRewardsMe(USER)).balance).toBe(7);
+    expect((await getRewardsMe(USER)).balance).toBe(7);
   });
 });
 

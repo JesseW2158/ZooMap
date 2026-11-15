@@ -53,7 +53,7 @@ describe("/auth/mobile/done", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(body).toMatch(/location\.replace\("zoomap:\/\/auth\?code=[A-Za-z0-9_-]{43}"\)/);
-    expect(body).toContain("Return to ZooMap");
+    expect(body).toContain("Return to Minute Map");
     const rows = await t.cols.handoff_codes.find({}).toArray();
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ userId: "seed-alex", challenge: CHALLENGE });

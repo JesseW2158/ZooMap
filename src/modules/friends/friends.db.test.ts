@@ -133,6 +133,16 @@ describe("friend codes", () => {
     expect(await codeOf(addFriend(blair, "not-a-code"))).toBe("NOT_FOUND");
   });
 
+  it("a code stops working 15 minutes after it was issued", async () => {
+    const issuedAt = new Date("2026-11-16T15:00:00Z");
+    const { code } = await issueFriendCode(alex, ORIGIN, issuedAt);
+    const later = (min: number) => new Date(issuedAt.getTime() + min * 60_000);
+    expect((await previewFriendCode(blair, code, later(14))).userId).toBe(alex.id);
+    expect(await codeOf(previewFriendCode(blair, code, later(15)))).toBe("NOT_FOUND");
+    expect(await codeOf(addFriend(blair, code, later(16)))).toBe("NOT_FOUND");
+    expect(await t.cols.friendships.countDocuments({})).toBe(0);
+  });
+
   it("rate limits code lookups to 20 a minute per user", async () => {
     for (let i = 0; i < 20; i++) expect(await codeOf(previewFriendCode(casey, "AAAAAAAAAAAAAAAAAAAA"))).toBe("NOT_FOUND");
     expect(await codeOf(previewFriendCode(casey, "AAAAAAAAAAAAAAAAAAAA"))).toBe("RATE_LIMITED");
@@ -193,6 +203,29 @@ describe("activity invites", () => {
     expect(await codeOf(acceptInvite(blair, invite.id, {}))).toBe("CONFLICT"); // already accepted
   });
 
+  it("accepting with leaveCurrent into a full or ended activity gives up nothing", async () => {
+    const a = await hosted(); // capacity 2: Alex plus one
+    await befriend(alex, casey);
+    await befriend(alex, blair);
+    await befriend(alex, drew);
+    await sendInvites(alex, { activityId: a.id, toUserIds: [blair.id, casey.id, drew.id] });
+    await joinActivity(drew, a.id); // fills it
+
+    // Blair hosts their own activity; accepting into the full one must not end it
+    const mine = await createActivity(blair, { title: "Blair's", placeId, category: "social" });
+    const [invite] = await listInvites(blair.id);
+    expect(await codeOf(acceptInvite(blair, invite.id, { leaveCurrent: true }))).toBe("CAPACITY_FULL");
+    expect((await getActiveParticipation(blair.id)).activity?.id).toBe(mine.id);
+    expect((await listInvites(blair.id)).map((i) => i.id)).toEqual([invite.id]);
+
+    // Casey is a guest in Blair's; the invited activity ends, so they keep their place there
+    await joinActivity(casey, mine.id);
+    const [caseyInvite] = await listInvites(casey.id);
+    await endActivityAsHost(alex, a.id);
+    expect(await codeOf(acceptInvite(casey, caseyInvite.id, { leaveCurrent: true }))).toBe("ACTIVITY_ENDED");
+    expect((await getActiveParticipation(casey.id)).activity?.id).toBe(mine.id);
+  });
+
   it("declining, unfriending and the activity ending all clear the invite", async () => {
     const a = await hosted();
     await befriend(alex, blair);
@@ -209,5 +242,38 @@ describe("activity invites", () => {
     await endActivityAsHost(alex, a.id);
     expect(await listInvites(drew.id)).toEqual([]);
     expect(await t.cols.activity_invites.countDocuments({ toUserId: drew.id, status: "expired" })).toBe(1);
+  });
+});
+
+describe("unfriending", () => {
+  it("works from either side, expires invites both ways, emits once, and is safe to repeat", async () => {
+    const ended: EventPayload<"friendship.ended">[] = [];
+    bus.on("friendship.ended", "test:capture", (e) => void ended.push(e));
+    try {
+      const a = await createActivity(alex, { title: "Study group", placeId, category: "study" });
+      const b = await createActivity(blair, { title: "Board games", placeId, category: "social" });
+      await befriend(alex, blair);
+      await sendInvites(alex, { activityId: a.id, toUserIds: [blair.id] });
+      await sendInvites(blair, { activityId: b.id, toUserIds: [alex.id] });
+
+      expect(await removeFriend(blair.id, alex.id)).toEqual({ ok: true });
+      expect(await listFriends(alex.id)).toEqual([]);
+      expect(await listFriends(blair.id)).toEqual([]);
+      expect(await listInvites(alex.id)).toEqual([]);
+      expect(await listInvites(blair.id)).toEqual([]);
+      expect(await t.cols.activity_invites.countDocuments({ status: "expired" })).toBe(2);
+
+      // again, the other way round, and someone who was never a friend: still ok, no second event
+      expect(await removeFriend(alex.id, blair.id)).toEqual({ ok: true });
+      expect(await removeFriend(alex.id, casey.id)).toEqual({ ok: true });
+      expect(await removeFriend(alex.id, "seed-nobody")).toEqual({ ok: true });
+      expect(ended).toHaveLength(1);
+
+      // they can become friends again, and a fresh invite works
+      await befriend(blair, alex);
+      expect((await sendInvites(alex, { activityId: a.id, toUserIds: [blair.id] })).sent).toEqual([blair.id]);
+    } finally {
+      bus.off("friendship.ended", "test:capture");
+    }
   });
 });

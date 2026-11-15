@@ -5,7 +5,8 @@ import { REWARD_RULES } from "./rules";
 /**
  * Runs every rule registered for `type` against one event and applies the drafts.
  * A failing rule is logged and skipped so it cannot block the others (README risk 6:
- * a failed award is logged, not retried).
+ * a failed award is logged here and paid later by `settleUnpaid` when the user next asks for
+ * their points).
  */
 export async function runRules<K extends EventType>(
   type: K,

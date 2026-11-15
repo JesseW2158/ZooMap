@@ -12,6 +12,8 @@ import { ApiError } from "@/shared/http";
 /** 32 letters and digits with no look-alikes (no I, O, 0, 1), so a typed code is unambiguous. */
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const CODE_LENGTH = 20; // 100 bits
+/** A friend code works for this long after it is issued, so a photo of someone's QR goes stale. */
+export const CODE_TTL_MS = 15 * 60_000;
 
 export function newFriendCode(): string {
   const bytes = randomBytes(CODE_LENGTH);

@@ -46,6 +46,21 @@ export const OUTBOX = {
   batchSize: 25,
   /** How long `confirm` polls a sent transaction before leaving it for the next drain. */
   confirmTimeoutMs: 30_000,
+  /**
+   * Cap on every single RPC call. Without it a stalled connection never settles, and the
+   * deadline in `confirm` is only checked between calls.
+   */
+  rpcTimeoutMs: 8_000,
+  /**
+   * Time one `drainOutbox` call may spend in total. A drain runs inside a serverless request
+   * (the wallet view, or `after()` of a points request), so it must end well inside the
+   * function's time limit. Rows it does not reach stay pending for the next drain.
+   */
+  drainBudgetMs: 20_000,
+  /** Do not start a new row with less than this left in the budget (prepare and send take a few RPC calls). */
+  minRowBudgetMs: 6_000,
+  /** The shortest `confirm` wait once the budget is nearly spent. */
+  minConfirmMs: 2_000,
 } as const;
 
 export function explorerAddressUrl(address: string): string {
