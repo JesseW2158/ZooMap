@@ -11,7 +11,7 @@ import { describeClass, manualProvider } from "./providers/manual";
 import { planProvider } from "./providers/plan";
 import { resolvePlaceWith } from "./resolve-place";
 import { fetchFeed, FeedError, hostAllowed, urlProblem } from "./safe-fetch";
-import { localParts } from "./time";
+import { localDayKeys, localDays, localParts } from "./time";
 
 // --------------------------------------------------------------------- feeds
 
@@ -275,6 +275,37 @@ describe("manual classes", () => {
 
   it("describe themselves", () => {
     expect(describeClass({ label: "X", days: ["TU", "TH"], start: "13:00", end: "14:15" }, "LGRT")).toBe("TuTh 1:00pm–2:15pm · LGRT");
+    expect(describeClass({ label: "X", days: ["SU", "SA", "MO"], start: "09:00", end: "10:00" })).toBe("MSaSu 9:00am–10:00am");
+  });
+
+  it("land on Saturday and Sunday in campus time, even when the evening is already the next day in UTC", async () => {
+    const run = (days: string[], start: string, end: string) =>
+      manualProvider.fetchEvents(
+        { id: "w1", userId: "u", provider: "manual", label: "Weekend", secret: JSON.stringify({ label: "Weekend", days, start, end }) },
+        { from: new Date("2026-11-13T00:00:00Z"), to: new Date("2026-11-17T00:00:00Z") },
+      );
+    // Sat 14 and Sun 15 November 2026 (EST, UTC-5)
+    expect((await run(["SA", "SU"], "09:00", "10:00")).map((e) => e.start.toISOString())).toEqual(["2026-11-14T14:00:00.000Z", "2026-11-15T14:00:00.000Z"]);
+    // 11pm Saturday is already Sunday in UTC; it is still the Saturday class
+    expect((await run(["SA"], "23:00", "23:30")).map((e) => e.start.toISOString())).toEqual(["2026-11-15T04:00:00.000Z"]);
+    // and a weekday-only class never lands on the weekend
+    expect((await run(["MO", "TU", "WE", "TH", "FR"], "09:00", "10:00")).map((e) => localParts(e.start).weekday)).toEqual(["FR", "MO"]);
+  });
+});
+
+describe("local calendar days", () => {
+  it("names each weekday correctly across a weekend", () => {
+    const days = localDays(new Date("2026-11-13T12:00:00Z"), new Date("2026-11-16T12:00:00Z"));
+    expect(days.map((d) => `${d.m}/${d.d} ${d.weekday}`)).toEqual(["11/13 FR", "11/14 SA", "11/15 SU", "11/16 MO"]);
+  });
+
+  it("lists seven consecutive dates without skipping the Sunday the clocks change", () => {
+    // 11:30pm Saturday 7 March 2026 (EST); 24 hours later is already Monday 9th in New York
+    const lateSaturday = new Date("2026-03-08T04:30:00Z");
+    expect(localParts(lateSaturday).weekday).toBe("SA");
+    expect(localDayKeys(lateSaturday, 4)).toEqual(["2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10"]);
+    // the fall-back Sunday, 1 November 2026, is 25 hours long
+    expect(localDayKeys(new Date("2026-11-01T03:30:00Z"), 3)).toEqual(["2026-10-31", "2026-11-01", "2026-11-02"]);
   });
 });
 

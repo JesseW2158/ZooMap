@@ -5,6 +5,7 @@ import type { Place, RouteResult, ScheduleConnection, ScheduleEvent, Weekday } f
 import { ApiClientError, apiFetch } from "@/shared/http/client";
 import { openExternalAuth, useUserLocation } from "@/shared/platform";
 import { useApi, useMapStore } from "@/shared/ui";
+import { localDayKeys } from "../time";
 import {
   AlarmIcon,
   AlertIcon,
@@ -113,7 +114,7 @@ export function SchedulePanel() {
     return () => clearInterval(id);
   }, []);
 
-  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => dayKeyFmt.format(new Date(now + i * DAY_MS))), [now]);
+  const days = useMemo(() => localDayKeys(new Date(now), 7), [now]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const day = selectedDay && days.includes(selectedDay) ? selectedDay : days[0];
 
@@ -138,7 +139,7 @@ export function SchedulePanel() {
       {notice ? (
         <p className="flex items-start justify-between gap-2 rounded-2xl bg-sky/25 px-3 py-2 text-sm text-ink">
           <span>{notice}</span>
-          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="text-yale hover:text-ink"><CloseIcon className="h-4 w-4" /></button>
+          <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="inline-flex shrink-0 items-center justify-center text-yale hover:text-ink max-md:min-h-11 max-md:min-w-11"><CloseIcon className="h-4 w-4" /></button>
         </p>
       ) : null}
 
@@ -156,7 +157,8 @@ export function SchedulePanel() {
           <div className="flex items-center gap-3">
             <div role="tablist" aria-label="Day" className="grid min-w-0 flex-1 grid-cols-7 gap-1">
               {days.map((d, i) => {
-                const at = new Date(now + i * DAY_MS);
+                // noon UTC of the campus date: the same calendar day in New York all year
+                const at = new Date(`${d}T12:00:00Z`);
                 const selected = d === day;
                 const busy = busyDays.has(d);
                 return (
@@ -331,7 +333,7 @@ function NextUp({ event, previous, now }: { event: ScheduleEvent; previous?: Sch
           ) : status === "denied" || status === "unavailable" ? (
             <p className="flex items-center gap-1 text-ivory/60"><PinIcon className="h-3.5 w-3.5" />Location is off</p>
           ) : (
-            <button type="button" onClick={startLocation} className="text-sm font-semibold text-sky hover:underline">
+            <button type="button" onClick={startLocation} className="text-sm font-semibold text-sky hover:underline max-md:min-h-11">
               <span className="inline-flex items-center gap-1"><PinIcon className="h-3.5 w-3.5" />{status === "requesting" ? "Finding you…" : "Use my location for leave-by"}</span>
             </button>
           )}
@@ -343,7 +345,7 @@ function NextUp({ event, previous, now }: { event: ScheduleEvent; previous?: Sch
           <button
             type="button"
             onClick={() => { selectPlace(event.placeId!); requestRoute(event.placeId!); }}
-            className="flex items-center gap-1.5 rounded-full bg-ivory px-4 py-2 text-sm font-bold text-ink hover:bg-white"
+            className="flex items-center gap-1.5 rounded-full bg-ivory px-4 py-2 text-sm font-bold text-ink hover:bg-white max-md:min-h-11"
           >
             <GoIcon className="h-4 w-4" /> Go
           </button>
@@ -351,7 +353,7 @@ function NextUp({ event, previous, now }: { event: ScheduleEvent; previous?: Sch
             <button
               type="button"
               onClick={() => { selectPlace(event.placeId!); requestRoute(event.placeId!, { fromPlaceId: previous.placeId }); }}
-              className="rounded-full bg-ivory/10 px-4 py-2 text-sm font-medium text-ivory hover:bg-ivory/20"
+              className="rounded-full bg-ivory/10 px-4 py-2 text-sm font-medium text-ivory hover:bg-ivory/20 max-md:min-h-11"
             >
               From {previous.locationText?.split(" ")[0] ?? previous.title}
             </button>
@@ -373,7 +375,7 @@ function DayTimeline(props: { items: ScheduleEvent[]; date: string; now: number;
       <div className="flex flex-col items-center gap-2 rounded-2xl bg-linen px-4 py-6 text-center text-sm">
         <span aria-hidden className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-ink"><SunIcon className="h-7 w-7" /></span>
         <p className="font-semibold">Free day</p>
-        <button type="button" onClick={() => props.onAddPlan("14:00", "15:00")} className="rounded-full bg-ink px-4 py-2 font-semibold text-ivory">
+        <button type="button" onClick={() => props.onAddPlan("14:00", "15:00")} className="rounded-full bg-ink px-4 py-2 font-semibold text-ivory max-md:min-h-11">
           + Plan something
         </button>
       </div>
@@ -423,7 +425,7 @@ function Between({ from, to, now, onAddPlan }: { from: ScheduleEvent; to: Schedu
             onClick={() => { selectPlace(to.placeId!); requestRoute(to.placeId!, { fromPlaceId: from.placeId }); }}
             aria-label="Preview the walk"
             title="Preview the walk"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#1663d6] shadow-sm ring-1 ring-ink/10 hover:bg-blue-50"
+            className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#1663d6] shadow-sm ring-1 ring-ink/10 before:absolute before:-inset-2 before:content-[''] hover:bg-blue-50"
           >
             <GoIcon className="h-3.5 w-3.5" />
           </button>
@@ -433,7 +435,7 @@ function Between({ from, to, now, onAddPlan }: { from: ScheduleEvent; to: Schedu
         <button
           type="button"
           onClick={() => onAddPlan(toHHMM(from.end), toHHMM(new Date(to.start).getTime() - walkMin * 60_000))}
-          className="mt-1.5 rounded-full border border-dashed border-sky px-3 py-1 font-semibold text-ink hover:bg-sky/15"
+          className="mt-1.5 rounded-full border border-dashed border-sky px-3 py-1 font-semibold text-ink hover:bg-sky/15 max-md:min-h-11"
         >
           <PlusIcon className="mr-1 inline h-3 w-3 align-[-1px]" />{free >= 90 ? `${Math.floor(free / 60)} h ${free % 60 ? `${free % 60} min` : ""}` : `${free} min`} free
         </button>
@@ -478,7 +480,7 @@ function ItemCard({ event, previous, past, onChanged }: { event: ScheduleEvent; 
   const fromName = fromPlaceId ? short(previous!) : "you";
 
   const KindIcon: IconC = isPlan ? NoteIcon : event.source === "manual" ? CapIcon : CalendarIcon;
-  const iconBtn = "flex h-8 w-8 items-center justify-center rounded-full bg-linen text-ink hover:bg-ash/50 disabled:opacity-40";
+  const iconBtn = "relative flex h-8 w-8 items-center justify-center rounded-full bg-linen text-ink before:absolute before:-inset-1.5 before:content-[''] hover:bg-ash/50 disabled:opacity-40";
 
   return (
     <li
@@ -508,20 +510,20 @@ function ItemCard({ event, previous, past, onChanged }: { event: ScheduleEvent; 
         ) : mode === "confirm-delete" ? (
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
             <span>Delete?</span>
-            <button type="button" disabled={busy} onClick={remove} className="rounded-full bg-red-600 px-3 py-1 font-semibold text-white">Delete</button>
-            <button type="button" onClick={() => setMode(null)} className="rounded-full bg-linen px-3 py-1 font-medium">Keep</button>
+            <button type="button" disabled={busy} onClick={remove} className="rounded-full bg-red-600 px-3 py-1 font-semibold text-white max-md:min-h-11">Delete</button>
+            <button type="button" onClick={() => setMode(null)} className="rounded-full bg-linen px-3 py-1 font-medium max-md:min-h-11">Keep</button>
           </div>
         ) : event.skipped ? (
           <div className="mt-1 flex items-center gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
             <span className="inline-flex items-center gap-1 text-yale"><SkipIcon className="h-3.5 w-3.5" />Skipped</span>
-            <button type="button" disabled={busy} onClick={() => setSkipped(false)} className="rounded-full bg-linen px-2.5 py-0.5 font-semibold">Undo</button>
+            <button type="button" disabled={busy} onClick={() => setSkipped(false)} className="rounded-full bg-linen px-2.5 py-0.5 font-semibold max-md:min-h-11">Undo</button>
           </div>
         ) : null}
         {error ? <p className="mt-1 text-xs text-red-700">{error}</p> : null}
       </div>
 
       {!mode && !event.skipped ? (
-        <div className="flex shrink-0 gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex shrink-0 gap-1.5 max-md:gap-3" onClick={(e) => e.stopPropagation()}>
           {canPreview && fromPlaceId ? (
             <button type="button" onClick={fromMe} aria-label="Directions from me" title="Directions from me" className={iconBtn}>
               <PinIcon className="h-4 w-4" />
@@ -547,7 +549,7 @@ function ItemCard({ event, previous, past, onChanged }: { event: ScheduleEvent; 
               onClick={preview}
               aria-label={`Preview the walk from ${fromName}`}
               title={`Walk from ${fromName}`}
-              className={`flex h-8 w-8 items-center justify-center rounded-full ${previewing ? "bg-[#1663d6] text-white" : "bg-ink text-ivory hover:bg-yale"}`}
+              className={`relative flex h-8 w-8 items-center justify-center rounded-full before:absolute before:-inset-1.5 before:content-[''] ${previewing ? "bg-[#1663d6] text-white" : "bg-ink text-ivory hover:bg-yale"}`}
             >
               <GoIcon className="h-3.5 w-3.5" />
             </button>
@@ -566,19 +568,19 @@ function MovePlan({ event, busy, onSave, onCancel }: { event: ScheduleEvent; bus
     const e = new Date(event.end).getTime() + mins * 60_000;
     setStart(toHHMM(s)); setEnd(toHHMM(e));
   };
-  const input = "rounded-lg border border-neutral-200 bg-white px-2 py-0.5 text-xs text-neutral-900";
+  const input = "rounded-lg border border-neutral-200 bg-white px-2 py-0.5 text-xs text-neutral-900 max-md:min-h-11";
   return (
     <div className="mt-1.5 space-y-1.5 text-xs">
       <div className="flex flex-wrap items-center gap-1.5">
-        <button type="button" onClick={() => shift(-30)} className="rounded-full border border-neutral-200 px-2 py-0.5">−30 min</button>
-        <button type="button" onClick={() => shift(30)} className="rounded-full border border-neutral-200 px-2 py-0.5">+30 min</button>
+        <button type="button" onClick={() => shift(-30)} className="rounded-full border border-neutral-200 px-2 py-0.5 max-md:min-h-11">−30 min</button>
+        <button type="button" onClick={() => shift(30)} className="rounded-full border border-neutral-200 px-2 py-0.5 max-md:min-h-11">+30 min</button>
         <input type="time" aria-label="Start" value={start} onChange={(e) => setStart(e.target.value)} className={input} />
         <span>to</span>
         <input type="time" aria-label="End" value={end} onChange={(e) => setEnd(e.target.value)} className={input} />
       </div>
       <div className="flex gap-1.5">
-        <button type="button" disabled={busy || end <= start} onClick={() => onSave(start, end)} className="rounded-full bg-neutral-900 px-2.5 py-0.5 font-medium text-white disabled:opacity-50">Save</button>
-        <button type="button" onClick={onCancel} className="rounded-full border border-neutral-200 px-2.5 py-0.5">Cancel</button>
+        <button type="button" disabled={busy || end <= start} onClick={() => onSave(start, end)} className="rounded-full bg-neutral-900 px-2.5 py-0.5 font-medium text-white disabled:opacity-50 max-md:min-h-11">Save</button>
+        <button type="button" onClick={onCancel} className="rounded-full border border-neutral-200 px-2.5 py-0.5 max-md:min-h-11">Cancel</button>
       </div>
     </div>
   );
@@ -605,7 +607,7 @@ function Calendars({ connections, onChanged }: { connections: ScheduleConnection
   const kind = (c: ScheduleConnection) => (c.provider === "manual" ? "Class" : c.provider === "plan" ? "Plan" : c.provider === "google" ? "Google" : "Feed");
   return (
     <details className="rounded-2xl bg-linen/70">
-      <summary className="flex cursor-pointer items-center gap-2 px-3 py-2.5 text-sm font-semibold text-ink"><GearIcon className="h-4 w-4" />Manage ({connections.length})</summary>
+      <summary className="flex cursor-pointer items-center gap-2 px-3 py-2.5 text-sm font-semibold text-ink max-md:min-h-11"><GearIcon className="h-4 w-4" />Manage ({connections.length})</summary>
       <ul className="divide-y divide-neutral-100 border-t border-neutral-100">
         {connections.map((c) => (
           <li key={c.id} className="flex items-center gap-2 px-3 py-2 text-sm">
@@ -617,13 +619,13 @@ function Calendars({ connections, onChanged }: { connections: ScheduleConnection
             </span>
             {confirm === c.id ? (
               <span className="flex shrink-0 gap-1">
-                <button type="button" disabled={busy === c.id} onClick={() => remove(c.id)} className="rounded-full bg-red-700 px-2.5 py-0.5 text-xs font-medium text-white">
+                <button type="button" disabled={busy === c.id} onClick={() => remove(c.id)} className="rounded-full bg-red-700 px-2.5 py-0.5 text-xs font-medium text-white max-md:min-h-11">
                   {c.provider === "manual" ? "Remove every week" : "Remove"}
                 </button>
-                <button type="button" onClick={() => setConfirm(null)} className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs">Keep</button>
+                <button type="button" onClick={() => setConfirm(null)} className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs max-md:min-h-11">Keep</button>
               </span>
             ) : (
-              <button type="button" onClick={() => setConfirm(c.id)} className="shrink-0 rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs font-semibold text-yale hover:text-red-700">
+              <button type="button" onClick={() => setConfirm(c.id)} className="shrink-0 rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs font-semibold text-yale hover:text-red-700 max-md:min-h-11">
                 Remove
               </button>
             )}
@@ -636,7 +638,7 @@ function Calendars({ connections, onChanged }: { connections: ScheduleConnection
 
 // ---------------------------------------------------------------- forms
 
-const inputCls = "mt-1 w-full rounded-xl border-0 bg-linen px-3 py-2 text-sm text-ink outline-none placeholder:text-yale/50 focus:outline-2 focus:outline-ink";
+const inputCls = "mt-1 w-full rounded-xl border-0 bg-linen px-3 py-2 text-sm text-ink outline-none placeholder:text-yale/50 focus:outline-2 focus:outline-ink max-md:min-h-11";
 
 function BuildingPicker({ place, onPick, placeholder }: { place: Place | null; onPick: (p: Place | null) => void; placeholder: string }) {
   const [q, setQ] = useState("");
@@ -654,7 +656,7 @@ function BuildingPicker({ place, onPick, placeholder }: { place: Place | null; o
       {place ? (
         <div className="mt-1 flex items-center justify-between rounded-xl bg-linen px-3 py-2 text-sm text-ink">
           <span className="flex items-center gap-1"><PinIcon className="h-3.5 w-3.5" />{place.name}</span>
-          <button type="button" className="text-xs text-neutral-500 hover:underline" onClick={() => { onPick(null); setQ(""); }}>change</button>
+          <button type="button" className="text-xs text-neutral-500 hover:underline max-md:min-h-11 max-md:px-2" onClick={() => { onPick(null); setQ(""); }}>change</button>
         </div>
       ) : (
         <input className={inputCls} value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} />
@@ -663,7 +665,7 @@ function BuildingPicker({ place, onPick, placeholder }: { place: Place | null; o
         <ul className="absolute left-0 right-0 z-10 mt-1 max-h-40 overflow-auto rounded-lg border border-neutral-200 bg-white shadow">
           {results.slice(0, 6).map((p) => (
             <li key={p.id}>
-              <button type="button" className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100" onClick={() => { onPick(p); setResults([]); }}>
+              <button type="button" className="w-full px-3 py-1.5 text-left text-sm hover:bg-neutral-100 max-md:min-h-11" onClick={() => { onPick(p); setResults([]); }}>
                 {p.name}
                 {p.studyFriendly ? <span className="ml-1 text-xs text-emerald-700">· good for studying</span> : null}
               </button>
@@ -716,7 +718,7 @@ function PlanForm({ initial, onDone }: { initial: { date?: string; start?: strin
             type="button"
             aria-pressed={label === p}
             onClick={() => setLabel(p)}
-            className={`rounded-full px-3 py-1 text-xs ${label === p ? "bg-ink text-ivory" : "bg-linen text-ink hover:bg-ash/50"}`}
+            className={`rounded-full px-3 py-1 text-xs max-md:min-h-11 ${label === p ? "bg-ink text-ivory" : "bg-linen text-ink hover:bg-ash/50"}`}
           >
             {p}
           </button>
@@ -737,17 +739,19 @@ function PlanForm({ initial, onDone }: { initial: { date?: string; start?: strin
       </div>
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
       <div className="flex gap-2">
-        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60">
+        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60 max-md:min-h-11">
           {saving ? "Saving…" : "Add plan"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink">Cancel</button>
+        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink max-md:min-h-11">Cancel</button>
       </div>
     </div>
   );
 }
 
-const DAYS: { id: Weekday; label: string }[] = [
-  { id: "MO", label: "M" }, { id: "TU", label: "Tu" }, { id: "WE", label: "W" }, { id: "TH", label: "Th" }, { id: "FR", label: "F" },
+const DAYS: { id: Weekday; label: string; name: string }[] = [
+  { id: "MO", label: "M", name: "Monday" }, { id: "TU", label: "Tu", name: "Tuesday" }, { id: "WE", label: "W", name: "Wednesday" },
+  { id: "TH", label: "Th", name: "Thursday" }, { id: "FR", label: "F", name: "Friday" },
+  { id: "SA", label: "Sa", name: "Saturday" }, { id: "SU", label: "Su", name: "Sunday" },
 ];
 
 function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
@@ -796,7 +800,7 @@ function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
       </label>
       <div>
         <div className="text-xs font-semibold text-yale">Days</div>
-        <div className="mt-1 flex gap-1">
+        <div className="mt-1 flex flex-wrap gap-1">
           {DAYS.map((d) => {
             const on = days.includes(d.id);
             return (
@@ -804,8 +808,9 @@ function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
                 key={d.id}
                 type="button"
                 aria-pressed={on}
+                aria-label={d.name}
                 onClick={() => setDays(on ? days.filter((x) => x !== d.id) : [...days, d.id])}
-                className={`h-10 w-10 rounded-full text-sm font-bold ${on ? "bg-ink text-ivory" : "bg-linen text-ink"}`}
+                className={`h-10 w-10 rounded-full text-sm font-bold max-md:h-11 max-md:w-11 ${on ? "bg-ink text-ivory" : "bg-linen text-ink"}`}
               >
                 {d.label}
               </button>
@@ -819,10 +824,10 @@ function AddClassForm({ onDone }: { onDone: (saved: boolean) => void }) {
       </div>
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
       <div className="flex gap-2">
-        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60">
+        <button type="button" disabled={saving} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60 max-md:min-h-11">
           {saving ? "Saving…" : "Save class"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink">Cancel</button>
+        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink max-md:min-h-11">Cancel</button>
       </div>
     </div>
   );
@@ -864,10 +869,10 @@ function AddFeedForm({ onDone }: { onDone: (saved: boolean) => void }) {
       />
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
       <div className="flex gap-2">
-        <button type="button" disabled={saving || !url.trim()} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60">
+        <button type="button" disabled={saving || !url.trim()} onClick={save} className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-ivory disabled:opacity-60 max-md:min-h-11">
           {saving ? "Adding…" : "Add link"}
         </button>
-        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink">Cancel</button>
+        <button type="button" onClick={() => onDone(false)} className="rounded-full bg-linen px-5 py-2 text-sm font-medium text-ink max-md:min-h-11">Cancel</button>
       </div>
     </div>
   );
