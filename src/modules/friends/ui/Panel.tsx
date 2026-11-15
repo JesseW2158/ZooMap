@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { InviteResult, Profile, SocialKind, type Friend, type Profile as ProfileT, type SocialInput } from "@/shared/contracts";
 import { apiFetch } from "@/shared/http/client";
 import { errorText, refreshFriends, setMyProfile, useFriendsFeed } from "./feed";
 import { MyCodeOverlay, ScanOverlay } from "./overlays";
+import { PullDownLayer, scrollParent, useIsPhone, usePullCode } from "./PullCode";
 import { ChatIcon, CheckIcon, CloseIcon, HeartIcon, MailIcon, PencilIcon, QrIcon, ScanIcon, SendIcon, UserMinusIcon, UserPlusIcon, UsersIcon } from "./icons";
 import { Avatar, ContactButtons, InviteCard, SOCIAL_LABELS } from "./parts";
 
@@ -17,13 +18,21 @@ export function FriendsPanel() {
   const { me, friends, invites, current, error } = useFriendsFeed();
   const [overlay, setOverlay] = useState<"code" | "scan" | null>(null);
   const [editing, setEditing] = useState(false);
+  // phones: pulling the whole page down (or the "My code" buttons) opens your code full screen
+  // on a dark backdrop, and swiping up goes back; elsewhere the buttons open the overlay
+  const isPhone = useIsPhone();
+  const [scroller, setScroller] = useState<HTMLElement | null>(null);
+  const rootRef = useCallback((el: HTMLDivElement | null) => setScroller(el ? scrollParent(el) : null), []);
+  const pullCode = usePullCode(scroller, isPhone);
+  const showCode = () => (isPhone ? pullCode.open() : setOverlay("code"));
 
   useEffect(() => {
     void refreshFriends();
   }, []);
 
   return (
-    <div className="space-y-5 text-sm text-ink">
+    <div ref={rootRef} className="space-y-5 text-sm text-ink">
+      <PullDownLayer scroller={isPhone ? scroller : null} state={pullCode} />
       {me && editing ? (
         <ProfileEditor me={me} onDone={() => setEditing(false)} />
       ) : (
@@ -39,7 +48,7 @@ export function FriendsPanel() {
             <p className="truncate text-base font-bold">{me?.name ?? " "}</p>
             <p className="truncate text-yale">{me?.pronouns ?? (me ? "Add pronouns" : "")}</p>
           </div>
-          <RoundButton label="My code" onClick={() => setOverlay("code")} primary>
+          <RoundButton label="My code" onClick={showCode} primary>
             <QrIcon className="h-5 w-5" />
           </RoundButton>
           <RoundButton label="Scan" onClick={() => setOverlay("scan")}>
@@ -67,7 +76,7 @@ export function FriendsPanel() {
       <FriendsList
         friends={friends}
         current={current?.participation ? current.activity : null}
-        onAdd={() => setOverlay("code")}
+        onAdd={showCode}
         onScan={() => setOverlay("scan")}
       />
 

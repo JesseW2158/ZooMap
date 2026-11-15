@@ -40,6 +40,45 @@ function Overlay({ title, onClose, children }: { title: string; onClose: () => v
  * stops working), shown as a large QR that another phone's camera or Scan button can read.
  */
 export function MyCodeOverlay({ me, onClose }: { me: Profile | null; onClose: () => void }) {
+  const { code, svg, error } = useFriendCode();
+
+  return (
+    <Overlay title="My friend code" onClose={onClose}>
+      {me ? (
+        <div className="flex items-center gap-3">
+          <Avatar person={me} size={48} />
+          <div>
+            <p className="text-lg font-semibold">{me.name}</p>
+            {me.pronouns ? <p className="text-neutral-600">{me.pronouns}</p> : null}
+          </div>
+        </div>
+      ) : null}
+      <FriendCodeView code={code} svg={svg} error={error} />
+    </Overlay>
+  );
+}
+
+export const FRIEND_CODE_HELP =
+  "Let a friend scan this with their camera or the Scan button in ZooMap. Opening your code again makes a new one, and this one stops working.";
+
+/** The QR, the code under it and how to use it, from `useFriendCode()`. */
+function FriendCodeView({ code, svg, error }: ReturnType<typeof useFriendCode>) {
+  return (
+    <>
+      {error ? <p className="text-red-600">{error}</p> : null}
+      {!svg && !error ? <p className="text-neutral-500">Making your code…</p> : null}
+      {svg ? (
+        // The SVG comes from the qrcode library, generated here from our own URL.
+        <div className="w-full max-w-xs [&>svg]:h-auto [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: svg }} />
+      ) : null}
+      {code ? <p className="font-mono text-sm tracking-wider text-neutral-500">{code.code}</p> : null}
+      <p className="max-w-xs text-center text-sm text-neutral-600">{FRIEND_CODE_HELP}</p>
+    </>
+  );
+}
+
+/** Issues a fresh friend code on mount (the previous one stops working) and renders it as a QR SVG. */
+export function useFriendCode(): { code: FriendCode | null; svg: string | null; error: string | null } {
   const [code, setCode] = useState<FriendCode | null>(null);
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,30 +102,7 @@ export function MyCodeOverlay({ me, onClose }: { me: Profile | null; onClose: ()
     };
   }, []);
 
-  return (
-    <Overlay title="My friend code" onClose={onClose}>
-      {me ? (
-        <div className="flex items-center gap-3">
-          <Avatar person={me} size={48} />
-          <div>
-            <p className="text-lg font-semibold">{me.name}</p>
-            {me.pronouns ? <p className="text-neutral-600">{me.pronouns}</p> : null}
-          </div>
-        </div>
-      ) : null}
-      {error ? <p className="text-red-600">{error}</p> : null}
-      {!svg && !error ? <p className="text-neutral-500">Making your code…</p> : null}
-      {svg ? (
-        // The SVG comes from the qrcode library, generated here from our own URL.
-        <div className="w-full max-w-xs [&>svg]:h-auto [&>svg]:w-full" dangerouslySetInnerHTML={{ __html: svg }} />
-      ) : null}
-      {code ? <p className="font-mono text-sm tracking-wider text-neutral-500">{code.code}</p> : null}
-      <p className="max-w-xs text-center text-sm text-neutral-600">
-        Let a friend scan this with their camera or the Scan button in ZooMap. Opening your code again makes a new one, and
-        this one stops working.
-      </p>
-    </Overlay>
-  );
+  return { code, svg, error };
 }
 
 /** The browser's built-in barcode reader (Chrome on Android, the Android shell); absent on iPhone browsers and most desktops. */
