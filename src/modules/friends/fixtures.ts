@@ -1,4 +1,4 @@
-import type { ActivityInvite, Friend, FriendCode, FriendPreview, InviteResult, Profile } from "@/shared/contracts";
+import type { ActivityInvite, Conversation, DirectMessage, Friend, FriendCode, FriendPreview, InviteResult, Profile } from "@/shared/contracts";
 
 /** Contract-valid sample bodies for the route test, which runs without a database. */
 
@@ -44,5 +44,17 @@ export function inviteFixture(now = new Date()): ActivityInvite {
     from: { userId: "seed-alex", name: "Alex Dev", image: null, pronouns: null },
     status: "pending",
     createdAt: now.toISOString(),
+  };
+}
+
+export function messageFixture(fromUserId = "seed-blair", toUserId = "seed-alex", now = new Date()): DirectMessage {
+  return { id: "fixture-message-1", fromUserId, toUserId, body: "Meet at the library?", createdAt: now.toISOString(), readAt: null };
+}
+
+export function conversationFixture(now = new Date()): Conversation {
+  return {
+    friend: { userId: "seed-blair", name: "Blair Dev", image: null, pronouns: "they/them" },
+    lastMessage: messageFixture("seed-blair", "seed-alex", now),
+    unread: 1,
   };
 }

@@ -30,6 +30,7 @@ import {
   Profile,
   ProfileUpdateBody,
 } from "./friends";
+import { ConversationList, DirectMessage, DirectMessageList, MessagesQuery, SendMessageBody, UnreadCount } from "./messages";
 import { Ok } from "./common";
 import { AlertSettings, AlertSettingsBody, MarkReadBody, NotificationsResponse } from "./notifications";
 import { CreatePlannedEventBody, GoingBody, PlannedEvent, PlannedEventList } from "./planned";
@@ -126,6 +127,12 @@ export const API_ROUTES = {
     response: ParticipationResult,
   },
   inviteDecline: { path: "/api/friends/invites/[id]/decline", method: "POST", status: 200, response: Ok },
+  /** Added after Phase 0: direct messages between friends. `[id]` is the friend's user id. */
+  messagesInbox: { path: "/api/messages", method: "GET", status: 200, response: ConversationList },
+  messagesUnread: { path: "/api/messages/unread", method: "GET", status: 200, response: UnreadCount },
+  messagesThread: { path: "/api/messages/[id]", method: "GET", status: 200, query: MessagesQuery, response: DirectMessageList },
+  messagesSend: { path: "/api/messages/[id]", method: "POST", status: 201, body: SendMessageBody, response: DirectMessage },
+  messagesRead: { path: "/api/messages/[id]/read", method: "POST", status: 200, response: Ok },
   notificationsList: { path: "/api/notifications", method: "GET", status: 200, response: NotificationsResponse },
   notificationsRead: { path: "/api/notifications/read", method: "POST", status: 200, body: MarkReadBody, response: Ok },
   notificationsSettings: { path: "/api/notifications/settings", method: "PUT", status: 200, body: AlertSettingsBody, response: AlertSettings },

@@ -3,6 +3,7 @@ import type {
   ActivityDoc,
   ActivityInviteDoc,
   FriendshipDoc,
+  MessageDoc,
   ProfileDoc,
   RateLimitDoc,
   ChainOutboxDoc,
@@ -41,6 +42,7 @@ export interface CollectionMap {
   notifications: NotificationDoc;
   notification_settings: NotificationSettingsDoc;
   planned_events: PlannedEventDoc;
+  messages: MessageDoc;
 }
 
 export type CollectionName = keyof CollectionMap;
@@ -64,6 +66,7 @@ export const COLLECTION_NAMES: CollectionName[] = [
   "notifications",
   "notification_settings",
   "planned_events",
+  "messages",
 ];
 
 export type Collections = { [K in CollectionName]: Collection<CollectionMap[K]> };
@@ -89,6 +92,7 @@ export function collectionsOf(db: Db): Collections {
     notifications: db.collection("notifications"),
     notification_settings: db.collection("notification_settings"),
     planned_events: db.collection("planned_events"),
+    messages: db.collection("messages"),
   } as Collections;
 }
 
