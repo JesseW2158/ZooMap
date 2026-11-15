@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { env } from "@/shared/config/env";
 import { getSessionUser, seedUsers, signIn } from "@/modules/auth";
@@ -47,12 +48,14 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
 
       <div className="relative mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
         <header className="animate-rise">
-          <span className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-jasmine text-ink shadow-lg shadow-black/30 ring-4 ring-ivory/10">
-            <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
-              <circle cx="12" cy="9.5" r="2.5" />
-            </svg>
-          </span>
+          <Image
+            src="/logo/minute-map-circle-512.png"
+            alt=""
+            width={64}
+            height={64}
+            priority
+            className="mb-5 h-16 w-16 rounded-full shadow-lg shadow-black/30 ring-4 ring-ivory/10"
+          />
           <h1 className="text-4xl font-extrabold tracking-tight">
             Zoo<span className="text-jasmine">Map</span>
           </h1>

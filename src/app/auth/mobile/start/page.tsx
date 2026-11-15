@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { env } from "@/shared/config/env";
 import { getSessionUser, isValidChallenge, seedUsers, signIn } from "@/modules/auth";
@@ -15,7 +16,10 @@ export default async function MobileStartPage({ searchParams }: { searchParams: 
   if (!isValidChallenge(challenge)) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-4 p-6">
-        <h1 className="text-3xl font-bold">ZooMap</h1>
+        <h1 className="flex items-center gap-3 text-3xl font-bold">
+          <Image src="/logo/minute-map-circle-512.png" alt="" width={40} height={40} priority className="h-10 w-10 rounded-full" />
+          ZooMap
+        </h1>
         <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
           This sign-in link is not valid. Go back to the ZooMap app and try again.
         </p>
@@ -32,7 +36,10 @@ export default async function MobileStartPage({ searchParams }: { searchParams: 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
       <header>
-        <h1 className="text-3xl font-bold">ZooMap</h1>
+        <h1 className="flex items-center gap-3 text-3xl font-bold">
+          <Image src="/logo/minute-map-circle-512.png" alt="" width={40} height={40} priority className="h-10 w-10 rounded-full" />
+          ZooMap
+        </h1>
         <p className="text-neutral-500">Your campus, live. Sign in with your {domains.map((d) => `@${d}`).join(" or ")} Google account.</p>
       </header>
 
