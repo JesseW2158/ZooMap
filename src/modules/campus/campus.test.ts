@@ -66,6 +66,14 @@ describe("campus data", () => {
     const ids = new Set((await getPlaces()).map((p) => p.id));
     for (const f of (await getBuildings()).features) if (f.properties.placeId) expect(ids.has(f.properties.placeId)).toBe(true);
   });
+
+  it("tags each place building with its place's category, and nothing else", async () => {
+    const byId = new Map((await getPlaces()).map((p) => [p.id, p.category]));
+    const features = (await getBuildings()).features;
+    for (const f of features) expect(f.properties.category).toBe(f.properties.placeId ? byId.get(f.properties.placeId) : undefined);
+    const library = features.find((f) => f.properties.name === "W.E.B. Du Bois Library");
+    expect(library?.properties.category).toBe("library");
+  });
 });
 
 describe("getPlace and nearestPlace", () => {

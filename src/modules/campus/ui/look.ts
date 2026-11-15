@@ -2,7 +2,10 @@
  * The campus look: colours, building materials and tree canopies. Pure
  * data and functions, so `Layer.tsx` only wires them into MapLibre.
  *
- * Buildings follow how the campus reads from above: mostly light concrete and pale stone
+ * Buildings that belong to a place are coloured by what they are (CATEGORY_COLORS): soft,
+ * light tints that read apart at a glance and never use a strong red, which means crowded and selected.
+ * They only show with the crowd heat off: the density layer covers every building otherwise.
+ * The rest follow how the campus reads from above: mostly light concrete and pale stone
  * with flat light roofs (the Campus Center, LGRT, the Fine Arts Center), tan precast for the
  * Southwest towers, a granite Old Chapel, the timber Design Building, and the W.E.B. Du Bois
  * Library in pale grey, so it never reads as a crowded red. Unnamed buildings get one of the light neutrals,
@@ -67,6 +70,18 @@ const MATERIAL = {
 } as const;
 type Material = keyof typeof MATERIAL;
 
+/** By place category; "other" places keep the materials above. Two close shades where a type is common. */
+export const CATEGORY_COLORS = {
+  academic: ["#d3dcf2", "#c9d4ee"], // light periwinkle: the most common type, so the lightest
+  library: ["#86cbbf"], // teal
+  residence: ["#f2dfb8", "#ecd5a8"], // warm sand
+  dining: ["#f5c46a"], // marigold
+  student_life: ["#d9c3f0"], // lavender
+  athletic: ["#f4c6d6"], // pale rose: far lighter than the crowd red, and not blue like academic
+} as const;
+type ColoredCategory = keyof typeof CATEGORY_COLORS;
+const isColored = (c: unknown): c is ColoredCategory => typeof c === "string" && c in CATEGORY_COLORS;
+
 /** Name patterns, checked in order. */
 const NAMED: [RegExp, Material][] = [
   [/du bois library/i, "library"],
@@ -100,9 +115,11 @@ export function paintBuildings(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCo
   return {
     ...fc,
     features: fc.features.map((f) => {
-      const props = (f.properties ?? {}) as { name?: string; heightM?: number };
+      const props = (f.properties ?? {}) as { name?: string; heightM?: number; category?: string };
       const seed = seedOf(f.geometry);
-      const shades = MATERIAL[materialOf(props.name, props.heightM ?? 10, seed)];
+      const shades: readonly string[] = isColored(props.category)
+        ? CATEGORY_COLORS[props.category]
+        : MATERIAL[materialOf(props.name, props.heightM ?? 10, seed)];
       return { ...f, properties: { ...props, color: shades[seed % shades.length] } };
     }),
   };
