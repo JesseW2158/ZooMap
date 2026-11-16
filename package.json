@@ -31,6 +31,7 @@
     "@solana-program/token": "0.18.0",
     "@solana/kit": "8.6.0",
     "@vercel/analytics": "2.0.1",
+    "@vercel/speed-insights": "2.1.0",
     "h3-js": "4.5.0",
     "maplibre-gl": "6.18.0",
     "mongodb": "7.9.0",
